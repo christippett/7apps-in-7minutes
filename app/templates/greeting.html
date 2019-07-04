@@ -10,9 +10,13 @@
     <style type="text/css">
         html,
         body {
-            /* background: #f9f9fa; */
-            background: fuchsia;
-            color: lawngreen !important;
+            background: #f9f9fa;
+            /* background: fuchsia;
+            color: lawngreen !important; */
+        }
+
+        .environment {
+            color: #ff3860
         }
 
         .ascii {
@@ -27,7 +31,7 @@
         <div class="container has-text-centered">
             <span class="ascii is-family-monospace">{{ ascii }}</span>
             <p class="has-text-weight-medium is-size-2">{{ greeting }}</p>
-            <p class="has-text-weight-medium is-size-4" style="color:#ff3860">{{ env }}</p>
+            <p class="environment has-text-weight-medium is-size-4">{{ env }}</p>
         </div>
     </section>
 </body>
