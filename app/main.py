@@ -3,19 +3,18 @@ import os
 from flask import Flask, render_template, request, Request
 from pyfiglet import Figlet
 
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")  # where the app is running
 
 app = Flask("7apps")
+fmt = Figlet(font="slant")  # render our greeting in a fancy ascii font
 
 
 def greeting(req: Request):
-    font = req.args.get("font", "slant")
     name = req.args.get("name", "world")
     greeting = f"Hello {name}!"
-    fmt = Figlet(font=font)
-    ascii = fmt.renderText(greeting)
+    ascii_greeting = fmt.renderText(greeting)
     return render_template(
-        "greeting.html", greeting=greeting, ascii=ascii, env=ENVIRONMENT
+        "greeting.html", greeting=greeting, ascii=ascii_greeting, env=ENVIRONMENT
     )
 
 
