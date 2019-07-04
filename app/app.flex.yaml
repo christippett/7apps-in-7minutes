@@ -1,6 +1,6 @@
 runtime: custom
 env: flex
-service: appengine-flex
+service: gae-flexible
 resources:
   cpu: 1
   memory_gb: 0.5
