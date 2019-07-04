@@ -9,7 +9,7 @@ steps:
         "builds",
         "submit",
         "--config",
-        "cloudbuild.image.yaml",
+        "cloudbuild.container.yaml",
         "--substitutions=SHORT_SHA=$SHORT_SHA",
       ]
     waitFor: ["-"]
@@ -19,7 +19,15 @@ steps:
   #========================================
   - id: "Deploy: Cloud Functions"
     name: "gcr.io/cloud-builders/gcloud"
-    args: ["builds", "submit", "--config", "cloudbuild.cloudfunction.yaml"]
+    args:
+      - "functions"
+      - "deploy"
+      - "demo-function"
+      - "--trigger-http"
+      - "--runtime=python37"
+      - "--entry-point=greeting"
+      - "--set-env-vars=ENVIRONMENT=Cloud Function"
+    dir: "app"
     waitFor: ["-"]
 
   #========================================
@@ -27,7 +35,8 @@ steps:
   #========================================
   - id: "Deploy: App Engine (Standard)"
     name: "gcr.io/cloud-builders/gcloud"
-    args: ["builds", "submit", "--config", "cloudbuild.appengine.yaml"]
+    args: ["app", "deploy", "app.standard.yaml", "--promote", "--version=0"]
+    dir: "app"
     waitFor: ["-"]
 
   #========================================
@@ -37,12 +46,14 @@ steps:
     name: "gcr.io/cloud-builders/gcloud"
     args:
       [
-        "builds",
-        "submit",
-        "--config",
-        "cloudbuild.appengineflex.yaml",
-        "--substitutions=SHORT_SHA=$SHORT_SHA",
+        "app",
+        "deploy",
+        "app.flex.yaml",
+        "--promote",
+        "--image-url=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA",
+        "--version=0",
       ]
+    dir: "app"
     waitFor: ["Build Docker image"]
 
   #========================================
@@ -51,13 +62,15 @@ steps:
   - id: "Deploy: Cloud Run"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      [
-        "builds",
-        "submit",
-        "--config",
-        "cloudbuild.cloudrun.yaml",
-        "--substitutions=SHORT_SHA=$SHORT_SHA",
-      ]
+      - beta
+      - run
+      - deploy
+      - demo-app
+      - "--platform=managed"
+      - "--allow-unauthenticated"
+      - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
+      - "--region=us-central1"
+      - "--set-env-vars=ENVIRONMENT=Cloud Run"
     waitFor: ["Build Docker image"]
 
   #========================================
@@ -66,13 +79,15 @@ steps:
   - id: "Deploy: Cloud Run on GKE"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      [
-        "builds",
-        "submit",
-        "--config",
-        "cloudbuild.cloudrunk8s.yaml",
-        "--substitutions=SHORT_SHA=$SHORT_SHA",
-      ]
+      - beta
+      - run
+      - deploy
+      - demo-app-gke
+      - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
+      - "--set-env-vars=ENVIRONMENT=Cloud Run (GKE)"
+      - "--platform=gke"
+      - "--cluster=demo-cluster"
+      - "--cluster-location=australia-southeast1-b"
     waitFor: ["Build Docker image"]
 
   #========================================
@@ -91,18 +106,20 @@ steps:
     waitFor: ["Build Docker image"]
 
   #========================================
-  # 7. CLOUD FUNCTIONS
+  # 7. GOOGLE COMPUTE ENGINE
   #========================================
   - id: "Deploy: Google Compute Engine (GCE)"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      [
-        "builds",
-        "submit",
-        "--config",
-        "cloudbuild.compute.yaml",
-        "--substitutions=SHORT_SHA=$SHORT_SHA",
-      ]
+      - "compute"
+      - "instances"
+      - "update-container"
+      - "demo-instance"
+      - "--zone=australia-southeast1-b"
+      - "--container-image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
+      - "--container-env=ENVIRONMENT=Google Compute Engine"
+      - "--container-mount-host-path"
+      - "mount-path=/etc/letsencrypt,host-path=/tmp,mode=rw"
     waitFor: ["Build Docker image"]
 
 timeout: 3600s
