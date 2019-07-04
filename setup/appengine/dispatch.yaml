@@ -1,0 +1,6 @@
+dispatch:
+  - url: "*/appengine-standard/*"
+    service: appengine-standard
+
+  - url: "*/appengine-flex/*"
+    service: appengine-flex

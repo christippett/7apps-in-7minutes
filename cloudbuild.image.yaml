@@ -1,0 +1,30 @@
+steps:
+  - id: "Pull latest Docker image"
+    name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker pull gcr.io/$PROJECT_ID/demo-app:latest || exit 0
+
+  - id: "Build Docker image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA",
+        "-t",
+        "gcr.io/$PROJECT_ID/demo-app:latest",
+        ".",
+        "--cache-from",
+        "gcr.io/$PROJECT_ID/demo-app:latest",
+      ]
+    dir: "app"
+
+  - id: "Push Docker image to Google Container Registry (GCR)"
+    name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"]
+
+images: ["gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"]
+timeout: 3600s

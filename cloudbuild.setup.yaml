@@ -1,0 +1,39 @@
+steps:
+  # Deploy default App Engine service
+  - name: "gcr.io/cloud-builders/gcloud"
+    args: ["app", "deploy", "app.yaml", "--promote", "--version=0"]
+    dir: "setup/appengine"
+    waitFor: ["-"]
+
+  # Deploy App Engine routing rules
+  - name: "gcr.io/cloud-builders/gcloud"
+    args: ["app", "deploy", "dispatch.yaml"]
+    dir: "setup/appengine"
+    waitFor: ["-"]
+
+  # Build and push Cloud Build container for envsubst
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/envsubst:latest", "."]
+    dir: "setup/envsubst"
+    waitFor: ["-"]
+
+  # Configure externaldns for Kubernetes
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "container"
+      - "clusters"
+      - "get-credentials"
+      - "demo-cluster"
+      - "--zone=australia-southeast1-b"
+    waitFor: ["-"]
+  - name: "gcr.io/cloud-builders/kubectl"
+    args: ["apply", "-f", "rbac.yaml"]
+    dir: "setup/kubernetes"
+  - name: "gcr.io/cloud-builders/kubectl"
+    args: ["apply", "-f", "externaldns.yaml"]
+    dir: "setup/kubernetes"
+  - name: "gcr.io/cloud-builders/kubectl"
+    args: ["apply", "-f", "certificate.yaml"]
+    dir: "setup/kubernetes"
+
+images: ["gcr.io/$PROJECT_ID/envsubst:latest"]

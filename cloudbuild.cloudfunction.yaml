@@ -1,0 +1,11 @@
+steps:
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "functions"
+      - "deploy"
+      - "demo-function"
+      - "--trigger-http"
+      - "--runtime=python37"
+      - "--entry-point=greeting"
+      - "--set-env-vars=ENVIRONMENT=Cloud Function"
+    dir: "app"

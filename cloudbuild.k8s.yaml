@@ -1,0 +1,18 @@
+steps:
+  - name: "gcr.io/$PROJECT_ID/envsubst"
+    args: ["k8s.yaml"]
+    env:
+      - SHORT_SHA=$SHORT_SHA
+    dir: "app"
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      [
+        "container",
+        "clusters",
+        "get-credentials",
+        "demo-cluster",
+        "--zone=australia-southeast1-b",
+      ]
+  - name: "gcr.io/cloud-builders/kubectl"
+    args: ["apply", "-f", "k8s.yaml"]
+    dir: "app"

@@ -1,0 +1,10 @@
+steps:
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "compute"
+      - "instances"
+      - "update-container"
+      - "demo-instance"
+      - "--zone=australia-southeast1-b"
+      - "--container-image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
+      - "--container-env=ENVIRONMENT=Google Compute Engine"
