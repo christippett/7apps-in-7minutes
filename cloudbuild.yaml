@@ -20,6 +20,7 @@ steps:
   - id: "Deploy: Cloud Functions"
     name: "gcr.io/cloud-builders/gcloud"
     args:
+      - "-q"
       - "functions"
       - "deploy"
       - "demo-function"
@@ -35,7 +36,8 @@ steps:
   #========================================
   - id: "Deploy: App Engine (Standard)"
     name: "gcr.io/cloud-builders/gcloud"
-    args: ["app", "deploy", "app.standard.yaml", "--promote", "--version=0"]
+    args:
+      ["-q", "app", "deploy", "app.standard.yaml", "--promote", "--version=0"]
     dir: "app"
     waitFor: ["-"]
 
@@ -46,6 +48,7 @@ steps:
     name: "gcr.io/cloud-builders/gcloud"
     args:
       [
+        "-q",
         "app",
         "deploy",
         "app.flex.yaml",
@@ -62,10 +65,11 @@ steps:
   - id: "Deploy: Cloud Run"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      - beta
-      - run
-      - deploy
-      - demo-app
+      - "-q"
+      - "beta"
+      - "run"
+      - "deploy"
+      - "demo-app"
       - "--platform=managed"
       - "--allow-unauthenticated"
       - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
@@ -79,10 +83,11 @@ steps:
   - id: "Deploy: Cloud Run on GKE"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      - beta
-      - run
-      - deploy
-      - demo-app-gke
+      - "-q"
+      - "beta"
+      - "run"
+      - "deploy"
+      - "demo-app-gke"
       - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
       - "--set-env-vars=ENVIRONMENT=Cloud Run (GKE)"
       - "--platform=gke"
@@ -111,6 +116,7 @@ steps:
   - id: "Deploy: Google Compute Engine (GCE)"
     name: "gcr.io/cloud-builders/gcloud"
     args:
+      - "-q"
       - "compute"
       - "instances"
       - "update-container"
