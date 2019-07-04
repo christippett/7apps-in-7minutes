@@ -1,4 +1,4 @@
 runtime: python37
-service: gae-flexible
+service: gae-standard
 env_variables:
   ENVIRONMENT: "App Engine (Standard)"
