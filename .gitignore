@@ -1,3 +1,4 @@
 *.pem
-.terraform
-.vscode
+.*
+!.gitignore
+!.gcloudignore
