@@ -1,6 +1,7 @@
 dispatch:
-  - url: "*/appengine-standard/*"
-    service: appengine-standard
-
-  - url: "*/appengine-flex/*"
-    service: appengine-flex
+  - url: "servian.fun/gae-standard/*"
+    service: gae-standard
+  - url: "servian.fun/gae-flexible/*"
+    service: gae-flexible
+  - url: "servian.fun/"
+    service: default
