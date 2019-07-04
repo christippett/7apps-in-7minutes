@@ -2,20 +2,20 @@
 
 set -x
 
-PYTHONPATH=/app:$PYTHONPATH
+export PYTHONPATH=/app:$PYTHONPATH
+export CERTBOT_EMAIL=chris.tippett@servian.com
 
 # If not running on Google Compute Engine, run gunicorn directly
 if [ ! "$ENVIRONMENT" = "Google Compute Engine" ]; then
     (cd /app; gunicorn --bind 0.0.0.0:8080 main:app)
 else
 
-# If running on Google Compute Engine, setup nginx and certbot
-CERTBOT_EMAIL=chris.tippett@servian.com
-rm -rf /etc/nginx/sites-available/*
-
 # Start gunicorn in the background
 (cd /app; gunicorn --bind 0.0.0.0:8080 main:app) &
 sleep 15
+
+# If running on Google Compute Engine, setup nginx and certbot
+rm -rf /etc/nginx/sites-available/*
 
 cat <<EOF >/etc/nginx/conf.d/certbot.conf
 server {
