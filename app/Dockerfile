@@ -16,6 +16,7 @@ RUN apt-get update && \
 RUN mkdir -p /scripts/startup
 RUN touch /scripts/startup/gunicorn.sh && chmod a+x /scripts/startup/gunicorn.sh
 COPY --from=0 /scripts /scripts/
+VOLUME /etc/letsencrypt
 
 # Install app dependencies
 RUN pip install gunicorn

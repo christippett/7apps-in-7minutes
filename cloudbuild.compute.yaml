@@ -8,3 +8,4 @@ steps:
       - "--zone=australia-southeast1-b"
       - "--container-image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
       - "--container-env=ENVIRONMENT=Google Compute Engine"
+      - "--container-mount-host-path mount-path=/etc/letsencrypt,host-path=/tmp,mode=rw"
