@@ -1,7 +1,17 @@
 dispatch:
-  - url: "servian.fun/gae-standard/*"
-    service: gae-standard
-  - url: "servian.fun/gae-flexible/*"
-    service: gae-flexible
-  - url: "servian.fun/"
-    service: default
+  # - url: "servian.fun/gae-standard/*"
+  #   service: gae-standard
+  # - url: "servian.fun/gae-flexible/*"
+  #   service: gae-flexible
+  # - url: "gae-standard.servian.fun/*"
+  #   service: gae-standard
+  # - url: "gae-flexible.servian.fun/*"
+  #   service: gae-flexible
+  # - url: "servian-app-demo.appspot.com/gae-standard/*"
+  #   service: gae-standard
+  # - url: "servian-app-demo.appspot.com/gae-flexible/*"
+  #   service: gae-flexible
+  # - url: "servian.fun/"
+  #   service: default
+  # - url: "servian-app-demo.appspot.com/"
+  #   service: default
