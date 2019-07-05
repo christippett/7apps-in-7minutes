@@ -125,7 +125,7 @@ steps:
       - "--container-image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
       - "--container-env=ENVIRONMENT=Google Compute Engine"
       - "--container-mount-host-path"
-      - "mount-path=/etc/letsencrypt,host-path=/data,mode=rw"
+      - "mount-path=/etc/letsencrypt,host-path=/home/data,mode=rw"
     waitFor: ["Build Docker image"]
 
 timeout: 3600s
