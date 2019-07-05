@@ -1,22 +1,23 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
 SOURCES = [
-    "http://localhost:8080",
-    "https://us-central1-servian-app-demo.cloudfunctions.net/demo-function",
-    "http://gae-standard.servian.fun",
-    "http://gae-flexible.servian.fun",
-    "https://run.servian.fun",
-    "https://run-gke.servian.fun",
-    "https://gke.servian.fun",
-    "https://gce.servian.fun",
+    "http://localhost:8080/",
+    "https://us-central1-servian-app-demo.cloudfunctions.net/demo-function/",
+    "http://gae-standard.servian.fun/",
+    "http://gae-flexible.servian.fun/",
+    "https://run.servian.fun/",
+    "https://run-gke.servian.fun/",
+    "https://gke.servian.fun/",
+    "https://gce.servian.fun/",
 ]
 
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("monitor.html", iframes=SOURCES)
+    name = request.args.get("name", "world")
+    return render_template("monitor.html", iframes=SOURCES, name=name)
 
 
 if __name__ == "__main__":

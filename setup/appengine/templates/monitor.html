@@ -33,16 +33,29 @@
 </head>
 
 <body>
-    <section class="iframe-container" style="background: red; height">
+    <section class="iframe-container">
         <div class="columns is-multiline is-gapless" style="height: 100%">
             {% for src in iframes %}
             <div class="column is-half">
-                <iframe class="iframe" src="{{ src }}">
+                <iframe id="{{ loop.index }}" class="iframe" src="{{ src }}?name={{ name }}">
                 </iframe>
             </div>
             {% endfor %}
         </div>
     </section>
 </body>
+<script>
+
+    window.setInterval(function () {
+        var iframes = document.getElementsByTagName("iframe");
+
+        for (var i = 0, max = iframes.length; i < max; i++) {
+            var el = iframes[i];
+            el.src = el.src;
+            console.log(`Refreshing ${i}`);
+        }
+    }, 5000);
+
+</script>
 
 </html>
