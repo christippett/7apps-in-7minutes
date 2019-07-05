@@ -1,15 +1,23 @@
-from flask import Flask, redirect
+from flask import Flask, render_template
 
 app = Flask(__name__)
+
+SOURCES = [
+    "http://localhost:8080",
+    "https://us-central1-servian-app-demo.cloudfunctions.net/demo-function",
+    "http://gae-standard.servian.fun",
+    "http://gae-flexible.servian.fun",
+    "https://run.servian.fun",
+    "https://run-gke.servian.fun",
+    "https://gke.servian.fun",
+    "https://gce.servian.fun",
+]
 
 
 @app.route("/", methods=["GET"])
 def index():
-    return redirect("https://www.servian.com")
+    return render_template("monitor.html", iframes=SOURCES)
 
 
 if __name__ == "__main__":
-    # This is used when running locally only. When deploying to Google App
-    # Engine, a webserver process such as Gunicorn will serve the app. This
-    # can be configured by adding an `entrypoint` to app.yaml.
-    app.run(host="127.0.0.1", port=8080, debug=True)
+    app.run(host="127.0.0.1", port=8081, debug=True)

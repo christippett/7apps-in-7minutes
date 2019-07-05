@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>7apps7minutes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css">
+    <style type="text/css">
+        html,
+        body {
+            background: white;
+        }
+
+        .ascii {
+            font-weight: 700;
+            white-space: pre;
+        }
+
+        .iframe-container {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .iframe {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="iframe-container" style="background: red; height">
+        <div class="columns is-multiline is-gapless" style="height: 100%">
+            {% for src in iframes %}
+            <div class="column is-half">
+                <iframe class="iframe" src="{{ src }}">
+                </iframe>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</body>
+
+</html>
