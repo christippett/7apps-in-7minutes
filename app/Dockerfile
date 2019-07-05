@@ -9,7 +9,8 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install -y supervisor nginx python-certbot-nginx && \
     apt-get autoremove -y && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 RUN rm -rf /etc/nginx/sites-available/*
 ADD scripts/certbot.conf /etc/nginx/conf.d/
 ADD scripts/app.conf /etc/nginx/conf.d/
