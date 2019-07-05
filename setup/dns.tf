@@ -33,7 +33,7 @@ resource "google_dns_record_set" "cloud_run" {
 }
 
 resource "google_dns_record_set" "appengine_standard" {
-  name         = "appengine-standard.${google_dns_managed_zone.servian_dot_fun.dns_name}"
+  name         = "gae-standard.${google_dns_managed_zone.servian_dot_fun.dns_name}"
   type         = "CNAME"
   ttl          = 300
   managed_zone = "${google_dns_managed_zone.servian_dot_fun.name}"
@@ -41,7 +41,7 @@ resource "google_dns_record_set" "appengine_standard" {
 }
 
 resource "google_dns_record_set" "appengine_flexible" {
-  name         = "appengine-flex.${google_dns_managed_zone.servian_dot_fun.dns_name}"
+  name         = "gae-flexible.${google_dns_managed_zone.servian_dot_fun.dns_name}"
   type         = "CNAME"
   ttl          = 300
   managed_zone = "${google_dns_managed_zone.servian_dot_fun.name}"
