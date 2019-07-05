@@ -1,6 +1,8 @@
 FROM python:3.7-slim-stretch
 
-# The following dependencies are needed for running on Google Compute Engine
+WORKDIR /app
+
+# The following is required to install supervisor, nginx and certbot for Google Compute Engine
 RUN apt-get update && \
     apt-get install -y gnupg2 && \
     echo "deb http://ppa.launchpad.net/certbot/certbot/ubuntu xenial main" >> /etc/apt/source.list && \
@@ -11,25 +13,26 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Configure nginx (for Google Compute Engine)
 RUN rm -rf /etc/nginx/sites-available/*
 ADD scripts/certbot.conf /etc/nginx/conf.d/
 ADD scripts/app.conf /etc/nginx/conf.d/
-ENV CERTBOT_EMAIL=chris.tippett@servian.com
 VOLUME /etc/letsencrypt
+ENV CERTBOT_EMAIL=chris.tippett@servian.com
 
 # Install app dependencies
-WORKDIR /app
 RUN pip install gunicorn
 ADD requirements.txt .
 RUN pip install -r requirements.txt
 
 # Copy app source
-COPY . /app/
+ADD . /app/
 
+# Expose ports for gunicorn (8080) and nginx (80, 443)
 EXPOSE 80
 EXPOSE 443
 EXPOSE 8080
 
-# CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
 ENTRYPOINT ["/bin/bash"]
 CMD ["/app/entrypoint.sh"]
