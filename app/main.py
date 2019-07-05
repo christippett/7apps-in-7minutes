@@ -18,8 +18,7 @@ def greeting(req: Request):
     )
 
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
+@app.route("/")
 def index(path):
     return greeting(request)
 
