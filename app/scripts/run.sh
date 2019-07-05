@@ -31,7 +31,7 @@ server {
 
     # Everything else gets shunted over to HTTPS
     location / {
-        return 301 https://gce.servian.fun$request_uri;
+        return 301 https://vm.servian.fun$request_uri;
     }
 }
 EOF
@@ -39,9 +39,9 @@ EOF
 cat <<EOF >/etc/nginx/conf.d/app.conf
 server {
     listen 443 ssl;
-    server_name gce.servian.fun;
-    ssl_certificate     /etc/letsencrypt/live/gce.servian.fun/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/gce.servian.fun/privkey.pem;
+    server_name vm.servian.fun;
+    ssl_certificate     /etc/letsencrypt/live/vm.servian.fun/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vm.servian.fun/privkey.pem;
 
     location / {
         include proxy_params;
