@@ -17,7 +17,7 @@ resource "google_dns_record_set" "gke_name_servers" {
 }
 
 resource "google_dns_record_set" "demo_instance" {
-  name         = "vm.${google_dns_managed_zone.servian_dot_fun.dns_name}"
+  name         = "gce.${google_dns_managed_zone.servian_dot_fun.dns_name}"
   type         = "A"
   ttl          = 300
   managed_zone = "${google_dns_managed_zone.servian_dot_fun.name}"
