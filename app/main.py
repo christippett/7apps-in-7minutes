@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, Request
+from flask import Flask, Request, render_template, request
 from pyfiglet import Figlet
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")  # where the app is running
@@ -18,8 +18,9 @@ def greeting(req: Request):
     )
 
 
-@app.route("/", methods=["GET"])
-def index():
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def index(path):
     return greeting(request)
 
 
