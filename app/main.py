@@ -19,7 +19,7 @@ def greeting(req: Request):
 
 
 @app.route("/")
-def index(path):
+def index():
     return greeting(request)
 
 
