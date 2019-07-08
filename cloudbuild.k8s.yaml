@@ -14,5 +14,5 @@ steps:
         "--zone=australia-southeast1-b",
       ]
   - name: "gcr.io/cloud-builders/kubectl"
-    args: ["apply", "-f", "k8s.yaml"]
+    args: ["apply", "-f", "app.k8s.yaml"]
     dir: "app"
