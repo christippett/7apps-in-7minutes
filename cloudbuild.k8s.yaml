@@ -1,6 +1,6 @@
 steps:
   - name: "gcr.io/$PROJECT_ID/envsubst"
-    args: ["k8s.yaml"]
+    args: ["app.k8s.yaml"]
     env:
       - SHORT_SHA=$SHORT_SHA
     dir: "app"
