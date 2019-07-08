@@ -9,7 +9,7 @@
     <style type="text/css">
         html,
         body {
-            background: white;
+            background: black;
         }
 
         .ascii {
@@ -34,7 +34,7 @@
 
 <body>
     <section class="iframe-container">
-        <div class="columns is-multiline is-gapless" style="height: 100%">
+        <div class="columns is-multiline" style="height: 100%">
             {% for src in iframes %}
             <div class="column is-half">
                 <iframe id="{{ loop.index }}" class="iframe" src="{{ src }}?name={{ name }}">
