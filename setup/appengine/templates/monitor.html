@@ -16,10 +16,18 @@
             font-weight: 700;
             white-space: pre;
         }
+        .timer-container{
+            text-align: center;
+        }
 
+        .timer-container .values{
+            color: white;
+            font-size: 2rem;
+        }
+        
         .iframe-container {
             position: absolute;
-            top: 0;
+            top: 100px;
             bottom: 0;
             left: 0;
             right: 0;
@@ -33,6 +41,17 @@
 </head>
 
 <body>
+    <section class="timer-container">
+        <div id="timer">
+            <div class="values">00:00:00</div>
+            <div>
+                <button class="button startButton">Start</button>
+                <button class="button pauseButton" >Pause</button>
+                <button class="button stopButton">Stop</button>
+                <button class="button resetButton">Reset</button>
+            </div>
+        </div>
+    </section>
     <section class="iframe-container">
         <div class="columns is-multiline" style="height: 100%">
             {% for src in iframes %}
@@ -44,7 +63,31 @@
         </div>
     </section>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://storage.googleapis.com/demo-assets-app/easytimer.js"></script>
 <script>
+    var timer = new easytimer.Timer();
+    $('#timer .startButton').click(function () {
+        timer.start();
+    });
+    $('#timer .pauseButton').click(function () {
+        timer.pause();
+    });
+    $('#timer .stopButton').click(function () {
+        timer.stop();
+    });
+    $('#timer .resetButton').click(function () {
+        timer.reset();
+    });
+    timer.addEventListener('secondsUpdated', function (e) {
+        $('#timer .values').html(timer.getTimeValues().toString());
+    });
+    timer.addEventListener('started', function (e) {
+        $('#timer .values').html(timer.getTimeValues().toString());
+    });
+    timer.addEventListener('reset', function (e) {
+        $('#timer .values').html(timer.getTimeValues().toString());
+    });
 
     window.setInterval(function () {
         var iframes = document.getElementsByTagName("iframe");
