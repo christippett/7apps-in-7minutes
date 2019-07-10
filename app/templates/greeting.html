@@ -4,30 +4,100 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ env }} » 7apps7minutes</title>
+    <title>7apps7minutes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css">
     <style type="text/css">
         html,
         body {
-            background: white;
-            /* background: fuchsia;
-            color: lawngreen !important; */
+            background: black;
         }
 
         .ascii {
             font-weight: 700;
             white-space: pre;
         }
+        .timer-container{
+            text-align: center;
+        }
+
+        .timer-container .values{
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .iframe-container {
+            position: absolute;
+            top: 100px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .iframe {
+            height: 100%;
+            width: 100%;
+        }
     </style>
 </head>
 
 <body>
-    <section style="padding: 2em; font-size: 1.5vw !important;">
-        <div class="container has-text-centered">
-            <span class="ascii is-family-monospace">{{ ascii }}</span>
-            <p class="has-text-weight-medium" style="font-size: 2.5em;">{{ env }}</p>
+    <section class="timer-container">
+        <div id="timer">
+            <div class="values">00:00:00</div>
+            <div>
+                <button class="button startButton">Start</button>
+                <button class="button pauseButton" >Pause</button>
+                <button class="button stopButton">Stop</button>
+                <button class="button resetButton">Reset</button>
+            </div>
+        </div>
+    </section>
+    <section class="iframe-container">
+        <div class="columns is-multiline" style="height: 100%">
+            {% for src in iframes %}
+            <div class="column is-half">
+                <iframe id="{{ loop.index }}" class="iframe" src="{{ src }}?name={{ name }}">
+                </iframe>
+            </div>
+            {% endfor %}
         </div>
     </section>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://storage.googleapis.com/demo-assets-app/easytimer.js"></script>
+<script>
+    var timer = new easytimer.Timer();
+    $('#timer .startButton').click(function () {
+        timer.start();
+    });
+    $('#timer .pauseButton').click(function () {
+        timer.pause();
+    });
+    $('#timer .stopButton').click(function () {
+        timer.stop();
+    });
+    $('#timer .resetButton').click(function () {
+        timer.reset();
+    });
+    timer.addEventListener('secondsUpdated', function (e) {
+        $('#timer .values').html(timer.getTimeValues().toString());
+    });
+    timer.addEventListener('started', function (e) {
+        $('#timer .values').html(timer.getTimeValues().toString());
+    });
+    timer.addEventListener('reset', function (e) {
+        $('#timer .values').html(timer.getTimeValues().toString());
+    });
+
+    window.setInterval(function () {
+        var iframes = document.getElementsByTagName("iframe");
+
+        for (var i = 0, max = iframes.length; i < max; i++) {
+            var el = iframes[i];
+            el.src = el.src;
+        }
+    }, 2000);
+
+</script>
 
 </html>
