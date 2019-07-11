@@ -87,3 +87,11 @@ resource "google_dns_record_set" "cloud_run_gke" {
   managed_zone = "${google_dns_managed_zone.servian_dot_fun.name}"
   rrdatas      = ["35.189.18.208"]
 }
+
+resource "google_dns_record_set" "firebase" {
+  name         = "firebase.${google_dns_managed_zone.servian_dot_fun.dns_name}"
+  type         = "A"
+  ttl          = 300
+  managed_zone = "${google_dns_managed_zone.servian_dot_fun.name}"
+  rrdatas      = ["151.101.1.195", "151.101.65.195"]
+}
