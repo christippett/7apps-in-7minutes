@@ -93,6 +93,7 @@
     });
     $('#timer .resetButton').click(function () {
         timer.reset();
+        timer.stop();
     });
     timer.addEventListener('secondsUpdated', function (e) {
         $('#timer .values').html(timer.getTimeValues().toString());
