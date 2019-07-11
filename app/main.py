@@ -3,7 +3,7 @@ import os
 from flask import Flask, Request, render_template, request
 from pyfiglet import Figlet
 
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")  # where the app is running
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "Localhost")  # where the app is running
 
 app = Flask("7apps")
 fmt = Figlet(font="slant")  # render our greeting in a fancy ascii font
