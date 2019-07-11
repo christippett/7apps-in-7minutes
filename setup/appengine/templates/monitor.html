@@ -9,33 +9,48 @@
     <style type="text/css">
         html,
         body {
-            background: black;
+            background: #16436C;
         }
 
         .ascii {
             font-weight: 700;
             white-space: pre;
         }
-        .timer-container{
+
+        .timer-container {
             text-align: center;
         }
 
-        .timer-container .values{
+        .timer-container .values {
             color: white;
             font-size: 2rem;
         }
-        
+
         .iframe-container {
             position: absolute;
             top: 100px;
             bottom: 0;
-            left: 0;
-            right: 0;
+            left: 0.5rem;
+            right: 0.5rem;
         }
 
         .iframe {
             height: 100%;
             width: 100%;
+        }
+
+        .columns:last-child {
+            margin-bottom: -0.25rem;
+        }
+
+        .columns {
+            margin-left: -0.25rem;
+            margin-right: -0.25rem;
+            margin-top: -0.25rem;
+        }
+
+        .column {
+            padding: 0.25rem;
         }
     </style>
 </head>
@@ -46,7 +61,7 @@
             <div class="values">00:00:00</div>
             <div>
                 <button class="button startButton">Start</button>
-                <button class="button pauseButton" >Pause</button>
+                <button class="button pauseButton">Pause</button>
                 <button class="button stopButton">Stop</button>
                 <button class="button resetButton">Reset</button>
             </div>
