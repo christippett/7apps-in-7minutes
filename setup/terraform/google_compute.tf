@@ -21,7 +21,7 @@ resource "google_compute_firewall" "demo_app_rule" {
 
 resource "google_compute_instance" "demo_instance" {
   name         = "demo-instance"
-  machine_type = "f1-micro"
+  machine_type = "g1-small"
   zone         = "${local.zone}"
 
   boot_disk {
