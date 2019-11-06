@@ -10,7 +10,7 @@ SOURCES = [
     "https://run.servian.fun/",
     "https://run-gke.servian.fun/",
     "https://gke.servian.fun/",
-    "https://gce.servian.fun/",
+    "http://gce.servian.fun:8080/",
 ]
 
 
