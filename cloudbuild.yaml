@@ -80,20 +80,20 @@ steps:
   #========================================
   # 5. CLOUD RUN (ON GKE)
   #========================================
-  - id: "Deploy: Cloud Run on GKE"
-    name: "gcr.io/cloud-builders/gcloud"
-    args:
-      - "-q"
-      - "beta"
-      - "run"
-      - "deploy"
-      - "demo-app-gke"
-      - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
-      - "--set-env-vars=ENVIRONMENT=Cloud Run (GKE)"
-      - "--platform=gke"
-      - "--cluster=demo-cluster"
-      - "--cluster-location=australia-southeast1-b"
-    waitFor: ["Build Docker image"]
+  # - id: "Deploy: Cloud Run on GKE"
+  #   name: "gcr.io/cloud-builders/gcloud"
+  #   args:
+  #     - "-q"
+  #     - "beta"
+  #     - "run"
+  #     - "deploy"
+  #     - "demo-app-gke"
+  #     - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
+  #     - "--set-env-vars=ENVIRONMENT=Cloud Run (GKE)"
+  #     - "--platform=gke"
+  #     - "--cluster=demo-cluster"
+  #     - "--cluster-location=australia-southeast1-b"
+  #   waitFor: ["Build Docker image"]
 
   #========================================
   # 6. GOOGLE KUBERENTES ENGINE (GKE)
