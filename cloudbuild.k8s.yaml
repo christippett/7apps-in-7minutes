@@ -15,4 +15,8 @@ steps:
       ]
   - name: "gcr.io/cloud-builders/kubectl"
     args: ["apply", "-f", "app.k8s.yaml"]
+    env:
+      - CLOUDSDK_COMPUTE_REGION=australia-southeast1-b
+      - CLOUDSDK_COMPUTE_ZONE=australia-southeast1
+      - CLOUDSDK_CONTAINER_CLUSTER=demo-cluster
     dir: "app"
