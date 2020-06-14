@@ -1,7 +1,0 @@
-dispatch:
-  - url: "gae-standard.servian.fun/*"
-    service: gae-standard
-  - url: "gae-flexible.servian.fun/*"
-    service: gae-flexible
-  - url: "servian.fun/*"
-    service: default
