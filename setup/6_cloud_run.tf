@@ -9,6 +9,9 @@ resource "google_cloud_run_service" "managed" {
   project  = var.project_id
   location = var.region
 
+  service_account_name = google_service_account.default.email
+
+
   metadata {
     namespace = var.project_id
   }
