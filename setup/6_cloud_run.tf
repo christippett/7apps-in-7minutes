@@ -5,12 +5,9 @@
 # https://cloud.google.com/run/docs/setup
 
 resource "google_cloud_run_service" "managed" {
-  name     = "7apps-app"
+  name     = "${var.project_id}-app"
   project  = var.project_id
   location = var.region
-
-  service_account_name = google_service_account.default.email
-
 
   metadata {
     namespace = var.project_id
@@ -18,6 +15,7 @@ resource "google_cloud_run_service" "managed" {
 
   template {
     spec {
+      service_account_name = google_service_account.default.email
       containers {
         image = var.container_image
       }
@@ -44,7 +42,7 @@ resource "google_cloud_run_domain_mapping" "managed" {
 }
 
 resource "google_dns_record_set" "cloudrun_managed" {
-  for_each     = google_cloud_run_domain_mapping.managed.status[0].resource_records
+  for_each = google_cloud_run_domain_mapping.managed.status[0].resource_records
 
   name         = "${var.cloud_run_managed_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
