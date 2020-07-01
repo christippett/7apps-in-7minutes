@@ -34,9 +34,6 @@ resource "google_container_cluster" "gke" {
     http_load_balancing {
       disabled = false
     }
-    istio_config {
-      disabled = false
-    }
     cloudrun_config {
       disabled = false
     }
