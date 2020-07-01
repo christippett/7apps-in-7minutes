@@ -62,11 +62,11 @@ resource "google_compute_subnetwork" "default" {
 # https://cloud.google.com/vpc/docs/configure-serverless-vpc-access
 
 resource "google_vpc_access_connector" "connector" {
-  name          = "conn-${google_compute_network.default.name}"
+  name          = "${google_compute_network.default.name}-usc1-conn"
   project       = var.project_id
-  network       = google_compute_network.default.self_link
+  network       = google_compute_network.default.name
   region        = var.region
-  ip_cidr_range = "10.1.1.0/24"
+  ip_cidr_range = "10.11.1.0/28"
 }
 
 /* Private Services Access ------------------------------------------------ */
@@ -103,7 +103,7 @@ module "firewall" {
   source = "terraform-google-modules/network/google//modules/fabric-net-firewall"
 
   project_id = var.project_id
-  network    = google_compute_network.default.self_link
+  network    = google_compute_network.default.name
 
   http_source_ranges  = local.firewall_allow_ranges
   https_source_ranges = local.firewall_allow_ranges
@@ -116,8 +116,8 @@ module "firewall" {
     google_container_cluster.gke.private_cluster_config.*.master_ipv4_cidr_block,
   ])
   internal_allow = [
-    { "protocol": "icmp" },
-    { "protocol": "tcp" }
+    { "protocol" : "icmp" },
+    { "protocol" : "tcp" }
   ]
 }
 
@@ -155,8 +155,8 @@ module "cloudsql" {
   database_version = "POSTGRES_12"
   tier             = "db-f1-micro"
 
-  db_name       = local.db_name
-  user_name     = local.db_user
+  db_name   = local.db_name
+  user_name = local.db_user
 
   ip_configuration = {
     ipv4_enabled        = true
