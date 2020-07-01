@@ -62,7 +62,7 @@ resource "google_compute_subnetwork" "default" {
 # https://cloud.google.com/vpc/docs/configure-serverless-vpc-access
 
 resource "google_vpc_access_connector" "connector" {
-  name          = "connector-${google_compute_subnetwork.default.name}"
+  name          = "conn-${google_compute_network.default.name}"
   project       = var.project_id
   network       = google_compute_network.default.self_link
   region        = var.region
@@ -85,6 +85,8 @@ resource "google_service_networking_connection" "google_services" {
   network                 = google_compute_network.default.self_link
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.google_services.name]
+
+  depends_on = [module.project-services]
 }
 
 
@@ -149,9 +151,9 @@ module "cloudsql" {
   name             = "postgres-db"
   project_id       = var.project_id
   region           = var.region
-  zone             = "${var.region}-b"
+  zone             = "a"
   database_version = "POSTGRES_12"
-  tier             = "e2-small"
+  tier             = "db-f1-micro"
 
   db_name       = local.db_name
   user_name     = local.db_user
@@ -233,7 +235,7 @@ resource "google_app_engine_standard_app_version" "default" {
 
   deployment {
     zip {
-      source_url = google_storage_bucket_object.default.self_link
+      source_url = "https://storage.googleapis.com/${google_storage_bucket.app.name}/${google_storage_bucket_object.default.name}"
     }
   }
 
