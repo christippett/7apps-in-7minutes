@@ -17,7 +17,7 @@ resource "google_storage_bucket_object" "app" {
 resource "google_app_engine_standard_app_version" "app" {
   project    = var.project_id
   service    = "standard"
-  runtime    = "python37"
+  runtime    = "python38"
   version_id = "v1"
 
   instance_class = "F1"
