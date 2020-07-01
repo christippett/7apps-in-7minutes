@@ -196,7 +196,7 @@ data "archive_file" "monitoring_dashboard" {
 }
 
 resource "google_storage_bucket_object" "default" {
-  name   = basename(data.archive_file.monitoring_dashboard.output_path)
+  name   = "dashboard-${data.archive_file.monitoring_dashboard.output_sha}.zip"
   bucket = google_storage_bucket.app.name
   source = data.archive_file.monitoring_dashboard.output_path
 }
@@ -204,7 +204,7 @@ resource "google_storage_bucket_object" "default" {
 resource "google_app_engine_standard_app_version" "default" {
   project    = var.project_id
   service    = "default"
-  runtime    = "python37"
+  runtime    = "python38"
   version_id = "initial"
 
   entrypoint {

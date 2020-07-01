@@ -9,7 +9,7 @@ data "archive_file" "app" {
 }
 
 resource "google_storage_bucket_object" "app" {
-  name   = basename(data.archive_file.app.output_path)
+  name   = "app-${data.archive_file.app.output_sha}.zip"
   bucket = google_storage_bucket.app.name
   source = data.archive_file.app.output_path
 }
