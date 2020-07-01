@@ -42,8 +42,6 @@ resource "google_cloud_run_domain_mapping" "managed" {
 }
 
 resource "google_dns_record_set" "cloudrun_managed" {
-  for_each = google_cloud_run_domain_mapping.managed.status[0].resource_records
-
   name         = "${var.cloud_run_managed_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
   type         = "CNAME"

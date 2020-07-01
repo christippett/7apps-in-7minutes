@@ -43,12 +43,10 @@ resource "google_cloud_run_domain_mapping" "anthos" {
 }
 
 resource "google_dns_record_set" "cloudrun_anthos" {
-  for_each = google_cloud_run_domain_mapping.anthos.status[0].resource_records
-
   name         = "${var.cloud_run_anthos_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
-  type         = each.value.type
-  rrdatas      = each.value.rrdata
+  type         = "CNAME"
+  rrdatas      = ["ghs.googlehosted.com."]
   ttl          = 300
 
   depends_on = [google_cloud_run_domain_mapping.anthos]
