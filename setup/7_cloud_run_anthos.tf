@@ -57,6 +57,8 @@ resource "google_dns_record_set" "cloudrun_anthos" {
 
 /* TLS ---------------------------------------------------------------------- */
 
+# https://cloud.google.com/run/docs/gke/auto-tls#enabling_automatic_tls_certificates_and_https
+
 resource "kubernetes_config_map" "config-domainmapping" {
   metadata {
     name = "config-domainmapping"
