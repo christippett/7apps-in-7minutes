@@ -59,7 +59,7 @@ variable "cloud_run_managed_subdomain" {
 }
 
 variable "cloud_run_anthos_subdomain" {
-  default = "run-anthos"
+  default = "anthos-run"
 }
 
 variable "kubernetes_engine_subdomain" {

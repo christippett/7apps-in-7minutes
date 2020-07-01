@@ -4,52 +4,55 @@
 
 # https://cloud.google.com/run/docs/gke/setup#create_private_cluster
 
-resource "google_cloud_run_service" "anthos" {
-  name     = "${var.project_id}-anthos-app"
-  project  = var.project_id
-  location = var.region
+locals {
+  anthos_app_name = "run-anthos"
+}
 
+resource "null_resource" "cloud_run_anthos" {
 
-  metadata {
-    namespace = var.project_id
+  triggers = {
+    cluster = google_container_cluster.gke.id
+    image   = var.container_image
   }
 
-  template {
-    spec {
-      containers {
-        image = var.container_image
-      }
-    }
+  provisioner "local-exec" {
+    command = <<EOT
+gcloud run deploy ${local.anthos_app_name} \
+  --platform gke \
+  --cluster ${google_container_cluster.gke.name} \
+  --cluster-location ${var.region}-a \
+  --image ${var.container_image} && sleep 10
+EOT
   }
 }
 
 /* DNS ---------------------------------------------------------------------- */
 
-# https://cloud.google.com/run/docs/mapping-custom-domains
-
-resource "google_cloud_run_domain_mapping" "anthos" {
-  name     = "${var.cloud_run_anthos_subdomain}.${var.domain_name}"
-  project  = var.project_id
-  location = var.region
-
-  metadata {
-    namespace = var.project_id
-  }
-
-  spec {
-    route_name = google_cloud_run_service.anthos.name
-  }
-}
-
 resource "google_dns_record_set" "cloudrun_anthos" {
   name         = "${var.cloud_run_anthos_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
-  type         = "CNAME"
-  rrdatas      = ["ghs.googlehosted.com."]
+  type         = "A"
+  rrdatas      = ["35.188.26.82"]
   ttl          = 300
-
-  depends_on = [google_cloud_run_domain_mapping.anthos]
 }
+
+# https://cloud.google.com/run/docs/mapping-custom-domains
+
+# resource "google_cloud_run_domain_mapping" "anthos" {
+#   name     = "${var.cloud_run_anthos_subdomain}.${var.domain_name}"
+#   project  = var.project_id
+#   location = var.region
+
+#   metadata {
+#     namespace = var.project_id
+#   }
+
+#   spec {
+#     route_name = local.anthos_app_name
+#   }
+
+#   depends_on = [null_resource.cloud_run_anthos]
+# }
 
 
 /* TLS ---------------------------------------------------------------------- */
@@ -63,12 +66,12 @@ resource "kubernetes_config_map" "config-domainmapping" {
 
     annotations = {
       "components.gke.io/component-name"    = "cloudrun"
-      "components.gke.io/component-version" = "10.4.1"
+      "components.gke.io/component-version" = "10.6.3"
     }
 
     labels = {
       "addonmanager.kubernetes.io/mode" : "Reconcile"
-      "serving.knative.dev/release" : "v0.11.0-gke.9"
+      "serving.knative.dev/release" : "v0.13.2-gke.3"
     }
   }
 
@@ -79,4 +82,6 @@ resource "kubernetes_config_map" "config-domainmapping" {
   lifecycle {
     ignore_changes = [data]
   }
+
+  depends_on = [null_resource.cloud_run_anthos]
 }

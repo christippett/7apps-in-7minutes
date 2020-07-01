@@ -14,7 +14,7 @@ resource "google_container_cluster" "gke" {
   subnetwork         = google_compute_subnetwork.default.name
   network            = google_compute_network.default.name
 
-  initial_node_count       = 3
+  initial_node_count = 3
 
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = "172.16.0.0/17"   # 172.16.1.0 - 172.16.127.255
@@ -121,11 +121,12 @@ resource "kubernetes_namespace" "caddy" {
 }
 
 resource "helm_release" "caddy" {
-  name       = "caddy-ingress"
+  name       = "caddy"
   namespace  = "caddy-system"
   repository = "https://caddyserver.github.io/ingress/"
   chart      = "caddy-ingress-controller"
   atomic     = true
+  devel      = true
 
   set {
     name  = "image.tag"

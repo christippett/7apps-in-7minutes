@@ -5,7 +5,7 @@
 # https://cloud.google.com/run/docs/setup
 
 resource "google_cloud_run_service" "managed" {
-  name     = "${var.project_id}-app"
+  name     = "run"
   project  = var.project_id
   location = var.region
 

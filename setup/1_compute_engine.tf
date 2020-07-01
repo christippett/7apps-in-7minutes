@@ -72,3 +72,27 @@ resource "google_dns_record_set" "compute_engine" {
   ttl          = 300
   rrdatas      = [google_compute_address.compute_engine.address]
 }
+
+/* Deployment Token --------------------------------------------------------- */
+
+resource "random_password" "deploy_token" {
+  length           = 16
+  special          = true
+  override_special = "_%@"
+}
+
+resource "google_secret_manager_secret" "deploy_token" {
+  project   = var.project_id
+  secret_id = "deploy_token"
+
+  replication {
+    automatic = true
+  }
+
+  depends_on = [module.project-services]
+}
+
+resource "google_secret_manager_secret_version" "deploy_token" {
+  secret      = google_secret_manager_secret.deploy_token.id
+  secret_data = random_password.deploy_token.result
+}

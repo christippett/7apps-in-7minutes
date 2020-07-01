@@ -26,6 +26,7 @@ module "project-services" {
     "appengine.googleapis.com",
     "appengineflex.googleapis.com",
     "run.googleapis.com",
+    "secretmanager.googleapis.com",
     # Services required for Cloud Run on Anthos / GKE
     # https://cloud.google.com/anthos/multicluster-management/connect/prerequisites
     "cloudresourcemanager.googleapis.com",
