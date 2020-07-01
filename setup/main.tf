@@ -266,3 +266,26 @@ resource "google_app_engine_domain_mapping" "default" {
 
   depends_on = [google_app_engine_application.app]
 }
+
+resource "google_dns_record_set" "appengine_default_ip4" {
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.dns.name
+  type         = "A"
+  ttl          = 300
+
+  rrdatas = [
+    for rr in google_app_engine_domain_mapping.default.resource_records : rr.rrdata if rr.type == "A"
+  ]
+}
+
+resource "google_dns_record_set" "appengine_default_ip6" {
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.dns.name
+  type         = "AAAA"
+  ttl          = 300
+
+  rrdatas = [
+    for rr in google_app_engine_domain_mapping.default.resource_records : rr.rrdata if rr.type == "AAAA"
+  ]
+}
+
