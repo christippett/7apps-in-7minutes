@@ -187,37 +187,11 @@ resource "google_storage_bucket" "app" {
   bucket_policy_only = true
 }
 
-/* Routing Rules ------------------------------------------------------------ */
-
-# https://cloud.google.com/appengine/docs/standard/python/reference/dispatch-yaml
-
-resource "google_app_engine_application_url_dispatch_rules" "app" {
-  dispatch_rules {
-    domain  = var.appengine_standard_subdomain
-    path    = "/*"
-    service = "standard"
-  }
-
-  dispatch_rules {
-    domain  = var.appengine_flexible_subdomain
-    path    = "/*"
-    service = "flexible"
-  }
-
-  dispatch_rules {
-    domain  = var.domain_name
-    path    = "/*"
-    service = "default"
-  }
-
-  depends_on = [google_app_engine_application.app]
-}
-
 /* Default Service (Monitoring Dashboard) ----------------------------------- */
 
 data "archive_file" "monitoring_dashboard" {
   type        = "zip"
-  source_dir = "${path.module}/assets/monitoring_dashboard"
+  source_dir  = "${path.module}/assets/monitoring_dashboard"
   output_path = "${path.module}/assets/monitoring_dashboard.zip"
 }
 
@@ -251,6 +225,32 @@ resource "google_app_engine_standard_app_version" "default" {
 
   delete_service_on_destroy = true
   depends_on                = [google_app_engine_application.app]
+}
+
+/* Routing Rules ------------------------------------------------------------ */
+
+# https://cloud.google.com/appengine/docs/standard/python/reference/dispatch-yaml
+
+resource "google_app_engine_application_url_dispatch_rules" "app" {
+  dispatch_rules {
+    domain  = "${var.appengine_standard_subdomain}.${var.domain_name}"
+    path    = "/*"
+    service = "standard"
+  }
+
+  dispatch_rules {
+    domain  = "${var.appengine_flexible_subdomain}.${var.domain_name}"
+    path    = "/*"
+    service = "flexible"
+  }
+
+  dispatch_rules {
+    domain  = var.domain_name
+    path    = "/*"
+    service = "default"
+  }
+
+  depends_on = [google_app_engine_standard_app_version.default, google_app_engine_standard_app_version.app, google_app_engine_flexible_app_version.app]
 }
 
 /* DNS ---------------------------------------------------------------------- */

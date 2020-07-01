@@ -48,7 +48,7 @@ resource "google_app_engine_standard_app_version" "app" {
 /* DNS ---------------------------------------------------------------------- */
 
 resource "google_app_engine_domain_mapping" "standard" {
-  domain_name = "standard.${var.domain_name}"
+  domain_name = "${var.appengine_standard_subdomain}.${var.domain_name}"
 
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
@@ -57,10 +57,10 @@ resource "google_app_engine_domain_mapping" "standard" {
   depends_on = [google_app_engine_standard_app_version.app]
 }
 
-resource "google_dns_record_set" "appengine_default" {
-  name         = "standard.${var.domain_name}."
+resource "google_dns_record_set" "appengine_standard" {
+  name         = "${var.appengine_standard_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
-  type         = "A"
-  rrdatas      = google_app_engine_domain_mapping.standard.resource_records.*.rrdata
+  type         = "CNAME"
+  rrdatas      = ["ghs.googlehosted.com."]
   ttl          = 300
 }

@@ -27,19 +27,15 @@ resource "google_app_engine_flexible_app_version" "app" {
   automatic_scaling {
     min_total_instances = 2
     max_total_instances = 5
-    cool_down_period = "120s"
+    cool_down_period    = "120s"
     cpu_utilization {
       target_utilization = 0.5
-    }
-    request_utilization {
-      target_request_count_per_second = 20
-      target_concurrent_requests = 10
     }
   }
 
   network {
-    name = google_compute_network.default.name
-    subnetwork = google_compute_subnetwork.default.name
+    name         = google_compute_network.default.name
+    subnetwork   = google_compute_subnetwork.default.name
     instance_tag = "appengine"
   }
 
@@ -48,4 +44,24 @@ resource "google_app_engine_flexible_app_version" "app" {
   }
 
   delete_service_on_destroy = true
+}
+
+/* DNS ---------------------------------------------------------------------- */
+
+resource "google_app_engine_domain_mapping" "flexible" {
+  domain_name = "${var.appengine_flexible_subdomain}.${var.domain_name}"
+
+  ssl_settings {
+    ssl_management_type = "AUTOMATIC"
+  }
+
+  depends_on = [google_app_engine_flexible_app_version.app]
+}
+
+resource "google_dns_record_set" "appengine_flexible" {
+  name         = "${var.appengine_flexible_subdomain}.${var.domain_name}."
+  managed_zone = google_dns_managed_zone.dns.name
+  type         = "CNAME"
+  rrdatas      = ["ghs.googlehosted.com."]
+  ttl          = 300
 }
