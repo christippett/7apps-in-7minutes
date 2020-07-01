@@ -15,7 +15,6 @@ resource "google_cloud_run_service" "managed" {
 
   template {
     spec {
-      service_account_name = google_service_account.default.email
       containers {
         image = var.container_image
         env {

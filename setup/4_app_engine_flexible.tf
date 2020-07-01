@@ -43,10 +43,6 @@ resource "google_app_engine_flexible_app_version" "app" {
     instance_tag = "appengine"
   }
 
-  vpc_access_connector {
-    name = google_vpc_access_connector.connector.id
-  }
-
   delete_service_on_destroy = true
   lifecycle {
     ignore_changes = [vpc_access_connector]
