@@ -26,6 +26,11 @@ resource "google_app_engine_standard_app_version" "app" {
     shell = "gunicorn -b :$PORT main:app"
   }
 
+  env_variables = {
+    ENVIRONMENT = "App Engine: Standard"
+  }
+
+
   deployment {
     zip {
       source_url = "https://storage.googleapis.com/${google_storage_bucket.app.name}/${google_storage_bucket_object.app.name}"

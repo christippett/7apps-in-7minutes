@@ -10,6 +10,10 @@ resource "google_app_engine_flexible_app_version" "app" {
 
   instance_class = "F1"
 
+  env_variables = {
+    ENVIRONMENT = "App Engine: Flexible"
+  }
+
   deployment {
     container {
       image = var.container_image

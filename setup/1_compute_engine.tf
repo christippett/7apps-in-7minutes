@@ -12,6 +12,9 @@ module "container" {
   container = {
     image = var.container_image
     ports = ["8080"]
+    environment = [
+      "ENVIRONMENT=Compute Engine"
+    ]
   }
 }
 

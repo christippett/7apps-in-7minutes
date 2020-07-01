@@ -18,6 +18,10 @@ resource "google_cloud_run_service" "managed" {
       service_account_name = google_service_account.default.email
       containers {
         image = var.container_image
+        env {
+          name  = "ENVIRONMENT"
+          value = "Cloud Run"
+        }
       }
     }
   }

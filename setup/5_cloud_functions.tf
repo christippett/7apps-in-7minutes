@@ -12,6 +12,10 @@ resource "google_cloudfunctions_function" "app" {
   trigger_http          = true
   entry_point           = "greeting"
 
+  environment_variables = {
+    ENVIRONMENT = "Cloud Function"
+  }
+
   service_account_email = google_service_account.default.email
 
   provisioner "local-exec" {
