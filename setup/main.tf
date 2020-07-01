@@ -21,12 +21,13 @@ module "project-services" {
     "cloudfunctions.googleapis.com",
     "cloudbuild.googleapis.com",
     "appengine.googleapis.com",
-    "appengine-flexible.googleapis.com",
+    "appengineflex.googleapis.com",
     "containerregistry.googleapis.com",
     "container.googleapis.com",
     "sql-component.googleapis.com",
     "storage-component.googleapis.com",
-    "storage-api.googleapis.com"
+    "storage-api.googleapis.com",
+    "servicenetworking.googleapis.com"
   ]
 }
 
@@ -123,7 +124,7 @@ module "firewall" {
 /* ========================================================================== */
 
 resource "google_dns_managed_zone" "dns" {
-  name        = "7apps"
+  name        = var.project_id
   description = "Public DNS zone for 7apps.servian.fun"
   dns_name    = "${var.domain_name}."
 }
@@ -173,11 +174,15 @@ module "cloudsql" {
 
 resource "google_app_engine_application" "app" {
   project     = var.project_id
-  location_id = var.region
+  location_id = replace(var.region, "us-central1", "us-central")
 }
 
 resource "google_storage_bucket" "app" {
-  name = "7apps-appengine"
+  name               = "${var.project_id}-appengine"
+  project            = var.project_id
+  location           = var.region
+  force_destroy      = true
+  bucket_policy_only = true
 }
 
 /* Routing Rules ------------------------------------------------------------ */
@@ -202,6 +207,8 @@ resource "google_app_engine_application_url_dispatch_rules" "app" {
     path    = "/*"
     service = "default"
   }
+
+  depends_on = [google_app_engine_application.app]
 }
 
 /* Default Service (Monitoring Dashboard) ----------------------------------- */
@@ -232,10 +239,11 @@ resource "google_app_engine_standard_app_version" "default" {
 
   basic_scaling {
     max_instances = 1
-    idle_timeout = 300
+    idle_timeout  = "300s"
   }
 
   delete_service_on_destroy = true
+  depends_on                = [google_app_engine_application.app]
 }
 
 /* DNS ---------------------------------------------------------------------- */
