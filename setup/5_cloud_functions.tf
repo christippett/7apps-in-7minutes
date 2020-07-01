@@ -3,8 +3,8 @@
 /* ========================================================================== */
 
 resource "google_cloudfunctions_function" "app" {
-  name        = "function-7apps"
-  runtime     = "python37"
+  name    = "${var.project_id}-function"
+  runtime = "python37"
 
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.app.name
