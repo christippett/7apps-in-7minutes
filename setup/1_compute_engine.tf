@@ -2,23 +2,41 @@
 /*                               Compute Engine                               */
 /* ========================================================================== */
 
+module "container" {
+  source  = "christippett/container-server/cloudinit"
+  version = "1.0.3"
+
+  domain            = "${var.compute_engine_subdomain}.${var.domain_name}"
+  letsencrypt_email = "chris.tippett@servian.com"
+
+  container = {
+    image = var.container_image
+    ports = ["8080"]
+  }
+}
+
 resource "google_compute_instance" "app" {
-  name         = "7apps-app"
-  machine_type = "e2-medium"
+  name         = "${var.project_id}-app"
+  project      = var.project_id
   zone         = "${var.region}-a"
+  machine_type = "e2-small"
+  tags         = ["ssh", "http-server", "https-server"]
+
+  metadata = {
+    user-data = module.container.cloud_config
+  }
 
   boot_disk {
     initialize_params {
-      image = module.container.source_image
+      image = data.google_compute_image.cos.self_link
     }
   }
 
-  metadata = {
-    gce-container-declaration = module.container.metadata_value
-  }
-
-  labels = {
-    container-vm = module.container.vm_container_label
+  service_account {
+    email = google_service_account.default.email
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
   }
 
   network_interface {
@@ -28,34 +46,13 @@ resource "google_compute_instance" "app" {
     }
   }
 
-  tags = ["https", "http", "ssh"]
-
-  service_account = google_service_account.default.email
-  service_account {
-    scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
-    ]
-  }
-
   allow_stopping_for_update = true
 }
 
-module "container" {
-  source  = "terraform-google-modules/container-vm/google"
-  version = "~> 2.0"
 
-  container = {
-    image = var.container_image
-
-    env = [
-      {
-        name  = "ENVIRONMENT"
-        value = "Google Compute Engine"
-      },
-    ]
-  }
-
-  restart_policy = "Always"
+data "google_compute_image" "cos" {
+  project = "cos-cloud"
+  family  = "cos-81-lts"
 }
 
 resource "google_compute_address" "compute_engine" {
