@@ -315,3 +315,23 @@ resource "google_dns_record_set" "appengine_default_ip6" {
   ]
 }
 
+/* ========================================================================== */
+/*                                 Cloud Build                                */
+/* ========================================================================== */
+
+resource "google_cloudbuild_trigger" "deploy" {
+  provider = google-beta
+  project  = var.project_id
+  name     = "DEPLOY-7-APPS"
+
+  ignored_files = ["setup/**", "presentation/**"]
+  filename      = "cloudbuild.yaml"
+
+  github {
+    owner = "servian"
+    name  = "7apps7minutes"
+    push {
+      branch = "demo"
+    }
+  }
+}
