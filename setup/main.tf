@@ -229,9 +229,14 @@ resource "google_storage_bucket_object" "default" {
 
 resource "google_app_engine_standard_app_version" "default" {
   project    = var.project_id
-  service    = "standard"
+  service    = "default"
   runtime    = "python37"
   version_id = "initial"
+
+  entrypoint {
+    shell = "gunicorn -b :$PORT main:app"
+  }
+
 
   deployment {
     zip {
@@ -258,36 +263,6 @@ resource "google_app_engine_domain_mapping" "default" {
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
   }
-}
 
-resource "google_app_engine_domain_mapping" "wildcard" {
-  domain_name = "*.${var.domain_name}"
-
-  ssl_settings {
-    ssl_management_type = "AUTOMATIC"
-  }
-}
-
-resource "google_dns_record_set" "appengine_default" {
-  for_each     = google_app_engine_domain_mapping.default.resource_records
-
-  name         = "${var.domain_name}."
-  managed_zone = google_dns_managed_zone.dns.name
-  type         = each.value.type
-  rrdatas      = each.value.rrdata
-  ttl          = 300
-
-  depends_on = [google_app_engine_domain_mapping.default]
-}
-
-resource "google_dns_record_set" "appengine_wildcard" {
-  for_each     = google_app_engine_domain_mapping.wildcard.resource_records
-
-  name         = "*.${var.domain_name}."
-  managed_zone = google_dns_managed_zone.dns.name
-  type         = each.value.type
-  rrdatas      = each.value.rrdata
-  ttl          = 300
-
-  depends_on = [google_app_engine_domain_mapping.wildcard]
+  depends_on = [google_app_engine_application.app]
 }
