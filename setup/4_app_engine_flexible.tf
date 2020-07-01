@@ -44,6 +44,9 @@ resource "google_app_engine_flexible_app_version" "app" {
   }
 
   delete_service_on_destroy = true
+  lifecycle {
+    ignore_changes = [vpc_access_connector]
+  }
 }
 
 /* DNS ---------------------------------------------------------------------- */

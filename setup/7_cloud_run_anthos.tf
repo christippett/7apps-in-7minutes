@@ -77,4 +77,7 @@ resource "kubernetes_config_map" "config-domainmapping" {
     autoTLS = "Enabled"
   }
 
+  lifecycle {
+    ignore_changes = [data]
+  }
 }
