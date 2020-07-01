@@ -5,7 +5,7 @@
 data "archive_file" "app" {
   type        = "zip"
   source_dir  = "${path.module}/../app"
-  output_path = "${path.module}/../app.zip"
+  output_path = "${path.root}/.terraform/app.zip"
 }
 
 resource "google_storage_bucket_object" "app" {
