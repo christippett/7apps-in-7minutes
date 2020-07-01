@@ -10,6 +10,10 @@ resource "google_app_engine_flexible_app_version" "app" {
 
   instance_class = "F1"
 
+  env_variables = {
+    ENVIRONMENT = "App Engine: Flexible"
+  }
+
   deployment {
     container {
       image = var.container_image
@@ -39,11 +43,10 @@ resource "google_app_engine_flexible_app_version" "app" {
     instance_tag = "appengine"
   }
 
-  vpc_access_connector {
-    name = google_vpc_access_connector.connector.id
-  }
-
   delete_service_on_destroy = true
+  lifecycle {
+    ignore_changes = [vpc_access_connector]
+  }
 }
 
 /* DNS ---------------------------------------------------------------------- */

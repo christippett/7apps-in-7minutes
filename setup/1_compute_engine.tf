@@ -7,11 +7,14 @@ module "container" {
   version = "1.0.3"
 
   domain            = "${var.compute_engine_subdomain}.${var.domain_name}"
-  letsencrypt_email = "chris.tippett@servian.com"
+  letsencrypt_email = var.email
 
   container = {
     image = var.container_image
     ports = ["8080"]
+    environment = [
+      "ENVIRONMENT=Compute Engine"
+    ]
   }
 }
 
@@ -33,7 +36,6 @@ resource "google_compute_instance" "app" {
   }
 
   service_account {
-    email = google_service_account.default.email
     scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]

@@ -5,11 +5,11 @@
 data "archive_file" "app" {
   type        = "zip"
   source_dir  = "${path.module}/../app"
-  output_path = "${path.module}/../app.zip"
+  output_path = "${path.root}/.terraform/app.zip"
 }
 
 resource "google_storage_bucket_object" "app" {
-  name   = basename(data.archive_file.app.output_path)
+  name   = "app-${data.archive_file.app.output_sha}.zip"
   bucket = google_storage_bucket.app.name
   source = data.archive_file.app.output_path
 }
@@ -17,7 +17,7 @@ resource "google_storage_bucket_object" "app" {
 resource "google_app_engine_standard_app_version" "app" {
   project    = var.project_id
   service    = "standard"
-  runtime    = "python37"
+  runtime    = "python38"
   version_id = "v1"
 
   instance_class = "F1"
@@ -25,6 +25,11 @@ resource "google_app_engine_standard_app_version" "app" {
   entrypoint {
     shell = "gunicorn -b :$PORT main:app"
   }
+
+  env_variables = {
+    ENVIRONMENT = "App Engine: Standard"
+  }
+
 
   deployment {
     zip {

@@ -13,27 +13,27 @@ module "project-services" {
 
   activate_apis = [
     "serviceusage.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "vpcaccess.googleapis.com",
     "compute.googleapis.com",
     "iam.googleapis.com",
-    "vpcaccess.googleapis.com",
-    "run.googleapis.com",
+    "sql-component.googleapis.com",
+    "storage-component.googleapis.com",
+    "storage-api.googleapis.com",
+    "containerregistry.googleapis.com",
     "cloudfunctions.googleapis.com",
     "cloudbuild.googleapis.com",
     "appengine.googleapis.com",
     "appengineflex.googleapis.com",
-    "containerregistry.googleapis.com",
+    "run.googleapis.com",
+    # Services required for Cloud Run on Anthos / GKE
+    # https://cloud.google.com/anthos/multicluster-management/connect/prerequisites
+    "cloudresourcemanager.googleapis.com",
     "container.googleapis.com",
-    "sql-component.googleapis.com",
-    "storage-component.googleapis.com",
-    "storage-api.googleapis.com",
-    "servicenetworking.googleapis.com"
+    "anthos.googleapis.com",
+    "gkeconnect.googleapis.com",
+    "gkehub.googleapis.com"
   ]
-}
-
-resource "google_service_account" "default" {
-  account_id   = "se7en-apps"
-  display_name = "7-Apps-7-Minutes Service Account"
 }
 
 /* ========================================================================== */
@@ -57,47 +57,14 @@ resource "google_compute_subnetwork" "default" {
   private_ip_google_access = true
 }
 
-/* Serverless VPC Access ---------------------------------------------------- */
-
-# https://cloud.google.com/vpc/docs/configure-serverless-vpc-access
-
-resource "google_vpc_access_connector" "connector" {
-  name          = "${google_compute_network.default.name}-usc1-conn"
-  project       = var.project_id
-  network       = google_compute_network.default.name
-  region        = var.region
-  ip_cidr_range = "10.11.1.0/28"
-}
-
-/* Private Services Access ------------------------------------------------ */
-
-# https://cloud.google.com/vpc/docs/configure-private-services-access
-
-resource "google_compute_global_address" "google_services" {
-  network       = google_compute_network.default.self_link
-  name          = "ip-google-services"
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-}
-
-resource "google_service_networking_connection" "google_services" {
-  network                 = google_compute_network.default.self_link
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.google_services.name]
-
-  depends_on = [module.project-services]
-}
-
-
 /* Firewall ----------------------------------------------------------------- */
+
+# Module:
+# https://github.com/terraform-google-modules/terraform-google-network/tree/master/modules/fabric-net-firewall
 
 locals {
   firewall_allow_ranges = ["0.0.0.0/0"]
 }
-
-# Module:
-# https://github.com/terraform-google-modules/terraform-google-network/tree/master/modules/fabric-net-firewall
 
 module "firewall" {
   source = "terraform-google-modules/network/google//modules/fabric-net-firewall"
@@ -112,7 +79,6 @@ module "firewall" {
   internal_ranges_enabled = true
   internal_ranges = flatten([
     google_compute_subnetwork.default.ip_cidr_range,
-    google_vpc_access_connector.connector.ip_cidr_range,
     google_container_cluster.gke.private_cluster_config.*.master_ipv4_cidr_block,
   ])
   internal_allow = [
@@ -129,43 +95,6 @@ resource "google_dns_managed_zone" "dns" {
   name        = var.project_id
   description = "Public DNS zone for 7apps.servian.fun"
   dns_name    = "${var.domain_name}."
-}
-
-/* ========================================================================== */
-/*                                  Cloud SQL                                 */
-/* ========================================================================== */
-
-locals {
-  db_name     = "7apps"
-  db_user     = "7apps"
-  db_password = module.cloudsql.generated_user_password
-}
-
-# Module:
-# https://github.com/terraform-google-modules/terraform-google-sql-db
-
-module "cloudsql" {
-  source  = "GoogleCloudPlatform/sql-db/google//modules/postgresql"
-  version = "3.2.0"
-
-  name             = "postgres-db"
-  project_id       = var.project_id
-  region           = var.region
-  zone             = "a"
-  database_version = "POSTGRES_12"
-  tier             = "db-f1-micro"
-
-  db_name   = local.db_name
-  user_name = local.db_user
-
-  ip_configuration = {
-    ipv4_enabled        = true
-    private_network     = google_compute_network.default.self_link
-    authorized_networks = []
-    require_ssl         = false
-  }
-
-  module_depends_on = [google_service_networking_connection.google_services]
 }
 
 /* ========================================================================== */
@@ -192,11 +121,11 @@ resource "google_storage_bucket" "app" {
 data "archive_file" "monitoring_dashboard" {
   type        = "zip"
   source_dir  = "${path.module}/assets/monitoring_dashboard"
-  output_path = "${path.module}/assets/monitoring_dashboard.zip"
+  output_path = "${path.root}/.terraform/dashboard.zip"
 }
 
 resource "google_storage_bucket_object" "default" {
-  name   = basename(data.archive_file.monitoring_dashboard.output_path)
+  name   = "dashboard-${data.archive_file.monitoring_dashboard.output_sha}.zip"
   bucket = google_storage_bucket.app.name
   source = data.archive_file.monitoring_dashboard.output_path
 }
@@ -204,7 +133,7 @@ resource "google_storage_bucket_object" "default" {
 resource "google_app_engine_standard_app_version" "default" {
   project    = var.project_id
   service    = "default"
-  runtime    = "python37"
+  runtime    = "python38"
   version_id = "initial"
 
   entrypoint {
@@ -259,10 +188,52 @@ resource "google_app_engine_application_url_dispatch_rules" "app" {
 
 resource "google_app_engine_domain_mapping" "default" {
   domain_name = var.domain_name
-
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
   }
 
   depends_on = [google_app_engine_application.app]
+}
+
+resource "google_dns_record_set" "appengine_default_ip4" {
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.dns.name
+  type         = "A"
+  ttl          = 300
+
+  rrdatas = [
+    for rr in google_app_engine_domain_mapping.default.resource_records : rr.rrdata if rr.type == "A"
+  ]
+}
+
+resource "google_dns_record_set" "appengine_default_ip6" {
+  name         = "${var.domain_name}."
+  managed_zone = google_dns_managed_zone.dns.name
+  type         = "AAAA"
+  ttl          = 300
+
+  rrdatas = [
+    for rr in google_app_engine_domain_mapping.default.resource_records : rr.rrdata if rr.type == "AAAA"
+  ]
+}
+
+/* ========================================================================== */
+/*                                 Cloud Build                                */
+/* ========================================================================== */
+
+resource "google_cloudbuild_trigger" "deploy" {
+  provider = google-beta
+  project  = var.project_id
+  name     = "DEPLOY-7-APPS"
+
+  ignored_files = ["setup/**", "presentation/**"]
+  filename      = "cloudbuild.yaml"
+
+  github {
+    owner = "servian"
+    name  = "7apps7minutes"
+    push {
+      branch = "demo"
+    }
+  }
 }
