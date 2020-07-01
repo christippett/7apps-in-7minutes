@@ -13,6 +13,11 @@ resource "google_cloudfunctions_function" "app" {
   entry_point           = "greeting"
 
   service_account_email = google_service_account.default.email
+
+  provisioner "local-exec" {
+    working_dir = "${path.module}/assets/firebase"
+    command     = "firebase deploy --project ${var.project_id}"
+  }
 }
 
 # IAM entry for all users to invoke the function
