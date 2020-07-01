@@ -7,7 +7,7 @@ module "container" {
   version = "1.0.3"
 
   domain            = "${var.compute_engine_subdomain}.${var.domain_name}"
-  letsencrypt_email = "chris.tippett@servian.com"
+  letsencrypt_email = var.email
 
   container = {
     image = var.container_image

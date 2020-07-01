@@ -46,8 +46,8 @@ resource "google_dns_record_set" "cloudrun_managed" {
 
   name         = "${var.cloud_run_managed_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
-  type         = each.value.type
-  rrdatas      = each.value.rrdata
+  type         = "CNAME"
+  rrdatas      = ["ghs.googlehosted.com."]
   ttl          = 300
 
   depends_on = [google_cloud_run_domain_mapping.managed]

@@ -10,7 +10,7 @@ resource "google_cloudfunctions_function" "app" {
   source_archive_bucket = google_storage_bucket.app.name
   source_archive_object = google_storage_bucket_object.app.name
   trigger_http          = true
-  entry_point           = "main"
+  entry_point           = "greeting"
 
   service_account_email = google_service_account.default.email
 }

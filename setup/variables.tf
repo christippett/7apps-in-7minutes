@@ -14,6 +14,11 @@ variable "region" {
   default     = "us-central1"
 }
 
+variable "email" {
+  description = "Email address used by Let's Encrypt to generate SSL/TLS certificates"
+  type        = string
+}
+
 /* Database ----------------------------------------------------------------- */
 
 variable "database_user" {
