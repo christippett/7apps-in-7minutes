@@ -14,8 +14,7 @@ resource "google_container_cluster" "gke" {
   subnetwork         = google_compute_subnetwork.default.name
   network            = google_compute_network.default.name
 
-  remove_default_node_pool = true
-  initial_node_count       = 1 # will be replaced immediately upon cluster creation
+  initial_node_count       = 3
 
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = "172.16.0.0/17"   # 172.16.1.0 - 172.16.127.255
@@ -53,21 +52,6 @@ resource "google_container_cluster" "gke" {
   }
 }
 
-resource "google_container_node_pool" "preemptible" {
-  name               = "preemptible-pool"
-  project            = google_container_cluster.gke.project
-  location           = google_container_cluster.gke.location
-  cluster            = google_container_cluster.gke.name
-  initial_node_count = 3
-  version            = "1.16.8-gke.15"
-
-  node_config {
-    preemptible  = true
-    machine_type = "n1-standard-1"
-    metadata     = { disable-legacy-endpoints = "true" }
-    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-  }
-}
 
 /* IAM ---------------------------------------------------------------------- */
 
