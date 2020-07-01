@@ -43,7 +43,7 @@ resource "google_cloud_run_domain_mapping" "anthos" {
 }
 
 resource "google_dns_record_set" "cloudrun_anthos" {
-  for_each     = google_cloud_run_domain_mapping.anthos.status[0].resource_records
+  for_each = google_cloud_run_domain_mapping.anthos.status[0].resource_records
 
   name         = "${var.cloud_run_anthos_subdomain}.${var.domain_name}."
   managed_zone = google_dns_managed_zone.dns.name
@@ -59,17 +59,17 @@ resource "google_dns_record_set" "cloudrun_anthos" {
 
 resource "kubernetes_config_map" "config-domainmapping" {
   metadata {
-    name = "config-domainmapping"
+    name      = "config-domainmapping"
     namespace = "knative-serving"
 
     annotations = {
-      "components.gke.io/component-name" = "cloudrun"
+      "components.gke.io/component-name"    = "cloudrun"
       "components.gke.io/component-version" = "10.4.1"
     }
 
     labels = {
-      "addonmanager.kubernetes.io/mode": "Reconcile"
-      "serving.knative.dev/release": "v0.11.0-gke.9"
+      "addonmanager.kubernetes.io/mode" : "Reconcile"
+      "serving.knative.dev/release" : "v0.11.0-gke.9"
     }
   }
 
