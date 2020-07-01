@@ -13,27 +13,54 @@ module "project-services" {
 
   activate_apis = [
     "serviceusage.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "vpcaccess.googleapis.com",
     "compute.googleapis.com",
     "iam.googleapis.com",
-    "vpcaccess.googleapis.com",
-    "run.googleapis.com",
+    "sql-component.googleapis.com",
+    "storage-component.googleapis.com",
+    "storage-api.googleapis.com",
+    "containerregistry.googleapis.com",
     "cloudfunctions.googleapis.com",
     "cloudbuild.googleapis.com",
     "appengine.googleapis.com",
     "appengineflex.googleapis.com",
-    "containerregistry.googleapis.com",
+    "run.googleapis.com",
+    # Services required for Cloud Run on Anthos / GKE
+    # https://cloud.google.com/anthos/multicluster-management/connect/prerequisites
+    "cloudresourcemanager.googleapis.com",
     "container.googleapis.com",
-    "sql-component.googleapis.com",
-    "storage-component.googleapis.com",
-    "storage-api.googleapis.com",
-    "servicenetworking.googleapis.com"
+    "anthos.googleapis.com",
+    "gkeconnect.googleapis.com",
+    "gkehub.googleapis.com"
   ]
 }
+
+/* ========================================================================== */
+/*                               Service Account                              */
+/* ========================================================================== */
+
+# One service account to rule them 🧙
 
 resource "google_service_account" "default" {
   account_id   = "se7en-apps"
   display_name = "7-Apps-7-Minutes Service Account"
+}
+
+resource "google_project_iam_member" "anthos" {
+  for_each = toset([
+    "roles/serverless.serviceAgent",
+    "roles/cloudfunctions.serviceAgent",
+    "roles/gkehub.connect",
+    "roles/container.hostServiceAgentUser",
+    "roles/cloudbuild.serviceAgent",
+    "roles/monitoring.metricWriter",
+    "roles/logging.logWriter"
+  ])
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.default.email}"
 }
 
 /* ========================================================================== */
@@ -259,7 +286,6 @@ resource "google_app_engine_application_url_dispatch_rules" "app" {
 
 resource "google_app_engine_domain_mapping" "default" {
   domain_name = var.domain_name
-
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
   }
