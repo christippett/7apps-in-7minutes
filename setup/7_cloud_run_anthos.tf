@@ -9,7 +9,6 @@ resource "google_cloud_run_service" "anthos" {
   project  = var.project_id
   location = var.region
 
-  service_account_name = google_service_account.default.email
 
   metadata {
     namespace = var.project_id
@@ -17,6 +16,7 @@ resource "google_cloud_run_service" "anthos" {
 
   template {
     spec {
+      service_account_name = google_service_account.default.email
       containers {
         image = var.container_image
       }
@@ -52,4 +52,29 @@ resource "google_dns_record_set" "cloudrun_anthos" {
   ttl          = 300
 
   depends_on = [google_cloud_run_domain_mapping.anthos]
+}
+
+
+/* TLS ---------------------------------------------------------------------- */
+
+resource "kubernetes_config_map" "config-domainmapping" {
+  metadata {
+    name = "config-domainmapping"
+    namespace = "knative-serving"
+
+    annotations = {
+      "components.gke.io/component-name" = "cloudrun"
+      "components.gke.io/component-version" = "10.4.1"
+    }
+
+    labels = {
+      "addonmanager.kubernetes.io/mode": "Reconcile"
+      "serving.knative.dev/release": "v0.11.0-gke.9"
+    }
+  }
+
+  data = {
+    autoTLS = "Enabled"
+  }
+
 }
