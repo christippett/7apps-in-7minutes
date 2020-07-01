@@ -5,7 +5,7 @@
 # https://cloud.google.com/run/docs/gke/setup#create_private_cluster
 
 resource "google_cloud_run_service" "anthos" {
-  name     = "7apps-app-anthos"
+  name     = "${var.project_id}-anthos-app"
   project  = var.project_id
   location = var.region
 
