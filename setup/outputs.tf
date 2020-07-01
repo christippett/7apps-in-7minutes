@@ -8,6 +8,16 @@ output "dns_nameservers" {
   value = google_dns_managed_zone.dns.name_servers
 }
 
+output "app_nameservers" {
+  value = {
+    managed            = google_cloud_run_domain_mapping.managed.status[0].resource_records
+    anthos             = google_cloud_run_domain_mapping.anthos.status[0].resource_records
+    appengine_standard = google_app_engine_domain_mapping.standard.resource_records
+    appengine_flexible = google_app_engine_domain_mapping.flexible.resource_records
+  }
+}
+
+
 /* Cloud SQL ---------------------------------------------------------------- */
 
 output "db_connection_parameters" {
