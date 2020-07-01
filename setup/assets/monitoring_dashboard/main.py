@@ -4,13 +4,13 @@ app = Flask(__name__)
 
 SOURCES = [
     "http://localhost:8080/",
-    "https://firebase.servian.fun/",
-    "https://gae-standard.servian.fun/",
-    "https://gae-flexible.servian.fun/",
-    "https://run.servian.fun/",
-    "https://run-gke.servian.fun/",
-    "https://gke.servian.fun/",
-    "https://gce.servian.fun/",
+    "https://function.7apps.servian.fun/",
+    "https://appengine.7apps.servian.fun/",
+    "https://appengine-flex.7apps.servian.fun/",
+    "https://run.7apps.servian.fun/",
+    "https://run-anthos.7apps.servian.fun/",
+    "https://gke.7apps.servian.fun/",
+    "https://compute.7apps.servian.fun/",
 ]
 
 
