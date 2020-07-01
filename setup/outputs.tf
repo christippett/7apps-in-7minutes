@@ -6,15 +6,33 @@
 
 output "app_dns_records" {
   value = {
-    root = {
-      name   = var.domain
-      type   = "NS"
-      rrdata = google_dns_managed_zone.dns.name_servers
+    (var.domain_name) = {
+      NS   = google_dns_managed_zone.dns.name_servers
+      A    = [for rec in google_app_engine_domain_mapping.default.resource_records : rec.rrdata if rec.type == "A"]
+      AAAA = [for rec in google_app_engine_domain_mapping.default.resource_records : rec.rrdata if rec.type == "AAAA"]
     }
-    cloud_run_managed  = google_cloud_run_domain_mapping.managed.status[0].resource_records
-    cloud_run_anthos   = google_cloud_run_domain_mapping.anthos.status[0].resource_records
-    appengine_standard = google_app_engine_domain_mapping.standard.resource_records
-    appengine_flexible = google_app_engine_domain_mapping.flexible.resource_records
+    (google_cloud_run_domain_mapping.managed.name) = {
+      CNAME = flatten([
+        for _rec in google_cloud_run_domain_mapping.managed.status.*.resource_records : [
+          for rec in _rec : rec.rrdata if rec.type == "CNAME"
+        ]
+      ])[0]
+    }
+    (google_cloud_run_domain_mapping.anthos.name) = {
+      CNAME = flatten([
+        for _rec in google_cloud_run_domain_mapping.anthos.status.*.resource_records : [
+          for rec in _rec : rec.rrdata if rec.type == "CNAME"
+        ]
+      ])[0]
+    }
+    # (google_cloud_run_domain_mapping.managed.name) = google_cloud_run_domain_mapping.managed.status.*.resource_records
+    # (google_cloud_run_domain_mapping.anthos.name)  = google_cloud_run_domain_mapping.managed.status.*.resource_records
+    (google_app_engine_domain_mapping.standard.domain_name) = {
+      for rec in google_app_engine_domain_mapping.standard.resource_records : rec.type => rec.rrdata
+    }
+    (google_app_engine_domain_mapping.flexible.domain_name) = {
+      for rec in google_app_engine_domain_mapping.flexible.resource_records : rec.type => rec.rrdata
+    }
   }
 }
 
