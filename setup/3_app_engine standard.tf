@@ -49,7 +49,7 @@ resource "google_app_engine_standard_app_version" "app" {
 
   delete_service_on_destroy = true
   lifecycle {
-    ignore_changes = [version_id]
+    ignore_changes = [version_id, deployment.source_url]
   }
 }
 

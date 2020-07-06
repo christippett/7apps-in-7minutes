@@ -15,6 +15,10 @@ resource "google_cloudfunctions_function" "app" {
   environment_variables = {
     ENVIRONMENT = var.service.cloud_functions.description
   }
+
+  lifecycle {
+    ignore_changes = [source_archive_object]
+  }
 }
 
 resource "local_file" "firebase_config" {
