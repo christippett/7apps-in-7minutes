@@ -26,6 +26,7 @@ ASCII_OPTIONS = [
     "rectangles",
     "serifcap",
 ]
+ASCII_FONT = ASCII_OPTIONS[randrange(0, len(ASCII_OPTIONS) - 1)]
 
 try:
     COMMIT_SHA = open("commit_sha.txt", "r").read()
@@ -33,7 +34,7 @@ except FileNotFoundError:
     COMMIT_SHA = "*****"
 
 app = Flask("7apps")
-fmt = Figlet(font=ASCII_OPTIONS[randrange(0, len(ASCII_OPTIONS) - 1)])
+fmt = Figlet(font=ASCII_FONT)
 
 
 def main(req: Request):
@@ -42,6 +43,7 @@ def main(req: Request):
     return render_template(
         "index.html",
         ascii=ascii_title,
+        ascii_font=ASCII_FONT,
         commit_sha=COMMIT_SHA,
         host=req.base_url.replace("http://", "https://"),
         bg_number=RANDOM_INT,
