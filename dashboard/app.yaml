@@ -1,8 +1,8 @@
 runtime: python38
 handlers:
-  - url: /favicon\.ico$
-    static_files: assets/favicon\.ico
-    upload: assets/favicon\.ico$
+  - url: /favicon\.ico
+    static_files: favicon.ico
+    upload: favicon\.ico
   - url: /.*
     secure: always
     redirect_http_response_code: 301
