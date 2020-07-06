@@ -14,22 +14,21 @@ steps:
     waitFor: ["-"]
 
   # ============================================================================ #
-  #                              🕹️ CLOUD FUNCTIONS                              #
+  #                           ⚙️ GOOGLE COMPUTE ENGINE                           #
   # ============================================================================ #
 
-  - id: "Deploy: Cloud Functions"
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: gcloud
+  - id: "Deploy: Google Compute Engine (GCE)"
+    name: "gcr.io/cloud-builders/curl"
+    entrypoint: bash
     args:
-      - functions
-      - deploy
-      - ${_CLOUD_FUNCTIONS_NAME}
-      - --trigger-http
-      - --runtime=python37
-      - --entry-point=main
-      - --quiet
-    dir: "app"
-    waitFor: ["-"]
+      - "-c"
+      - |
+        curl --request PATCH \
+        https://compute.7apps.servian.fun:9000/hooks/update-env \
+        --data '{ "key": "CONTAINER_IMAGE_TAG", "value": "$SHORT_SHA" }' \
+        --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+        --header 'Content-Type: application/json'
+    waitFor: ["Build: Docker image"]
 
   # ============================================================================ #
   #                           💪 APP ENGINE (STANDARD)                           #
@@ -67,6 +66,24 @@ steps:
     waitFor: ["Build: Docker image"]
 
   # ============================================================================ #
+  #                              🕹️ CLOUD FUNCTIONS                              #
+  # ============================================================================ #
+
+  - id: "Deploy: Cloud Functions"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - ${_CLOUD_FUNCTIONS_NAME}
+      - --trigger-http
+      - --runtime=python37
+      - --entry-point=main
+      - --quiet
+    dir: "app"
+    waitFor: ["-"]
+
+  # ============================================================================ #
   #                                 🏃‍♀️ CLOUD RUN                                 #
   # ============================================================================ #
 
@@ -82,39 +99,6 @@ steps:
       - --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
       - --region=${_REGION}
       - --quiet
-    waitFor: ["Build: Docker image"]
-
-  # ============================================================================ #
-  #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
-  # ============================================================================ #
-
-  - id: "Deploy: Google Kubernetes Engine (GKE)"
-    name: "gcr.io/cloud-builders/kubectl"
-    args:
-      - set
-      - image
-      - deployment/gke-app-deployment
-      - 7apps-app=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
-    env:
-      - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
-      - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
-    waitFor: ["Configure: kubectl", "Build: Docker image"]
-
-  # ============================================================================ #
-  #                           ⚙️ GOOGLE COMPUTE ENGINE                           #
-  # ============================================================================ #
-
-  - id: "Deploy: Google Compute Engine (GCE)"
-    name: "gcr.io/cloud-builders/curl"
-    entrypoint: bash
-    args:
-      - "-c"
-      - |
-        curl --request PATCH \
-        https://compute.7apps.servian.fun:9000/hooks/update-env \
-        --data '{ "key": "CONTAINER_IMAGE_TAG", "value": "$SHORT_SHA" }' \
-        --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
-        --header 'Content-Type: application/json'
     waitFor: ["Build: Docker image"]
 
   # ============================================================================ #
@@ -136,6 +120,22 @@ steps:
       - --service-account=${_GKE_SERVICE_ACCOUNT}
       - --quiet
     waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
+  # ============================================================================ #
+
+  - id: "Deploy: Google Kubernetes Engine (GKE)"
+    name: "gcr.io/cloud-builders/kubectl"
+    args:
+      - set
+      - image
+      - deployment/gke-app-deployment
+      - 7apps-app=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+    env:
+      - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
+      - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
+    waitFor: ["Configure: kubectl", "Build: Docker image"]
 
 # ============================================================================ #
 #                                    Fin 🏁                                    #
