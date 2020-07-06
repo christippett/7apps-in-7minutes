@@ -3,7 +3,7 @@
 /* ========================================================================== */
 
 resource "google_cloudfunctions_function" "app" {
-  name    = "${var.project_id}-function"
+  name    = var.service.cloud_functions.name
   runtime = "python37"
 
   available_memory_mb   = 128
@@ -13,11 +13,27 @@ resource "google_cloudfunctions_function" "app" {
   entry_point           = "greeting"
 
   environment_variables = {
-    ENVIRONMENT = "Cloud Function"
+    ENVIRONMENT = var.service.cloud_functions.description
   }
+}
+
+resource "local_file" "firebase_config" {
+  filename = "${path.module}/.terraform/firebase.json"
+  content = jsonencode({
+    hosting = {
+      public = "."
+      ignore = ["**"]
+      rewrites = [
+        {
+          source   = "/"
+          function = google_cloudfunctions_function.app.name
+        }
+      ]
+    }
+  })
 
   provisioner "local-exec" {
-    working_dir = "${path.module}/assets/firebase"
+    working_dir = "${path.module}/.terraform"
     command     = "firebase deploy --project ${var.project_id}"
   }
 }
@@ -40,7 +56,7 @@ resource "google_cloudfunctions_function_iam_member" "invoker" {
 # https://firebase.google.com/docs/hosting/custom-domain
 
 resource "google_dns_record_set" "function" {
-  name         = "${var.function_subdomain}.${var.domain_name}."
+  name         = "${var.service.cloud_functions.subdomain}.${var.domain}."
   type         = "A"
   ttl          = 300
   managed_zone = google_dns_managed_zone.dns.name

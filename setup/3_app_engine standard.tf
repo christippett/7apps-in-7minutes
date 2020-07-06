@@ -16,7 +16,7 @@ resource "google_storage_bucket_object" "app" {
 
 resource "google_app_engine_standard_app_version" "app" {
   project    = var.project_id
-  service    = "standard"
+  service    = var.service.appengine_standard.name
   runtime    = "python38"
   version_id = "v1"
 
@@ -27,7 +27,7 @@ resource "google_app_engine_standard_app_version" "app" {
   }
 
   env_variables = {
-    ENVIRONMENT = "App Engine: Standard"
+    ENVIRONMENT = var.service.appengine_standard.description
   }
 
 
@@ -48,12 +48,15 @@ resource "google_app_engine_standard_app_version" "app" {
   }
 
   delete_service_on_destroy = true
+  lifecycle {
+    ignore_changes = [version_id]
+  }
 }
 
 /* DNS ---------------------------------------------------------------------- */
 
 resource "google_app_engine_domain_mapping" "standard" {
-  domain_name = "${var.appengine_standard_subdomain}.${var.domain_name}"
+  domain_name = "${var.service.appengine_standard.subdomain}.${var.domain}"
 
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
@@ -63,9 +66,9 @@ resource "google_app_engine_domain_mapping" "standard" {
 }
 
 resource "google_dns_record_set" "appengine_standard" {
-  name         = "${var.appengine_standard_subdomain}.${var.domain_name}."
+  name         = "${var.service.appengine_standard.subdomain}.${var.domain}."
   managed_zone = google_dns_managed_zone.dns.name
   type         = "CNAME"
-  rrdatas      = ["ghs.googlehosted.com."]
+  rrdatas      = [var.google_cname]
   ttl          = 300
 }

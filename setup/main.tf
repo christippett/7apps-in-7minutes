@@ -32,8 +32,8 @@ module "project-services" {
     "cloudresourcemanager.googleapis.com",
     "container.googleapis.com",
     "anthos.googleapis.com",
-    "gkeconnect.googleapis.com",
-    "gkehub.googleapis.com"
+    "gkehub.googleapis.com",
+    "gkeconnect.googleapis.com"
   ]
 }
 
@@ -88,6 +88,21 @@ module "firewall" {
   ]
 }
 
+resource "google_compute_firewall" "allow-tag-ops" {
+  name          = "${google_compute_network.default.name}-ingress-tag-ops"
+  description   = "Allow access ops endpoints for machines with the 'ops' tag"
+  network       = google_compute_network.default.name
+  project       = var.project_id
+  source_ranges = local.firewall_allow_ranges
+  target_tags   = ["ops"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["9000"]
+  }
+}
+
+
 /* ========================================================================== */
 /*                                  Cloud DNS                                 */
 /* ========================================================================== */
@@ -95,7 +110,7 @@ module "firewall" {
 resource "google_dns_managed_zone" "dns" {
   name        = var.project_id
   description = "Public DNS zone for 7apps.servian.fun"
-  dns_name    = "${var.domain_name}."
+  dns_name    = "${var.domain}."
 }
 
 /* ========================================================================== */
@@ -163,24 +178,28 @@ resource "google_app_engine_standard_app_version" "default" {
 
 resource "google_app_engine_application_url_dispatch_rules" "app" {
   dispatch_rules {
-    domain  = "${var.appengine_standard_subdomain}.${var.domain_name}"
+    domain  = "${var.service.appengine_standard.subdomain}.${var.domain}"
     path    = "/*"
-    service = "standard"
+    service = var.service.appengine_standard.name
   }
 
   dispatch_rules {
-    domain  = "${var.appengine_flexible_subdomain}.${var.domain_name}"
+    domain  = "${var.service.appengine_flexible.subdomain}.${var.domain}"
     path    = "/*"
-    service = "flexible"
+    service = var.service.appengine_flexible.name
   }
 
   dispatch_rules {
-    domain  = var.domain_name
+    domain  = var.domain
     path    = "/*"
     service = "default"
   }
 
-  depends_on = [google_app_engine_standard_app_version.default, google_app_engine_standard_app_version.app, google_app_engine_flexible_app_version.app]
+  depends_on = [
+    google_app_engine_standard_app_version.default,
+    google_app_engine_standard_app_version.app,
+    google_app_engine_flexible_app_version.app
+  ]
 }
 
 /* DNS ---------------------------------------------------------------------- */
@@ -188,7 +207,7 @@ resource "google_app_engine_application_url_dispatch_rules" "app" {
 # https://cloud.google.com/appengine/docs/standard/python/mapping-custom-domains
 
 resource "google_app_engine_domain_mapping" "default" {
-  domain_name = var.domain_name
+  domain_name = var.domain
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
   }
@@ -197,24 +216,26 @@ resource "google_app_engine_domain_mapping" "default" {
 }
 
 resource "google_dns_record_set" "appengine_default_ip4" {
-  name         = "${var.domain_name}."
+  name         = "${var.domain}."
   managed_zone = google_dns_managed_zone.dns.name
   type         = "A"
   ttl          = 300
 
   rrdatas = [
-    for rr in google_app_engine_domain_mapping.default.resource_records : rr.rrdata if rr.type == "A"
+    for rr in google_app_engine_domain_mapping.default.resource_records :
+    rr.rrdata if rr.type == "A"
   ]
 }
 
 resource "google_dns_record_set" "appengine_default_ip6" {
-  name         = "${var.domain_name}."
+  name         = "${var.domain}."
   managed_zone = google_dns_managed_zone.dns.name
   type         = "AAAA"
   ttl          = 300
 
   rrdatas = [
-    for rr in google_app_engine_domain_mapping.default.resource_records : rr.rrdata if rr.type == "AAAA"
+    for rr in google_app_engine_domain_mapping.default.resource_records :
+    rr.rrdata if rr.type == "AAAA"
   ]
 }
 
@@ -222,13 +243,38 @@ resource "google_dns_record_set" "appengine_default_ip6" {
 /*                                 Cloud Build                                */
 /* ========================================================================== */
 
+resource "null_resource" "initial_container_build" {
+  provisioner "local-exec" {
+    working_dir = "${path.root}/../"
+    command     = "gcloud builds submit --config cloudbuild.container.yaml --substitutions=SHORT_SHA=latest"
+  }
+
+  depends_on = [module.project-services]
+}
+
 resource "google_cloudbuild_trigger" "deploy" {
   provider = google-beta
   project  = var.project_id
-  name     = "DEPLOY-7-APPS"
+  name     = "DEPLOY-7APPS"
 
   ignored_files = ["setup/**", "presentation/**"]
   filename      = "cloudbuild.yaml"
+
+  substitutions = {
+    _REGION                  = var.region
+    _ZONE                    = "${var.region}-a"
+    _IMAGE_NAME              = var.container_image_name
+    _DOMAIN                  = var.domain
+    _GKE_CLUSTER_NAME        = google_container_cluster.gke.name
+    _GKE_SERVICE_ACCOUNT     = kubernetes_service_account.ksa.metadata.0.name
+    _CLOUD_RUN_NAME          = var.service.cloud_run.name
+    _CLOUD_RUN_ANTHOS_NAME   = var.service.cloud_run_anthos.name
+    _CLOUD_FUNCTIONS_NAME    = var.service.cloud_functions.name
+    _APPENGINE_STANDARD_NAME = var.service.appengine_standard.name
+    _APPENGINE_FLEXIBLE_NAME = var.service.appengine_flexible.name
+    _COMPUTE_ENGINE_NAME     = var.service.compute_engine.name
+    _KUBERNETES_ENGINE_NAME  = var.service.kubernetes_engine.name
+  }
 
   github {
     owner = "servian"

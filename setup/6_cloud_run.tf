@@ -5,9 +5,11 @@
 # https://cloud.google.com/run/docs/setup
 
 resource "google_cloud_run_service" "managed" {
-  name     = "run"
+  name     = "run-demo"
   project  = var.project_id
   location = var.region
+
+  autogenerate_revision_name = true
 
   metadata {
     namespace = var.project_id
@@ -15,15 +17,24 @@ resource "google_cloud_run_service" "managed" {
 
   template {
     spec {
+
       containers {
-        image = var.container_image
+        image = "gcr.io/${var.project_id}/7apps-app:latest"
         env {
           name  = "ENVIRONMENT"
-          value = "Cloud Run"
+          value = var.service.cloud_run.description
+        }
+        resources {
+          limits = {
+            cpu    = "1000m"
+            memory = "128Mi"
+          }
         }
       }
     }
   }
+
+  depends_on = [null_resource.initial_container_build]
 }
 
 /* IAM ---------------------------------------------------------------------- */
@@ -50,7 +61,7 @@ resource "google_cloud_run_service_iam_policy" "managed" {
 # https://cloud.google.com/run/docs/mapping-custom-domains
 
 resource "google_cloud_run_domain_mapping" "managed" {
-  name     = "${var.cloud_run_managed_subdomain}.${var.domain_name}"
+  name     = "${var.service.cloud_run.subdomain}.${var.domain}"
   project  = var.project_id
   location = var.region
 
@@ -64,10 +75,10 @@ resource "google_cloud_run_domain_mapping" "managed" {
 }
 
 resource "google_dns_record_set" "cloudrun_managed" {
-  name         = "${var.cloud_run_managed_subdomain}.${var.domain_name}."
+  name         = "${var.service.cloud_run.subdomain}.${var.domain}."
   managed_zone = google_dns_managed_zone.dns.name
   type         = "CNAME"
-  rrdatas      = ["ghs.googlehosted.com."]
+  rrdatas      = [var.google_cname]
   ttl          = 300
 
   depends_on = [google_cloud_run_domain_mapping.managed]

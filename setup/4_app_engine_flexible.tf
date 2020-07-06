@@ -4,19 +4,19 @@
 
 resource "google_app_engine_flexible_app_version" "app" {
   project    = var.project_id
-  service    = "flexible"
+  service    = var.service.appengine_flexible.name
   runtime    = "custom"
   version_id = "v1"
 
   instance_class = "F1"
 
   env_variables = {
-    ENVIRONMENT = "App Engine: Flexible"
+    ENVIRONMENT = var.service.appengine_flexible.description
   }
 
   deployment {
     container {
-      image = var.container_image
+      image = "gcr.io/servian-7apps/7apps-app:latest"
     }
   }
 
@@ -45,14 +45,15 @@ resource "google_app_engine_flexible_app_version" "app" {
 
   delete_service_on_destroy = true
   lifecycle {
-    ignore_changes = [vpc_access_connector]
+    ignore_changes = [version_id]
   }
+  depends_on = [null_resource.initial_container_build]
 }
 
 /* DNS ---------------------------------------------------------------------- */
 
 resource "google_app_engine_domain_mapping" "flexible" {
-  domain_name = "${var.appengine_flexible_subdomain}.${var.domain_name}"
+  domain_name = "${var.service.appengine_flexible.subdomain}.${var.domain}"
 
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
@@ -62,9 +63,9 @@ resource "google_app_engine_domain_mapping" "flexible" {
 }
 
 resource "google_dns_record_set" "appengine_flexible" {
-  name         = "${var.appengine_flexible_subdomain}.${var.domain_name}."
+  name         = "${var.service.appengine_flexible.subdomain}.${var.domain}."
   managed_zone = google_dns_managed_zone.dns.name
   type         = "CNAME"
-  rrdatas      = ["ghs.googlehosted.com."]
+  rrdatas      = [var.google_cname]
   ttl          = 300
 }
