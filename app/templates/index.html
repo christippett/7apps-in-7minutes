@@ -31,7 +31,7 @@
         align-items: center;
         justify-content: center;
         height: 100vh;
-        font-size: 70%;
+        font-size: 65%;
       }
 
       .ascii {
@@ -131,16 +131,18 @@
       }
 
       .bg-6 {
-        background: #544a7d; /* fallback for old browsers */
+        background: #1e9600; /* fallback for old browsers */
         background: -webkit-linear-gradient(
-          to right,
-          #ffd452,
-          #544a7d
+          to left,
+          #d15454,
+          #fff200,
+          #1e9600
         ); /* Chrome 10-25, Safari 5.1-6 */
         background: linear-gradient(
-          to right,
-          #ffd452,
-          #544a7d
+          to left,
+          #d15454,
+          #fff200,
+          #1e9600
         ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
       }
 
@@ -247,14 +249,17 @@
   </head>
 
   <body class="style-{{ style_number }} bg bg-{{ bg_number }}">
-    <section class="py-1 px-1 pb-5">
+    <section class="py-1 px-1">
       <div class="container has-text-centered px-0 py-0">
         <span class="ascii is-family-monospace">{{ ascii }}</span>
-        <p class="service-type has-text-medium is-size-3 mt-3">
+        <p class="service-type has-text-weight-medium is-size-3 mt-3">
           {{ env }}
         </p>
-        <p class="is-size-6">
+        <p class="has-text-weight-semibold is-size-6 mt-1">
           {{ host }}
+        </p>
+        <p class="is-size-6">
+          <em>{{ commit_sha|upper }}</em>
         </p>
       </div>
     </section>

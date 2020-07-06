@@ -5,12 +5,14 @@ steps:
 
   - id: "Build: Docker image"
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - builds
-      - submit
-      - --config=cloudbuild.container.yaml
-      - --substitutions=SHORT_SHA=$SHORT_SHA,_IMAGE_NAME=${_IMAGE_NAME}
+      - "-c"
+      - |
+        echo $SHORT_SHA > ./app/commit_sha.txt && \
+        gcloud builds submit \
+          --config=cloudbuild.container.yaml \
+          --substitutions=SHORT_SHA=$SHORT_SHA,_IMAGE_NAME=${_IMAGE_NAME}
     waitFor: ["-"]
 
   # ============================================================================ #
@@ -46,7 +48,7 @@ steps:
       - --stop-previous-version
       - --quiet
     dir: "app"
-    waitFor: ["-"]
+    waitFor: ["Build: Docker image"]
 
   # ============================================================================ #
   #                           🦾 APP ENGINE (FLEXIBLE)                           #
@@ -83,7 +85,7 @@ steps:
       - --source=./
       - --quiet
     dir: "app"
-    waitFor: ["-"]
+    waitFor: ["Build: Docker image"]
 
   # ============================================================================ #
   #                                 🏃‍♀️ CLOUD RUN                                 #
