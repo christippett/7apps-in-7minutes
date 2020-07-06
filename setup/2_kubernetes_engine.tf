@@ -206,6 +206,9 @@ resource "kubernetes_deployment" "app" {
     }
   }
   depends_on = [google_container_cluster.gke]
+  lifecycle {
+    ignore_changes = [spec.0.template.0.spec.0.container.0.image]
+  }
 }
 
 resource "kubernetes_service" "app" {

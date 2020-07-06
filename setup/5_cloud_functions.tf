@@ -17,7 +17,7 @@ resource "google_cloudfunctions_function" "app" {
   }
 
   lifecycle {
-    ignore_changes = [source_archive_object]
+    ignore_changes = [source_archive_object, labels]
   }
 }
 
