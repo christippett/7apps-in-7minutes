@@ -17,7 +17,7 @@ def main(req: Request):
     return render_template(
         "index.html",
         ascii=ascii_title,
-        host=req.base_url,
+        host=req.base_url.replace("http", "https"),
         bg_number=RANDOM_INT,
         style_number=(RANDOM_INT % 3),
         env=ENVIRONMENT,
