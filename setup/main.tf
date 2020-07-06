@@ -187,6 +187,10 @@ resource "google_app_engine_standard_app_version" "default" {
 
   noop_on_destroy = true
   depends_on      = [google_app_engine_application.app]
+
+  lifecycle {
+    ignore_changes = [handlers]
+  }
 }
 
 /* Routing Rules ------------------------------------------------------------ */
