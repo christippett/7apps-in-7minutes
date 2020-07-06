@@ -121,7 +121,7 @@ resource "google_storage_bucket" "app" {
 
 data "archive_file" "monitoring_dashboard" {
   type        = "zip"
-  source_dir  = "${path.module}/assets/monitoring_dashboard"
+  source_dir  = "${path.module}/../dashboard"
   output_path = "${path.root}/.terraform/dashboard.zip"
 }
 

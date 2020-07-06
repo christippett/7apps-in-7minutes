@@ -5,8 +5,8 @@ app = Flask(__name__)
 SOURCES = [
     "http://localhost:8080/",
     "https://function.7apps.servian.fun/",
-    "https://appengine.7apps.servian.fun/",
-    "https://appengine-flex.7apps.servian.fun/",
+    "https://appengine-standard.7apps.servian.fun/",
+    "https://appengine-flexible.7apps.servian.fun/",
     "https://run.7apps.servian.fun/",
     "https://run-anthos.7apps.servian.fun/",
     "https://gke.7apps.servian.fun/",
