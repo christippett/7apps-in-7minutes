@@ -5,10 +5,22 @@ from flask import Flask, Request, render_template, request
 from pyfiglet import Figlet
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "Localhost")
-RANDOM_INT = randrange(1, 10)
+RANDOM_INT = randrange(1, 11)
+ASCII_OPTIONS = [
+    "big",
+    "stop",
+    "rounded",
+    "puffy",
+    "cricket",
+    "colossal",
+    "banner",
+    "larry3d",
+    "ogre",
+    "speed",
+]
 
 app = Flask("7apps")
-fmt = Figlet(font="big")
+fmt = Figlet(font=ASCII_OPTIONS[randrange(0, 10)])
 
 
 def main(req: Request):
