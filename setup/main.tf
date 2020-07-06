@@ -17,7 +17,6 @@ module "project-services" {
     "vpcaccess.googleapis.com",
     "compute.googleapis.com",
     "iam.googleapis.com",
-    "sql-component.googleapis.com",
     "storage-component.googleapis.com",
     "storage-api.googleapis.com",
     "containerregistry.googleapis.com",
@@ -156,7 +155,6 @@ resource "google_app_engine_standard_app_version" "default" {
     shell = "gunicorn -b :$PORT main:app"
   }
 
-
   deployment {
     zip {
       source_url = "https://storage.googleapis.com/${google_storage_bucket.app.name}/${google_storage_bucket_object.default.name}"
@@ -166,6 +164,16 @@ resource "google_app_engine_standard_app_version" "default" {
   basic_scaling {
     max_instances = 1
     idle_timeout  = "300s"
+  }
+
+  env_variables = {
+    CLOUD_RUN_DOMAIN          = "${var.service.cloud_run.subdomain}.${var.domain}"
+    CLOUD_RUN_ANTHOS_DOMAIN   = "${var.service.cloud_run_anthos.subdomain}.${var.domain}"
+    CLOUD_FUNCTIONS_DOMAIN    = "${var.service.cloud_functions.subdomain}.${var.domain}"
+    APPENGINE_STANDARD_DOMAIN = "${var.service.appengine_standard.subdomain}.${var.domain}"
+    APPENGINE_FLEXIBLE_DOMAIN = "${var.service.appengine_flexible.subdomain}.${var.domain}"
+    COMPUTE_ENGINE_DOMAIN     = "${var.service.compute_engine.subdomain}.${var.domain}"
+    KUBERNETES_ENGINE_DOMAIN  = "${var.service.kubernetes_engine.subdomain}.${var.domain}"
   }
 
   delete_service_on_destroy = true
