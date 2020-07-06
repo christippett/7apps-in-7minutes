@@ -80,6 +80,7 @@ steps:
       - --trigger-http
       - --runtime=python37
       - --entry-point=main
+      - --source=./
       - --quiet
     dir: "app"
     waitFor: ["-"]
