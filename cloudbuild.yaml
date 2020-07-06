@@ -39,7 +39,7 @@ steps:
       - ${_CLOUD_FUNCTIONS_NAME}
       - --trigger-http
       - --runtime=python38
-      - --entry-point=greeting
+      - --entry-point=main
     dir: "app"
     waitFor: ["-"]
 

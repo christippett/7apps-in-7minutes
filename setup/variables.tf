@@ -34,7 +34,7 @@ variable "service" {
     }
     cloud_run_anthos = {
       name        = "anthos-7apps"
-      description = "Cloud Run (Anthos)"
+      description = "Cloud Run: Anthos"
       subdomain   = "run-anthos"
     }
     cloud_functions = {
@@ -44,12 +44,12 @@ variable "service" {
     }
     appengine_standard = {
       name        = "standard"
-      description = "App Engine (Standard)"
+      description = "App Engine: Standard"
       subdomain   = "appengine-standard"
     }
     appengine_flexible = {
       name        = "flexible"
-      description = "App Engine (Flexible)"
+      description = "App Engine: Flexible"
       subdomain   = "appengine-flexible"
     }
     compute_engine = {
@@ -59,7 +59,7 @@ variable "service" {
     }
     kubernetes_engine = {
       name        = "gke-7apps"
-      description = "Google Kubernetes Engine"
+      description = "Kubernetes Engine"
       subdomain   = "gke"
     }
   }
