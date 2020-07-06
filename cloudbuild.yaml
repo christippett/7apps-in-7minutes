@@ -1,131 +1,164 @@
 steps:
-  #========================================
-  # 0. BUILD DOCKER IMAGE
-  #========================================
-  - id: "Build Docker image"
-    name: "gcr.io/cloud-builders/gcloud"
+  # ============================================================================ #
+  #                            📦 BUILD DOCKER IMAGE                            #
+  # ============================================================================ #
+
+  - id: "Build: Docker image"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: bash
     args:
-      [
-        "builds",
-        "submit",
-        "--config",
-        "cloudbuild.container.yaml",
-        "--substitutions=SHORT_SHA=$SHORT_SHA",
-      ]
+      - "-c"
+      - |
+        echo $SHORT_SHA > ./app/commit_sha.txt && \
+        gcloud builds submit \
+          --config=cloudbuild.container.yaml \
+          --substitutions=SHORT_SHA=$SHORT_SHA,_IMAGE_NAME=${_IMAGE_NAME}
     waitFor: ["-"]
 
-  #========================================
-  # 1. CLOUD FUNCTIONS
-  #========================================
-  - id: "Deploy: Cloud Functions"
-    name: "gcr.io/cloud-builders/gcloud"
-    args:
-      - "-q"
-      - "functions"
-      - "deploy"
-      - "demo-function"
-      - "--trigger-http"
-      - "--runtime=python37"
-      - "--entry-point=greeting"
-      - "--set-env-vars=ENVIRONMENT=Cloud Function"
-    dir: "app"
-    waitFor: ["-"]
+  # ============================================================================ #
+  #                           ⚙️ GOOGLE COMPUTE ENGINE                           #
+  # ============================================================================ #
 
-  #========================================
-  # 2. APP ENGINE (STANDARD)
-  #========================================
-  - id: "Deploy: App Engine (Standard)"
-    name: "gcr.io/cloud-builders/gcloud"
-    args:
-      ["-q", "app", "deploy", "app.standard.yaml", "--promote", "--version=0"]
-    dir: "app"
-    waitFor: ["-"]
-
-  #========================================
-  # 3. APP ENGINE (FLEXIBLE)
-  #========================================
-  - id: "Deploy: App Engine (Flexible)"
-    name: "gcr.io/cloud-builders/gcloud"
-    args:
-      [
-        "-q",
-        "app",
-        "deploy",
-        "app.flex.yaml",
-        "--promote",
-        "--image-url=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA",
-        "--version=0",
-      ]
-    dir: "app"
-    waitFor: ["Build Docker image"]
-
-  #========================================
-  # 4. CLOUD RUN
-  #========================================
-  - id: "Deploy: Cloud Run"
-    name: "gcr.io/cloud-builders/gcloud"
-    args:
-      - "-q"
-      - "beta"
-      - "run"
-      - "deploy"
-      - "demo-app"
-      - "--platform=managed"
-      - "--allow-unauthenticated"
-      - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
-      - "--region=us-central1"
-      - "--set-env-vars=ENVIRONMENT=Cloud Run"
-    waitFor: ["Build Docker image"]
-
-  #========================================
-  # 5. CLOUD RUN (ON GKE)
-  #========================================
-  # - id: "Deploy: Cloud Run on GKE"
-  #   name: "gcr.io/cloud-builders/gcloud"
-  #   args:
-  #     - "-q"
-  #     - "beta"
-  #     - "run"
-  #     - "deploy"
-  #     - "demo-app-gke"
-  #     - "--image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
-  #     - "--set-env-vars=ENVIRONMENT=Cloud Run (GKE)"
-  #     - "--platform=gke"
-  #     - "--cluster=demo-cluster"
-  #     - "--cluster-location=australia-southeast1-b"
-  #   waitFor: ["Build Docker image"]
-
-  #========================================
-  # 6. GOOGLE KUBERENTES ENGINE (GKE)
-  #========================================
-  - id: "Deploy: Google Kubernetes Engine (GKE)"
-    name: "gcr.io/cloud-builders/gcloud"
-    args:
-      [
-        "builds",
-        "submit",
-        "--config",
-        "cloudbuild.k8s.yaml",
-        "--substitutions=SHORT_SHA=$SHORT_SHA",
-      ]
-    waitFor: ["Build Docker image"]
-
-  #========================================
-  # 7. GOOGLE COMPUTE ENGINE
-  #========================================
   - id: "Deploy: Google Compute Engine (GCE)"
-    name: "gcr.io/cloud-builders/gcloud"
+    name: "gcr.io/cloud-builders/curl"
+    entrypoint: bash
     args:
-      - "-q"
-      - "compute"
-      - "instances"
-      - "update-container"
-      - "demo-instance"
-      - "--zone=australia-southeast1-b"
-      - "--container-image=gcr.io/$PROJECT_ID/demo-app:$SHORT_SHA"
-      - "--container-env=ENVIRONMENT=Google Compute Engine"
-      - "--container-mount-host-path"
-      - "mount-path=/etc/letsencrypt,host-path=/home/data,mode=rw"
-    waitFor: ["Build Docker image"]
+      - "-c"
+      - |
+        curl --request PATCH \
+        https://compute.7apps.servian.fun:9000/hooks/update-env \
+        --insecure \
+        --data '{ "key": "CONTAINER_IMAGE_TAG", "value": "$SHORT_SHA" }' \
+        --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+        --header 'Content-Type: application/json'
+    waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                           💪 APP ENGINE (STANDARD)                           #
+  # ============================================================================ #
+
+  - id: "Deploy: App Engine (Standard)"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: gcloud
+    args:
+      - app
+      - deploy
+      - app.standard.yaml
+      - --promote
+      - --stop-previous-version
+      - --quiet
+    dir: "app"
+    waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                           🦾 APP ENGINE (FLEXIBLE)                           #
+  # ============================================================================ #
+
+  - id: "Deploy: App Engine (Flexible)"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: gcloud
+    args:
+      - app
+      - deploy
+      - app.flex.yaml
+      - --image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - --promote
+      - --stop-previous-version
+      - --quiet
+    dir: "app"
+    waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                              🕹️ CLOUD FUNCTIONS                              #
+  # ============================================================================ #
+
+  - id: "Deploy: Cloud Functions"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - ${_CLOUD_FUNCTIONS_NAME}
+      - --trigger-http
+      - --runtime=python37
+      - --entry-point=main
+      - --source=./
+      - --quiet
+    dir: "app"
+    waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                                 🏃‍♀️ CLOUD RUN                                 #
+  # ============================================================================ #
+
+  - id: "Deploy: Cloud Run"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_CLOUD_RUN_NAME}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - --region=${_REGION}
+      - --quiet
+    waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                             🏃‍♂️ CLOUD RUN (ANTHOS)                            #
+  # ============================================================================ #
+
+  - id: "Deploy: Cloud Run on Anthos"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_CLOUD_RUN_ANTHOS_NAME}
+      - --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - --platform=gke
+      - --cluster=${_GKE_CLUSTER_NAME}
+      - --cluster-location=${_ZONE}
+      - --namespace=default
+      - --service-account=${_GKE_SERVICE_ACCOUNT}
+      - --quiet
+    waitFor: ["Build: Docker image"]
+
+  # ============================================================================ #
+  #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
+  # ============================================================================ #
+
+  - id: "Deploy: Google Kubernetes Engine (GKE)"
+    name: "gcr.io/cloud-builders/kubectl"
+    args:
+      - set
+      - image
+      - deployment/gke-app-deployment
+      - 7apps-app=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+    env:
+      - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
+      - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
+    waitFor: ["Build: Docker image"]
+
+# ============================================================================ #
+#                                    Fin 🏁                                    #
+# ============================================================================ #
 
 timeout: 3600s
+substitutions:
+  _IMAGE_NAME: 7apps-app
+  _REGION: us-central1
+  _ZONE: us-central1-a
+  _GKE_CLUSTER_NAME: tbc
+  _GKE_SERVICE_ACCOUNT: tbc
+  _DOMAIN: tbc
+  _CLOUD_RUN_NAME: tbc
+  _CLOUD_RUN_ANTHOS_NAME: tbc
+  _CLOUD_FUNCTIONS_NAME: tbc
+  _APPENGINE_STANDARD_NAME: tbc
+  _APPENGINE_FLEXIBLE_NAME: tbc
+  _COMPUTE_ENGINE_NAME: tbc
+  _KUBERNETES_ENGINE_NAME: tbc
+options:
+  substitution_option: "ALLOW_LOOSE"

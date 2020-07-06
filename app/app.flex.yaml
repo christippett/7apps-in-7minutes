@@ -1,10 +1,5 @@
 runtime: custom
 env: flex
-service: gae-flexible
-resources:
-  cpu: 1
-  memory_gb: 0.5
-manual_scaling:
-  instances: 1
+service: flexible
 env_variables:
-  ENVIRONMENT: "App Engine (Flexible)"
+  ENVIRONMENT: "App Engine: Flexible"
