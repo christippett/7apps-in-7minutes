@@ -62,7 +62,7 @@ EOT
 
 
 resource "google_compute_instance" "app" {
-  name         = "vm-demo"
+  name         = var.service.compute_engine.name
   project      = var.project_id
   zone         = "${var.region}-a"
   machine_type = "e2-small"

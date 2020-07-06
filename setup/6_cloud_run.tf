@@ -5,7 +5,7 @@
 # https://cloud.google.com/run/docs/setup
 
 resource "google_cloud_run_service" "managed" {
-  name     = "run-demo"
+  name     = var.service.cloud_run.name
   project  = var.project_id
   location = var.region
 
