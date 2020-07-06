@@ -135,7 +135,7 @@ steps:
     env:
       - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
       - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
-    waitFor: ["Configure: kubectl", "Build: Docker image"]
+    waitFor: ["Build: Docker image"]
 
 # ============================================================================ #
 #                                    Fin 🏁                                    #
