@@ -38,7 +38,8 @@ resource "local_file" "firebase_config" {
   }
 }
 
-# IAM entry for all users to invoke the function
+# Make function available to everyone
+
 resource "google_cloudfunctions_function_iam_member" "invoker" {
   project        = google_cloudfunctions_function.app.project
   region         = google_cloudfunctions_function.app.region
