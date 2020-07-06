@@ -4,7 +4,7 @@
 
 module "container" {
   source  = "christippett/container-server/cloudinit"
-  version = "1.2.0-alpha.2"
+  version = "1.2.0-alpha.3"
 
   domain = "${var.service.compute_engine.subdomain}.${var.domain}"
   email  = var.email
