@@ -1,20 +1,5 @@
 steps:
   # ============================================================================ #
-  #                             📐 CONFIGURE KUBECTL                             #
-  # ============================================================================ #
-
-  - id: "Configure: kubectl"
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: gcloud
-    args:
-      - container
-      - clusters
-      - get-credentials
-      - ${_GKE_CLUSTER_NAME}
-      - --zone=${_ZONE}
-    waitFor: ["-"]
-
-  # ============================================================================ #
   #                            📦 BUILD DOCKER IMAGE                            #
   # ============================================================================ #
 
@@ -58,6 +43,7 @@ steps:
       - deploy
       - app.standard.yaml
       - --promote
+      - --stop-previous-version
       - --quiet
     dir: "app"
     waitFor: ["-"]
@@ -73,8 +59,9 @@ steps:
       - app
       - deploy
       - app.flex.yaml
-      - --promote
       - --image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - --promote
+      - --stop-previous-version
       - --quiet
     dir: "app"
     waitFor: ["Build: Docker image"]
