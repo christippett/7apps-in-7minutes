@@ -10,7 +10,9 @@ resource "null_resource" "cloud_run_anthos" {
       "--namespace default",
       "--platform gke",
       "--cluster ${google_container_cluster.gke.name}",
-      "--cluster-location ${var.region}-a",
+      "--cluster-location ${var.region}-a"
+    ])
+    create_opts = join(" ", [
       "--service-account ${kubernetes_service_account.ksa.metadata.0.name}",
       "--set-env-vars 'ENVIRONMENT=${var.service.cloud_run_anthos.description}'",
       "--image gcr.io/${var.project_id}/${var.container_image_name}:latest"
@@ -19,7 +21,7 @@ resource "null_resource" "cloud_run_anthos" {
 
   provisioner "local-exec" {
     when    = create
-    command = "gcloud run deploy ${self.triggers.name} ${self.triggers.opts}"
+    command = "gcloud run deploy ${self.triggers.name} ${self.triggers.opts} ${self.trigers.create_opts}"
   }
 
   provisioner "local-exec" {
