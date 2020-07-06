@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>7Apps — Google Cloud</title>
-    <link rel='shortcut icon' type='image/x-icon' href='/favicon.ico' />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
@@ -154,11 +154,7 @@
         <div class="columns is-multiline" style="height: 100%;">
           {% for src in iframes %}
           <div class="column is-half">
-            <iframe
-              id="{{ loop.index }}"
-              class="iframe card"
-              src="{{ src }}"
-            >
+            <iframe id="{{ loop.index }}" class="iframe card" src="{{ src }}">
             </iframe>
           </div>
           {% endfor %}
@@ -167,21 +163,38 @@
     </div>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/easytimer@1.1.1/src/easytimer.min.js"></script>
+  <script src="/static/easytimer.min.js"></script>
   <script>
-    var timer = new Timer();
+    var intervalId = 0;
+    var timer = new easytimer.Timer();
+
+    function startRefreshInterval() {
+      let intervalId = window.setInterval(function () {
+        var iframes = document.getElementsByTagName("iframe");
+
+        for (var i = 0, max = iframes.length; i < max; i++) {
+          var el = iframes[i];
+          el.src = el.src;
+        }
+      }, 10000);
+      return intervalId;
+    }
+
     $("#start").click(function () {
       timer.start();
+      intervalId = startRefreshInterval();
     });
     $("#pause").click(function () {
       timer.pause();
     });
     $("#stop").click(function () {
       timer.stop();
+      window.clearInterval(intervalId);
     });
     $("#reset").click(function () {
       timer.reset();
       timer.stop();
+      window.clearInterval(intervalId);
     });
     timer.addEventListener("secondsUpdated", function (e) {
       $("#stopwatch").html(timer.getTimeValues().toString());
@@ -190,16 +203,8 @@
       $("#stopwatch").html(timer.getTimeValues().toString());
     });
     timer.addEventListener("reset", function (e) {
+      timer.stop();
       $("#stopwatch").html(timer.getTimeValues().toString());
     });
-
-    window.setInterval(function () {
-      var iframes = document.getElementsByTagName("iframe");
-
-      for (var i = 0, max = iframes.length; i < max; i++) {
-        var el = iframes[i];
-        el.src = el.src;
-      }
-    }, 10000);
   </script>
 </html>

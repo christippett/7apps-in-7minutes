@@ -169,8 +169,16 @@ resource "google_app_engine_standard_app_version" "default" {
   handlers {
     url_regex = "/favicon\\.ico"
     static_files {
-      path              = "favicon.ico"
-      upload_path_regex = "favicon\\.ico"
+      path              = "static/favicon.ico"
+      upload_path_regex = "static/favicon\\.ico"
+    }
+  }
+
+  handlers {
+    url_regex = "/static"
+    static_files {
+      path              = "static/.*"
+      upload_path_regex = "static/.*"
     }
   }
 
