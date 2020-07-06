@@ -21,7 +21,7 @@ resource "null_resource" "cloud_run_anthos" {
 
   provisioner "local-exec" {
     when    = create
-    command = "gcloud run deploy ${self.triggers.name} ${self.triggers.opts} ${self.trigers.create_opts}"
+    command = "gcloud run deploy ${self.triggers.name} ${self.triggers.opts} ${self.triggers.create_opts}"
   }
 
   provisioner "local-exec" {
