@@ -1,4 +1,5 @@
 runtime: python38
 service: standard
+entrypoint: gunicorn --bind 0.0.0.0:8080 main:app"
 env_variables:
   ENVIRONMENT: "App Engine: Standard"
