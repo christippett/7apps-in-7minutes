@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>7apps7minutes</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.materialdesignicons.com/5.3.45/css/materialdesignicons.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/css">
+      html,
+      body {
+        background: #f5f6fa;
+        height: 100vh;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        height: 100%;
+      }
+
+      .ascii {
+        font-weight: 700;
+        white-space: pre;
+      }
+
+      #stopwatch {
+        color: #1d1d1d;
+        font-size: 2rem;
+        font-weight: 500;
+        font-family: "Roboto Mono", "Courier New", Courier, monospace;
+      }
+
+      .iframe-container {
+        flex: 1;
+      }
+
+      .iframe {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        border: 1px solid #e4e4e4;
+        background-color: #dddddd;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container is-fullhd is-widescreen">
+      <section class="level mb-5">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Servian</p>
+            <p class="title">
+              <a class="has-text-grey-darker" href="https://www.servian.com">
+                <span class="icon is-large">
+                  <i class="mdi mdi-48px mdi-home-city"></i>
+                </span>
+              </a>
+            </p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Chris Tippett</p>
+            <p class="title">
+              <a
+                class="has-text-grey-darker"
+                href="https://www.christippett.dev"
+              >
+                <span class="icon is-large">
+                  <i class="mdi mdi-48px mdi-face-profile"></i>
+                </span>
+              </a>
+            </p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p id="stopwatch" class="mb-2">00:00:00</p>
+            <p>
+              <button id="start" class="button is-dark">
+                <span class="icon">
+                  <i class="mdi mdi-play"></i>
+                </span>
+                <span>Start</span>
+              </button>
+              <button id="stop" class="button is-dark">
+                <span class="icon">
+                  <i class="mdi mdi-stop"></i>
+                </span>
+                <span>Stop</span>
+              </button>
+              <button id="pause" class="button is-dark">
+                <span class="icon">
+                  <i class="mdi mdi-pause"></i>
+                </span>
+                <span>Pause</span>
+              </button>
+              <button id="reset" class="button is-dark">
+                <span class="icon">
+                  <i class="mdi mdi-refresh"></i>
+                </span>
+                <span>Reset</span>
+              </button>
+            </p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">GitHub</p>
+            <p class="title">
+              <a
+                class="has-text-grey-darker"
+                href="https://github.com/servian/7apps7minutes"
+              >
+                <span class="icon is-large">
+                  <i class="mdi mdi-48px mdi-github"></i>
+                </span>
+              </a>
+            </p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Medium</p>
+            <p class="title">
+              <a
+                class="has-text-grey-darker"
+                href="https://medium.com/weareservian"
+              >
+                <span class="icon is-large">
+                  <i class="mdi mdi-48px mdi-book-open-page-variant"></i>
+                </span>
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+      <section class="iframe-container">
+        <div class="columns is-multiline" style="height: 100%;">
+          {% for src in iframes %}
+          <div class="column is-half">
+            <iframe
+              id="{{ loop.index }}"
+              class="iframe card"
+              src="{{ src }}"
+            >
+            </iframe>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/easytimer@1.1.1/src/easytimer.min.js"></script>
+  <script>
+    var timer = new Timer();
+    $("#start").click(function () {
+      timer.start();
+    });
+    $("#pause").click(function () {
+      timer.pause();
+    });
+    $("#stop").click(function () {
+      timer.stop();
+    });
+    $("#reset").click(function () {
+      timer.reset();
+      timer.stop();
+    });
+    timer.addEventListener("secondsUpdated", function (e) {
+      $("#stopwatch").html(timer.getTimeValues().toString());
+    });
+    timer.addEventListener("started", function (e) {
+      $("#stopwatch").html(timer.getTimeValues().toString());
+    });
+    timer.addEventListener("reset", function (e) {
+      $("#stopwatch").html(timer.getTimeValues().toString());
+    });
+
+    window.setInterval(function () {
+      var iframes = document.getElementsByTagName("iframe");
+
+      for (var i = 0, max = iframes.length; i < max; i++) {
+        var el = iframes[i];
+        el.src = el.src;
+      }
+    }, 5000);
+  </script>
+</html>

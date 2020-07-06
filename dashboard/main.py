@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="assets")
 
 SOURCES = [
     "http://localhost:8080/",
@@ -16,8 +16,7 @@ SOURCES = [
 
 @app.route("/", methods=["GET"])
 def index():
-    name = request.args.get("name", "world")
-    return render_template("monitor.html", iframes=SOURCES, name=name)
+    return render_template("index.html", iframes=SOURCES)
 
 
 if __name__ == "__main__":

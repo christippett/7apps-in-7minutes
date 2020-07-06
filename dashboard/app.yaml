@@ -1,1 +1,9 @@
-runtime: python37
+runtime: python38
+handlers:
+  - url: /favicon\.ico$
+    static_files: assets/favicon\.ico
+    upload: assets/favicon\.ico$
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
