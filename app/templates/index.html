@@ -31,7 +31,7 @@
         align-items: center;
         justify-content: center;
         height: 100vh;
-        font-size: 65%;
+        font-size: 60%;
       }
 
       .ascii {
@@ -88,32 +88,35 @@
       }
 
       .bg-3 {
-        background: #8e2de2; /* fallback for old browsers */
+        background: #000000; /* fallback for old browsers */
         background: -webkit-linear-gradient(
-          to right,
-          #4a00e0,
-          #8e2de2
+          to left,
+          #434343,
+          #000000
         ); /* Chrome 10-25, Safari 5.1-6 */
         background: linear-gradient(
-          to right,
-          #4a00e0,
-          #8e2de2
+          to left,
+          #434343,
+          #000000
         ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
         color: white;
       }
 
       .bg-4 {
-        background: #1f4037; /* fallback for old browsers */
+        background: #1a2a6c; /* fallback for old browsers */
         background: -webkit-linear-gradient(
-          to top,
-          #99f2c8,
-          #9b4fb9
+          to right,
+          #fdbb2d,
+          #b21f1f,
+          #1a2a6c
         ); /* Chrome 10-25, Safari 5.1-6 */
         background: linear-gradient(
-          to top,
-          #99f2c8,
-          #9b4fb9
+          to right,
+          #fdbb2d,
+          #b21f1f,
+          #1a2a6c
         ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        color: white;
       }
 
       .bg-5 {
@@ -256,11 +259,11 @@
         <p class="service-type has-text-weight-medium is-size-3 mt-3">
           {{ env }}
         </p>
-        <p class="has-text-weight-semibold is-size-6 mt-1">
+        <p class="is-size-6">
           {{ host }}
         </p>
-        <p class="is-size-6">
-          <em>{{ commit_sha|upper }}</em>
+        <p class="is-size-7 has-text-weight-semibold mt-1">
+          📃 {{ commit_sha|upper }}
         </p>
       </div>
     </section>

@@ -12,11 +12,19 @@ ASCII_OPTIONS = [
     "rounded",
     "puffy",
     "cricket",
-    "colossal",
+    "contrast",
     "banner",
     "larry3d",
     "ogre",
     "speed",
+    "cybermedium",
+    "eftifont",
+    "fuzzy",
+    "lean",
+    "moscow",
+    "pawp",
+    "rectangles",
+    "serifcap",
 ]
 
 try:
@@ -25,7 +33,7 @@ except FileNotFoundError:
     COMMIT_SHA = "???"
 
 app = Flask("7apps")
-fmt = Figlet(font=ASCII_OPTIONS[randrange(0, 10)])
+fmt = Figlet(font=ASCII_OPTIONS[randrange(0, len(ASCII_OPTIONS) - 1)])
 
 
 def main(req: Request):
@@ -37,7 +45,7 @@ def main(req: Request):
         commit_sha=COMMIT_SHA,
         host=req.base_url.replace("http://", "https://"),
         bg_number=RANDOM_INT,
-        style_number=(RANDOM_INT % 3),
+        style_number=(RANDOM_INT % 4),
         env=ENVIRONMENT,
     )
 
