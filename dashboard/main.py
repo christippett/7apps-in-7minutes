@@ -1,17 +1,19 @@
 import os
+
+
 from flask import Flask, render_template
 
 app = Flask(__name__)
 
 SOURCES = [
     "http://localhost:8080/",
-    os.environ.get("COMPUTE_ENGINE_DOMAIN"),
-    os.environ.get("APPENGINE_STANDARD_DOMAIN"),
-    os.environ.get("APPENGINE_FLEXIBLE_DOMAIN"),
-    os.environ.get("CLOUD_FUNCTIONS_DOMAIN"),
-    os.environ.get("CLOUD_RUN_DOMAIN"),
-    os.environ.get("CLOUD_RUN_ANTHOS_DOMAIN"),
-    os.environ.get("KUBERNETES_ENGINE_DOMAIN"),
+    os.environ.get("COMPUTE_ENGINE_URL"),
+    os.environ.get("APPENGINE_STANDARD_URL"),
+    os.environ.get("APPENGINE_FLEXIBLE_URL"),
+    os.environ.get("CLOUD_FUNCTIONS_URL"),
+    os.environ.get("CLOUD_RUN_URL"),
+    os.environ.get("CLOUD_RUN_ANTHOS_URL"),
+    os.environ.get("KUBERNETES_ENGINE_URL"),
 ]
 
 

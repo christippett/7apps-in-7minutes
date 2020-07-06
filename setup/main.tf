@@ -166,18 +166,27 @@ resource "google_app_engine_standard_app_version" "default" {
     idle_timeout  = "300s"
   }
 
-  env_variables = {
-    CLOUD_RUN_DOMAIN          = "${var.service.cloud_run.subdomain}.${var.domain}"
-    CLOUD_RUN_ANTHOS_DOMAIN   = "${var.service.cloud_run_anthos.subdomain}.${var.domain}"
-    CLOUD_FUNCTIONS_DOMAIN    = "${var.service.cloud_functions.subdomain}.${var.domain}"
-    APPENGINE_STANDARD_DOMAIN = "${var.service.appengine_standard.subdomain}.${var.domain}"
-    APPENGINE_FLEXIBLE_DOMAIN = "${var.service.appengine_flexible.subdomain}.${var.domain}"
-    COMPUTE_ENGINE_DOMAIN     = "${var.service.compute_engine.subdomain}.${var.domain}"
-    KUBERNETES_ENGINE_DOMAIN  = "${var.service.kubernetes_engine.subdomain}.${var.domain}"
+  handlers {
+    url_regex = "/favicon\\.ico"
+    static_files {
+      path              = "favicon.ico"
+      upload_path_regex = "favicon\\.ico"
+    }
   }
 
-  delete_service_on_destroy = true
-  depends_on                = [google_app_engine_application.app]
+
+  env_variables = {
+    CLOUD_RUN_URL          = "https://${var.service.cloud_run.subdomain}.${var.domain}"
+    CLOUD_RUN_ANTHOS_URL   = "https://${var.service.cloud_run_anthos.subdomain}.${var.domain}"
+    CLOUD_FUNCTIONS_URL    = "https://${var.service.cloud_functions.subdomain}.${var.domain}"
+    APPENGINE_STANDARD_URL = "https://${var.service.appengine_standard.subdomain}.${var.domain}"
+    APPENGINE_FLEXIBLE_URL = "https://${var.service.appengine_flexible.subdomain}.${var.domain}"
+    COMPUTE_ENGINE_URL     = "https://${var.service.compute_engine.subdomain}.${var.domain}"
+    KUBERNETES_ENGINE_URL  = "https://${var.service.kubernetes_engine.subdomain}.${var.domain}"
+  }
+
+  noop_on_destroy = true
+  depends_on      = [google_app_engine_application.app]
 }
 
 /* Routing Rules ------------------------------------------------------------ */
