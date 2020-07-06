@@ -30,7 +30,7 @@ ASCII_OPTIONS = [
 try:
     COMMIT_SHA = open("commit_sha.txt", "r").read()
 except FileNotFoundError:
-    COMMIT_SHA = "???"
+    COMMIT_SHA = "*****"
 
 app = Flask("7apps")
 fmt = Figlet(font=ASCII_OPTIONS[randrange(0, len(ASCII_OPTIONS) - 1)])
