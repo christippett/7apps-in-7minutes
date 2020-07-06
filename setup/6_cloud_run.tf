@@ -35,6 +35,10 @@ resource "google_cloud_run_service" "managed" {
   }
 
   depends_on = [null_resource.initial_container_build]
+
+  lifecycly {
+    ignore_changes = [template.0.spec.0.containers.0.image]
+  }
 }
 
 /* IAM ---------------------------------------------------------------------- */
