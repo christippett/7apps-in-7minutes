@@ -4,7 +4,7 @@
 
 resource "google_cloudfunctions_function" "app" {
   name    = var.service.cloud_functions.name
-  runtime = "python37"
+  runtime = "python38"
 
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.app.name

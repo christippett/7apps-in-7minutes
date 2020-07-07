@@ -80,7 +80,7 @@ steps:
       - deploy
       - ${_CLOUD_FUNCTIONS_NAME}
       - --trigger-http
-      - --runtime=python37
+      - --runtime=python38
       - --entry-point=main
       - --source=./
       - --quiet
