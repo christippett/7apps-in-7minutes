@@ -6,7 +6,8 @@ from flask_cors import CORS
 from pyfiglet import Figlet
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "Localhost")
-RANDOM_INT = randrange(1, 11)
+BG_CLASS = randrange(0, 10)
+FONT_CLASS = randrange(0, 6)
 ASCII_OPTIONS = [
     "big",
     "stop",
@@ -57,8 +58,8 @@ def main(req: Request):
         ascii_font=ASCII_FONT,
         commit_sha=COMMIT_SHA,
         host=req.base_url.replace("http://", "https://"),
-        bg_number=RANDOM_INT,
-        style_number=(RANDOM_INT % 4),
+        bg_class=BG_CLASS,
+        font_class=FONT_CLASS,
         env=ENVIRONMENT,
     )
 

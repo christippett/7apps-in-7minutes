@@ -170,7 +170,7 @@
         console.log(`🕵️ new version detected on ${src} (${newVer})`);
         serviceMap.set(src, newVer);
         iframeElement.src = src; // refresh iframe
-        if (currentVer !== undefined || true) {
+        if (currentVer !== undefined) {
           parentEl.classList.add("has-new-version");
           setTimeout(() => parentEl.classList.remove("has-new-version"), 3000);
         }
