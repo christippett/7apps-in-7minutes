@@ -159,9 +159,7 @@
       var response;
       try {
         response = await fetch(src, {
-          mode: "cors" ,
           cache: "no-cache",
-          referrerPolicy: "no-referrer",
           headers: { "Accept-Language": "application/json" },
         })
       } catch {
