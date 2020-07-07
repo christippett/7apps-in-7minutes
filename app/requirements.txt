@@ -2,3 +2,5 @@ Flask
 pyfiglet
 pytest
 gunicorn
+gitpython
+
