@@ -126,7 +126,7 @@
                 class="iframe-mask px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-invisible"
               >
                 <p class="heading">🛑 {{ name }}</p>
-                <p class="title"></p>
+                <p class="title is-size-4 mt-4"></p>
               </div>
               <iframe
                 name="{{ unix_timestamp }}-{{ loop.index }}"
@@ -161,10 +161,10 @@
           cache: "no-cache",
           headers: { "Accept-Language": "application/json" },
         })
-      } catch {
+      } catch (e) {
         // mask iframe with error message
         maskEl.classList.remove("is-invisible");
-        maskEl.getElementsByClassName("title")[0].innerText = "Error fetching URL";
+        maskEl.getElementsByClassName("title")[0].innerText = e.message;
         return;
       }
       if (response == undefined || !response.ok) {
