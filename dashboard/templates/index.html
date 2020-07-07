@@ -112,16 +112,12 @@
           </div>
         </div>
       </section>
-      <section class="iframe-container">
-        <div class="columns is-multiline" style="height: 100%;">
+        <section class="columns is-multiline">
           {% for name, src in iframes.items() %}
           <div class="column is-half">
-            <div class="iframe">
+            <div class="iframe-container">
               <div class="iframe-src">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="{{ src }}?ts={{ unix_timestamp }}"
+                <a target="_blank" rel="noopener noreferrer" href="{{ src }}"
                   >{{ src }}</a
                 >
               </div>
@@ -135,8 +131,9 @@
               <iframe
                 name="{{ unix_timestamp }}-{{ loop.index }}"
                 id="{{ loop.index }}"
-                src="{{ src }}"
+                src="{{ src }}?ts={{ unix_timestamp }}"
                 data-id="{{ loop.index }}"
+                data-url="{{ src }}"
               >
               </iframe>
             </div>
@@ -144,7 +141,6 @@
           {% endfor %}
         </div>
       </section>
-    </div>
   </body>
   <script src="/static/easytimer.min.js"></script>
   <script>
@@ -156,27 +152,29 @@
         `service-${iframeElement.dataset.id}`
       );
       const parentEl = iframeElement.parentElement;
-      const src = iframeElement.src.split("?")[0];
+      const src = iframeElement.dataset.url;
       const timestamp = Date.now();
 
       // get latest commit sha from app
+      var response;
       try {
-        const response = await fetch(src, {
+        response = await fetch(src, {
           cache: "no-cache",
           headers: { "Accept-Language": "application/json" },
-        });
+        })
       } catch {
         // mask iframe with error message
         maskEl.classList.remove("is-invisible");
-        maskEl.getElementsByClassName("title")[0].innerText =
-          "Error fetching URL";
+        maskEl.getElementsByClassName("title")[0].innerText = "Error fetching URL";
         return;
       }
-      if (!response.ok) {
+      if (response == undefined || !response.ok) {
         // mask iframe with http status
         maskEl.classList.remove("is-invisible");
         maskEl.getElementsByClassName("title")[0].innerText = response.status;
         return;
+      } else {
+        maskEl.classList.add("is-invisible");
       }
       const data = await response.json();
       const currentVer = serviceMap.get(src);
@@ -185,9 +183,6 @@
       if (newVer !== currentVer) {
         console.log(`🕵️ new version detected on ${src} (${newVer})`);
         serviceMap.set(src, newVer);
-
-        // hide mask covering iframe
-        maskEl.classList.add("is-invisible");
 
         // cache-bust iframe
         iframeElement.name = `${iframeElement.name.split("-")[0]}-${timestamp}`;
@@ -204,7 +199,7 @@
     async function serviceLoop() {
       var iframes = document.getElementsByTagName("iframe");
       for (var i = 0, max = iframes.length; i < max; i++) {
-        var el = checkService(iframes[i]);
+        checkService(iframes[i])
       }
       setTimeout(serviceLoop, 2000);
     }

@@ -38,7 +38,7 @@ except FileNotFoundError:
     COMMIT_SHA = repo.head.object.hexsha[:7]
 
 app = Flask("7apps")
-CORS(app)
+CORS(app, send_wildcard=True)
 
 fmt = Figlet(font=ASCII_FONT)
 
