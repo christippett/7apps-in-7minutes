@@ -1,18 +1,22 @@
 import os
+
+from dotenv import load_dotenv
 from flask import Flask, render_template
+
+load_dotenv()
 
 app = Flask(__name__)
 
-SOURCES = [
-    "http://localhost:8080/",
-    os.environ.get("COMPUTE_ENGINE_URL"),
-    os.environ.get("APPENGINE_STANDARD_URL"),
-    os.environ.get("APPENGINE_FLEXIBLE_URL"),
-    os.environ.get("CLOUD_RUN_URL"),
-    os.environ.get("CLOUD_RUN_ANTHOS_URL"),
-    os.environ.get("CLOUD_FUNCTIONS_URL"),
-    os.environ.get("KUBERNETES_ENGINE_URL"),
-]
+SOURCES = {
+    "Localhost": "http://localhost:8080/",
+    "Cloud Functions": os.getenv("CLOUD_FUNCTIONS_URL"),
+    "App Engine: Standard": os.getenv("APPENGINE_STANDARD_URL"),
+    "App Engine: Flexible": os.getenv("APPENGINE_FLEXIBLE_URL"),
+    "Cloud Run": os.getenv("CLOUD_RUN_URL"),
+    "Cloud Run: Anthos": os.getenv("CLOUD_RUN_ANTHOS_URL"),
+    "Compute Engine": os.getenv("COMPUTE_ENGINE_URL"),
+    "Google Kubernetes Engine": os.getenv("KUBERNETES_ENGINE_URL"),
+}
 
 
 @app.route("/", methods=["GET"])

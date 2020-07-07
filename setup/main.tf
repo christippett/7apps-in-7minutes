@@ -137,6 +137,8 @@ data "archive_file" "monitoring_dashboard" {
   type        = "zip"
   source_dir  = "${path.module}/../dashboard"
   output_path = "${path.root}/.terraform/dashboard.zip"
+
+  depends_on = [local_file.dot_env]
 }
 
 resource "google_storage_bucket_object" "default" {
@@ -182,23 +184,17 @@ resource "google_app_engine_standard_app_version" "default" {
     }
   }
 
-
-  env_variables = {
-    CLOUD_RUN_URL          = "https://${var.service.cloud_run.subdomain}.${var.domain}"
-    CLOUD_RUN_ANTHOS_URL   = "https://${var.service.cloud_run_anthos.subdomain}.${var.domain}"
-    CLOUD_FUNCTIONS_URL    = "https://${var.service.cloud_functions.subdomain}.${var.domain}"
-    APPENGINE_STANDARD_URL = "https://${var.service.appengine_standard.subdomain}.${var.domain}"
-    APPENGINE_FLEXIBLE_URL = "https://${var.service.appengine_flexible.subdomain}.${var.domain}"
-    COMPUTE_ENGINE_URL     = "https://${var.service.compute_engine.subdomain}.${var.domain}"
-    KUBERNETES_ENGINE_URL  = "https://${var.service.kubernetes_engine.subdomain}.${var.domain}"
-  }
-
   noop_on_destroy = true
   depends_on      = [google_app_engine_application.app]
 
   lifecycle {
     ignore_changes = [handlers]
   }
+}
+
+resource "local_file" "dot_env" {
+  content  = join("\n", [for k, v in local.service_urls : "${k}=${v}"])
+  filename = "${path.root}/dashboard/.env"
 }
 
 /* Routing Rules ------------------------------------------------------------ */
