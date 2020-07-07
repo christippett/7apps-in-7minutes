@@ -194,7 +194,7 @@ resource "google_app_engine_standard_app_version" "default" {
 
 resource "local_file" "dot_env" {
   content  = join("\n", [for k, v in local.service_urls : "${k}=${v}"])
-  filename = "${path.root}/dashboard/.env"
+  filename = "${path.root}/../dashboard/.env"
 }
 
 /* Routing Rules ------------------------------------------------------------ */
