@@ -17,7 +17,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css"
     />
-    <link href="/static/index.css" rel="stylesheet" />
+    <link href="/static/index.css?ts={{ unix_timestamp }}" rel="stylesheet" />
   </head>
 
   <body>
@@ -159,7 +159,9 @@
       var response;
       try {
         response = await fetch(src, {
+          mode: "cors" ,
           cache: "no-cache",
+          referrerPolicy: "no-referrer",
           headers: { "Accept-Language": "application/json" },
         })
       } catch {
