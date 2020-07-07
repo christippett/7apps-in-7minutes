@@ -188,16 +188,15 @@ resource "google_app_engine_standard_app_version" "default" {
   }
 
   handlers {
+    url_regex                   = ".*"
     security_level              = "SECURE_ALWAYS"
     redirect_http_response_code = "REDIRECT_HTTP_RESPONSE_CODE_301"
-    url_regex                   = "/.*"
+    script {
+      script_path = "auto"
+    }
   }
 
   depends_on = [google_app_engine_application.app]
-
-  lifecycle {
-    ignore_changes = [handlers]
-  }
 }
 
 resource "local_file" "dot_env" {
