@@ -47,16 +47,14 @@ fmt = Figlet(font=ASCII_FONT)
 def main(req: Request):
     accept_language = req.headers.get("Accept-Language")
     if accept_language == "application/json":
-        resp = jsonify(commit_sha=COMMIT_SHA)
-        resp.headers.add_header("Access-Control-Allow-Origin", "*")
-        return resp
+        return jsonify(commit_sha=COMMIT_SHA)
     title = req.args.get("title", "7Apps")
     ascii_title = fmt.renderText(title)
     return render_template(
         "index.html",
         ascii=ascii_title,
         ascii_font=ASCII_FONT,
-        commit_sha=COMMIT_SHA,
+        commit_sha=COMMIT_SHA.strip(),
         host=req.base_url.replace("http://", "https://"),
         bg_class=BG_CLASS,
         font_class=FONT_CLASS,
