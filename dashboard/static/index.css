@@ -58,7 +58,7 @@ iframe {
 }
 
 .has-new-version {
-  animation: bounce;
+  animation: tada;
   animation-duration: 0.8s;
   animation-delay: 1s;
   z-index: 999;
