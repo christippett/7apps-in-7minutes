@@ -28,13 +28,8 @@ resource "google_app_engine_flexible_app_version" "app" {
     path = "/"
   }
 
-  automatic_scaling {
-    min_total_instances = 2
-    max_total_instances = 5
-    cool_down_period    = "120s"
-    cpu_utilization {
-      target_utilization = 0.5
-    }
+  manual_scaling {
+    instances = 1
   }
 
   network {
@@ -47,7 +42,7 @@ resource "google_app_engine_flexible_app_version" "app" {
   lifecycle {
     ignore_changes = [version_id, serving_status]
   }
-  depends_on = [null_resource.initial_container_build]
+  depends_on = [null_resource.initial_container_build, manual_scaling.0.instances]
 }
 
 /* DNS ---------------------------------------------------------------------- */
