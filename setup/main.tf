@@ -187,6 +187,12 @@ resource "google_app_engine_standard_app_version" "default" {
     }
   }
 
+  handlers {
+    security_level              = "SECURE_ALWAYS"
+    redirect_http_response_code = "REDIRECT_HTTP_RESPONSE_CODE_301"
+    url_regex                   = "/.*"
+  }
+
   depends_on = [google_app_engine_application.app]
 
   lifecycle {
