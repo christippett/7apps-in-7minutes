@@ -8,7 +8,7 @@ resource "google_app_engine_flexible_app_version" "app" {
   runtime    = "custom"
   version_id = "v1"
 
-  instance_class = "F1"
+  instance_class = "B1"
 
   env_variables = {
     ENVIRONMENT = var.service.appengine_flexible.description
@@ -42,7 +42,7 @@ resource "google_app_engine_flexible_app_version" "app" {
   lifecycle {
     ignore_changes = [version_id, serving_status]
   }
-  depends_on = [null_resource.initial_container_build, manual_scaling.0.instances]
+  depends_on = [null_resource.initial_container_build]
 }
 
 /* DNS ---------------------------------------------------------------------- */
