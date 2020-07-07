@@ -140,7 +140,6 @@
       </section>
     </div>
   </body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="/static/easytimer.min.js"></script>
   <script>
     var serviceMap = new Map();
@@ -161,8 +160,6 @@
         return;
       }
       const data = await response.json();
-      console.log(data);
-
       const currentVer = serviceMap.get(src);
       const newVer = data.commit_sha;
 
