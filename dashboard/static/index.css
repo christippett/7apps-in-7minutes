@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
 
 html,
 body {
@@ -8,11 +8,31 @@ body {
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
-.container {
+body {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  height: 100%;
+}
+
+footer {
+  padding: 1.5rem;
+  flex: 0;
+  background: white;
+}
+
+section {
+  padding: 1.5rem;
+}
+
+.container {
+  flex-direction: column;
+  padding: 2rem;
+}
+
+section,
+.container,
+.columns {
+  display: flex;
+  flex: 1;
 }
 
 .column {
@@ -25,6 +45,16 @@ body {
   font-size: 2rem;
   font-weight: 500;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
+}
+
+.preface {
+  font-size: 0.7rem;
+  font-family: "Roboto Mono", "Courier New", Courier, monospace;
+  font-weight: 400;
+  white-space: pre;
+  padding: 0 2rem;
+  line-height: 1.2;
+  align-self: center;
 }
 
 iframe {

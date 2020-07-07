@@ -21,98 +21,42 @@
   </head>
 
   <body>
-    <div class="container">
-      <section class="level is-mobile mb-5">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Servian</p>
-            <p class="title">
-              <a class="has-text-grey-darker" href="https://www.servian.com">
-                <span class="icon is-large">
-                  <i class="mdi mdi-48px mdi-home-city"></i>
-                </span>
-              </a>
-            </p>
+    <section>
+      <div class="container">
+        <div class="level is-mobile mb-5 is-hidden">
+          <div class="level-item has-text-centered is-hidden-mobile">
+            <div>
+              <p id="stopwatch" class="mb-2">00:00:00</p>
+              <p>
+                <button id="start" class="button is-dark">
+                  <span class="icon">
+                    <i class="mdi mdi-play"></i>
+                  </span>
+                  <span>Start</span>
+                </button>
+                <button id="stop" class="button is-dark">
+                  <span class="icon">
+                    <i class="mdi mdi-stop"></i>
+                  </span>
+                  <span>Stop</span>
+                </button>
+                <button id="pause" class="button is-dark">
+                  <span class="icon">
+                    <i class="mdi mdi-pause"></i>
+                  </span>
+                  <span>Pause</span>
+                </button>
+                <button id="reset" class="button is-dark">
+                  <span class="icon">
+                    <i class="mdi mdi-refresh"></i>
+                  </span>
+                  <span>Reset</span>
+                </button>
+              </p>
+            </div>
           </div>
         </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">christippett.dev</p>
-            <p class="title">
-              <a
-                class="has-text-grey-darker"
-                href="https://www.christippett.dev"
-              >
-                <span class="icon is-large">
-                  <i class="mdi mdi-48px mdi-face-profile"></i>
-                </span>
-              </a>
-            </p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered is-hidden-mobile">
-          <div>
-            <p id="stopwatch" class="mb-2">00:00:00</p>
-            <p>
-              <button id="start" class="button is-dark">
-                <span class="icon">
-                  <i class="mdi mdi-play"></i>
-                </span>
-                <span>Start</span>
-              </button>
-              <button id="stop" class="button is-dark">
-                <span class="icon">
-                  <i class="mdi mdi-stop"></i>
-                </span>
-                <span>Stop</span>
-              </button>
-              <button id="pause" class="button is-dark">
-                <span class="icon">
-                  <i class="mdi mdi-pause"></i>
-                </span>
-                <span>Pause</span>
-              </button>
-              <button id="reset" class="button is-dark">
-                <span class="icon">
-                  <i class="mdi mdi-refresh"></i>
-                </span>
-                <span>Reset</span>
-              </button>
-            </p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">GitHub</p>
-            <p class="title">
-              <a
-                class="has-text-grey-darker"
-                href="https://github.com/servian/7apps7minutes"
-              >
-                <span class="icon is-large">
-                  <i class="mdi mdi-48px mdi-github"></i>
-                </span>
-              </a>
-            </p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Medium</p>
-            <p class="title">
-              <a
-                class="has-text-grey-darker"
-                href="https://medium.com/weareservian"
-              >
-                <span class="icon is-large">
-                  <i class="mdi mdi-48px mdi-book-open-page-variant"></i>
-                </span>
-              </a>
-            </p>
-          </div>
-        </div>
-      </section>
-        <section class="columns is-multiline">
+        <div class="columns is-multiline">
           {% for name, src in iframes.items() %}
           <div class="column is-half">
             <div class="iframe-container">
@@ -123,7 +67,7 @@
               </div>
               <div
                 id="service-{{ loop.index }}"
-                class="iframe-mask px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-invisible"
+                class="iframe-mask px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
               >
                 <p class="heading">🛑 {{ name }}</p>
                 <p class="title is-size-4 mt-4"></p>
@@ -140,7 +84,38 @@
           </div>
           {% endfor %}
         </div>
-      </section>
+      </div>
+    </section>
+    <footer>
+      <div class="content has-text-centered">
+        <p>
+          🖊️ <strong>7Apps</strong> was developed by
+          <a
+            href="https://christippett.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Chris Tippett</a
+          >
+          — with help and encouragement from Ricardo Yepes and
+          <a
+            href="http://www.servian.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Servian</a
+          >.
+        </p>
+        <p>
+          Find the source code on
+          <a
+            href="https://github.com/servian/7apps7minutes"
+            target="_blank"
+            rel="noopener noreferrer"
+            >GitHub</a
+          >. Licensed
+          <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+        </p>
+      </div>
+    </footer>
   </body>
   <script src="/static/easytimer.min.js"></script>
   <script>
@@ -160,20 +135,20 @@
         response = await fetch(src, {
           cache: "no-cache",
           headers: { "Accept-Language": "application/json" },
-        })
+        });
       } catch (e) {
         // mask iframe with error message
-        maskEl.classList.remove("is-invisible");
+        maskEl.classList.remove("is-hidden");
         maskEl.getElementsByClassName("title")[0].innerText = e.message;
         return;
       }
       if (response == undefined || !response.ok) {
         // mask iframe with http status
-        maskEl.classList.remove("is-invisible");
+        maskEl.classList.remove("is-hidden");
         maskEl.getElementsByClassName("title")[0].innerText = response.status;
         return;
       } else {
-        maskEl.classList.add("is-invisible");
+        maskEl.classList.add("is-hidden");
       }
       const data = await response.json();
       const currentVer = serviceMap.get(src);
@@ -199,7 +174,7 @@
     async function serviceLoop() {
       var iframes = document.getElementsByTagName("iframe");
       for (var i = 0, max = iframes.length; i < max; i++) {
-        checkService(iframes[i])
+        checkService(iframes[i]);
       }
       setTimeout(serviceLoop, 2000);
     }
