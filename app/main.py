@@ -2,7 +2,7 @@ import os
 from random import randrange
 
 from flask import Flask, Request, jsonify, render_template, request
-from flask_cors import CORS
+from flask_cors import cross_origin
 from pyfiglet import Figlet
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "Localhost")
@@ -38,11 +38,11 @@ except FileNotFoundError:
     COMMIT_SHA = repo.head.object.hexsha[:7]
 
 app = Flask("7apps")
-CORS(app, send_wildcard=True)
 
 fmt = Figlet(font=ASCII_FONT)
 
 
+@cross_origin()
 def main(req: Request):
     accept_language = req.headers.get("Accept-Language")
     if accept_language == "application/json":
