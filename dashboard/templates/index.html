@@ -117,17 +117,18 @@
           {% for name, src in iframes.items() %}
           <div class="column is-half">
             <div class="iframe">
-              <div class="iframe-src"><a href="{{ src }}">{{ src }}</a></div>
+              <div class="iframe-src">
+                <a href="{{ src }}?ts={{ unix_timestamp }}">{{ src }}</a>
+              </div>
               <div
                 id="service-{{ loop.index }}"
                 class="iframe-mask px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-invisible"
               >
                 <p class="heading">🛑 {{ name }}</p>
-                <p class="title">
-                  400
-                </p>
+                <p class="title"></p>
               </div>
               <iframe
+                name="{{ unix_timestamp }}-{{ loop.index }}"
                 id="{{ loop.index }}"
                 src="{{ src }}"
                 data-id="{{ loop.index }}"
@@ -146,15 +147,28 @@
     var timer = new easytimer.Timer();
 
     async function checkService(iframeElement) {
-      const id = iframeElement.dataset.id;
-      const maskEl = document.getElementById(`service-${id}`);
+      const maskEl = document.getElementById(
+        `service-${iframeElement.dataset.id}`
+      );
       const parentEl = iframeElement.parentElement;
-      const src = iframeElement.src;
-      const response = await fetch(src, {
-        cache: "no-cache",
-        headers: { "Accept-Language": "application/json" },
-      });
+      const src = iframeElement.src.split("?")[0];
+      const timestamp = Date.now();
+
+      // get latest commit sha from app
+      try {
+        const response = await fetch(src, {
+          cache: "no-cache",
+          headers: { "Accept-Language": "application/json" },
+        });
+      } catch {
+        // mask iframe with error message
+        maskEl.classList.remove("is-invisible");
+        maskEl.getElementsByClassName("title")[0].innerText =
+          "Error fetching URL";
+        return;
+      }
       if (!response.ok) {
+        // mask iframe with http status
         maskEl.classList.remove("is-invisible");
         maskEl.getElementsByClassName("title")[0].innerText = response.status;
         return;
@@ -166,12 +180,19 @@
       if (newVer !== currentVer) {
         console.log(`🕵️ new version detected on ${src} (${newVer})`);
         serviceMap.set(src, newVer);
-        iframeElement.src = src; // refresh iframe
+
+        // hide mask covering iframe
+        maskEl.classList.add("is-invisible");
+
+        // cache-bust iframe
+        iframeElement.name = `${iframeElement.name.split("-")[0]}-${timestamp}`;
+        iframeElement.src = `${src}?ts={timestamp}`; // refresh iframe
+
+        // animate iframe if a new version is detected
         if (currentVer !== undefined) {
           parentEl.classList.add("has-new-version");
           setTimeout(() => parentEl.classList.remove("has-new-version"), 3000);
         }
-        maskEl.classList.add("is-invisible");
       }
     }
 

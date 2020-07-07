@@ -157,15 +157,18 @@ resource "google_app_engine_standard_app_version" "default" {
     shell = "gunicorn -b :$PORT main:app"
   }
 
+  env_variables = {
+    port = "8080"
+  }
+
   deployment {
     zip {
       source_url = "https://storage.googleapis.com/${google_storage_bucket.app.name}/${google_storage_bucket_object.default.name}"
     }
   }
 
-  basic_scaling {
-    max_instances = 1
-    idle_timeout  = "300s"
+  manual_scaling {
+    instances = 1
   }
 
   handlers {
@@ -184,8 +187,7 @@ resource "google_app_engine_standard_app_version" "default" {
     }
   }
 
-  noop_on_destroy = true
-  depends_on      = [google_app_engine_application.app]
+  depends_on = [google_app_engine_application.app]
 
   lifecycle {
     ignore_changes = [handlers]

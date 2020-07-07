@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from flask import Flask, render_template
@@ -21,7 +22,9 @@ SOURCES = {
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html", iframes=SOURCES)
+    return render_template(
+        "index.html", iframes=SOURCES, unix_timestamp=int(time.time())
+    )
 
 
 if __name__ == "__main__":
