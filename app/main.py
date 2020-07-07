@@ -12,7 +12,6 @@ ASCII_OPTIONS = [
     "big",
     "stop",
     "rounded",
-    "puffy",
     "cricket",
     "contrast",
     "banner",

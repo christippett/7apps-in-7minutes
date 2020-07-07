@@ -118,7 +118,12 @@
           <div class="column is-half">
             <div class="iframe">
               <div class="iframe-src">
-                <a href="{{ src }}?ts={{ unix_timestamp }}">{{ src }}</a>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="{{ src }}?ts={{ unix_timestamp }}"
+                  >{{ src }}</a
+                >
               </div>
               <div
                 id="service-{{ loop.index }}"
