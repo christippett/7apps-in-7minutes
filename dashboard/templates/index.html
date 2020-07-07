@@ -14,50 +14,16 @@
       href="https://cdn.materialdesignicons.com/5.3.45/css/materialdesignicons.min.css"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap"
       rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css"
     />
-    <style type="text/css">
-      html,
-      body {
-        background: #f5f6fa;
-        height: 100vh;
-      }
-
-      .container {
-        display: flex;
-        flex-direction: column;
-        padding: 1rem;
-        height: 100%;
-      }
-
-      #stopwatch {
-        color: #1d1d1d;
-        font-size: 2rem;
-        font-weight: 500;
-        font-family: "Roboto Mono", "Courier New", Courier, monospace;
-      }
-
-      .iframe-container {
-        flex: 1;
-      }
-
-      .iframe {
-        min-height: 230px;
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-        border-radius: 0.5rem;
-        border: 1px solid #e4e4e4;
-        background-color: #dddddd;
-      }
-    </style>
+    <link href="/static/index.css" rel="stylesheet" />
   </head>
 
   <body>
     <div class="container">
-      <section class="level mb-5">
-        <div class="level-item has-text-centered is-hidden-mobile">
+      <section class="level is-mobile mb-5">
+        <div class="level-item has-text-centered">
           <div>
             <p class="heading">Servian</p>
             <p class="title">
@@ -69,9 +35,9 @@
             </p>
           </div>
         </div>
-        <div class="level-item has-text-centered is-hidden-mobile">
+        <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Chris Tippett</p>
+            <p class="heading">christippett.dev</p>
             <p class="title">
               <a
                 class="has-text-grey-darker"
@@ -84,7 +50,7 @@
             </p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div class="level-item has-text-centered is-hidden-mobile">
           <div>
             <p id="stopwatch" class="mb-2">00:00:00</p>
             <p>
@@ -115,7 +81,7 @@
             </p>
           </div>
         </div>
-        <div class="level-item has-text-centered is-hidden-mobile">
+        <div class="level-item has-text-centered">
           <div>
             <p class="heading">GitHub</p>
             <p class="title">
@@ -130,7 +96,7 @@
             </p>
           </div>
         </div>
-        <div class="level-item has-text-centered is-hidden-mobile">
+        <div class="level-item has-text-centered">
           <div>
             <p class="heading">Medium</p>
             <p class="title">
@@ -148,10 +114,26 @@
       </section>
       <section class="iframe-container">
         <div class="columns is-multiline" style="height: 100%;">
-          {% for src in iframes %}
+          {% for name, src in iframes.items() %}
           <div class="column is-half">
-            <iframe id="{{ loop.index }}" class="iframe card" src="{{ src }}">
-            </iframe>
+            <div class="iframe">
+              <div class="iframe-src"><a href="{{ src }}">{{ src }}</a></div>
+              <div
+                id="service-{{ loop.index }}"
+                class="iframe-mask px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-invisible"
+              >
+                <p class="heading">🛑 {{ name }}</p>
+                <p class="title">
+                  400
+                </p>
+              </div>
+              <iframe
+                id="{{ loop.index }}"
+                src="{{ src }}"
+                data-id="{{ loop.index }}"
+              >
+              </iframe>
+            </div>
           </div>
           {% endfor %}
         </div>
@@ -161,46 +143,73 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="/static/easytimer.min.js"></script>
   <script>
-    var intervalId = 0;
+    var serviceMap = new Map();
     var timer = new easytimer.Timer();
 
-    function startRefreshInterval() {
-      let intervalId = window.setInterval(function () {
-        var iframes = document.getElementsByTagName("iframe");
+    async function checkService(iframeElement) {
+      const id = iframeElement.dataset.id;
+      const maskEl = document.getElementById(`service-${id}`);
+      const parentEl = iframeElement.parentElement;
+      const src = iframeElement.src;
+      const response = await fetch(src, {
+        cache: "no-cache",
+        headers: { "Accept-Language": "application/json" },
+      });
+      if (!response.ok) {
+        maskEl.classList.remove("is-invisible");
+        maskEl.getElementsByClassName("title")[0].innerText = response.status;
+        return;
+      }
+      const data = await response.json();
+      console.log(data);
 
-        for (var i = 0, max = iframes.length; i < max; i++) {
-          var el = iframes[i];
-          el.src = el.src;
+      const currentVer = serviceMap.get(src);
+      const newVer = data.commit_sha;
+
+      if (newVer !== currentVer) {
+        console.log(`🕵️ new version detected on ${src} (${newVer})`);
+        serviceMap.set(src, newVer);
+        iframeElement.src = src; // refresh iframe
+        if (currentVer !== undefined || true) {
+          parentEl.classList.add("has-new-version");
+          setTimeout(() => parentEl.classList.remove("has-new-version"), 3000);
         }
-      }, 10000);
-      return intervalId;
+        maskEl.classList.add("is-invisible");
+      }
     }
 
-    $("#start").click(function () {
-      timer.start();
-      intervalId = startRefreshInterval();
-    });
-    $("#pause").click(function () {
-      timer.pause();
-    });
-    $("#stop").click(function () {
-      timer.stop();
-      window.clearInterval(intervalId);
-    });
-    $("#reset").click(function () {
+    async function serviceLoop() {
+      var iframes = document.getElementsByTagName("iframe");
+      for (var i = 0, max = iframes.length; i < max; i++) {
+        var el = checkService(iframes[i]);
+      }
+      setTimeout(serviceLoop, 2000);
+    }
+
+    serviceLoop();
+
+    document.getElementById("start").click(() => timer.start());
+    document.getElementById("pause").click(() => timer.pause());
+    document.getElementById("stop").click(() => timer.stop());
+    document.getElementById("reset").click(() => {
       timer.reset();
       timer.stop();
-      window.clearInterval(intervalId);
     });
-    timer.addEventListener("secondsUpdated", function (e) {
-      $("#stopwatch").html(timer.getTimeValues().toString());
+    timer.addEventListener("secondsUpdated", (e) => {
+      document
+        .getElementById("stopwatch")
+        .innerText(timer.getTimeValues().toString());
     });
-    timer.addEventListener("started", function (e) {
-      $("#stopwatch").html(timer.getTimeValues().toString());
+    timer.addEventListener("started", (e) => {
+      document
+        .getElementById("stopwatch")
+        .innerText(timer.getTimeValues().toString());
     });
-    timer.addEventListener("reset", function (e) {
+    timer.addEventListener("reset", (e) => {
       timer.stop();
-      $("#stopwatch").html(timer.getTimeValues().toString());
+      document
+        .getElementById("stopwatch")
+        .innerText(timer.getTimeValues().toString());
     });
   </script>
 </html>

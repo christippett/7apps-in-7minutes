@@ -1,0 +1,98 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500;1,400&display=swap");
+
+html,
+body {
+  background: #f5f6fa;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  height: 100%;
+}
+
+#stopwatch {
+  color: #1d1d1d;
+  font-size: 2rem;
+  font-weight: 500;
+  font-family: "Roboto Mono", "Courier New", Courier, monospace;
+}
+
+.iframe-container {
+  flex: 1;
+}
+
+iframe,
+.iframe-mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.iframe {
+  min-height: 230px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  border: 1px solid #e4e4e4;
+  position: relative;
+  box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1),
+    0 0 0 1px rgba(10, 10, 10, 0.02);
+}
+
+.iframe-src {
+  z-index: 999;
+  position: absolute;
+  font-size: 0.75rem;
+  padding: 1px 8px;
+  background: rgba(255, 255, 255, 1);
+  font-weight: 400;
+  font-style: italic;
+  font-family: "Roboto Mono";
+  color: rgba(84, 84, 84, 0.9);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  border-bottom-right-radius: 5px;
+}
+
+.has-new-version {
+  animation: bounce;
+  animation-duration: 0.8s;
+  animation-delay: 1s;
+  z-index: 999;
+}
+
+.iframe-mask {
+  z-index: 999;
+  background-color: white;
+  background-image: linear-gradient(
+      45deg,
+      rgba(248, 248, 248, 0.5) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(248, 248, 248, 0.5) 75%,
+      rgba(248, 248, 248, 0.5)
+    ),
+    linear-gradient(
+      45deg,
+      rgba(248, 248, 248, 0.5) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(248, 248, 248, 0.5) 75%,
+      rgba(248, 248, 248, 0.5)
+    );
+  background-size: 60px 60px;
+  background-position: 0 0, 30px 30px;
+}
+
+.column {
+  position: relative;
+}
