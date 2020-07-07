@@ -271,9 +271,9 @@
   <body class="font-{{ font_class }} bg bg-{{ bg_class }}">
     <section class="py-1 px-1">
       <div class="container has-text-centered px-0 py-0">
-        <div class="ascii is-family-monospace">{{ ascii }}</div>
+        <div class="ascii is-family-monospace">{{ ascii_header }}</div>
         <p class="service-type has-text-weight-medium is-size-3 mt-5">
-          {{ env }}
+          {{ service_name }}
         </p>
         <p class="is-size-6 has-text-weight-medium mt-2">
           📃 {{ commit_sha|upper }}

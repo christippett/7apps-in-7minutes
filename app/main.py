@@ -1,7 +1,7 @@
 import os
 from random import randrange
 
-from flask import Flask, Request, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
 from pyfiglet import Figlet
 
@@ -42,28 +42,26 @@ app = Flask("7apps")
 fmt = Figlet(font=ASCII_FONT)
 
 
-@cross_origin()
-def main(req: Request):
-    accept_language = req.headers.get("Accept-Language")
+@app.route("/")
+@cross_origin(send_wildcard=True)
+def main(*args, **kwargs):
+    # accomodate requests from the 7apps dashboard
+    accept_language = request.headers.get("Accept-Language")
     if accept_language == "application/json":
         return jsonify(commit_sha=COMMIT_SHA)
-    title = req.args.get("title", "7Apps")
-    ascii_title = fmt.renderText(title)
+
+    #
+    ascii_header = fmt.renderText("7Apps")
     return render_template(
         "index.html",
-        ascii=ascii_title,
+        host=request.base_url.replace("http://", "https://"),
+        service_name=ENVIRONMENT,
+        ascii_header=ascii_header,
         ascii_font=ASCII_FONT,
         commit_sha=COMMIT_SHA.strip(),
-        host=req.base_url.replace("http://", "https://"),
         bg_class=BG_CLASS,
         font_class=FONT_CLASS,
-        env=ENVIRONMENT,
     )
-
-
-@app.route("/")
-def index():
-    return main(request)
 
 
 if __name__ == "__main__":
