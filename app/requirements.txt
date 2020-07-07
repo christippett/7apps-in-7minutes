@@ -1,6 +1,6 @@
 Flask
 pyfiglet
-pytest
-gunicorn
 gitpython
+flask-cors
+gunicorn
 
