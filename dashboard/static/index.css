@@ -14,13 +14,13 @@ body {
 }
 
 footer {
-  padding: 1.5rem;
   flex: 0;
-  background: white;
+  padding: 1rem 8em 3rem;
+  font-size: 0.8rem;
 }
 
 section {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .container {
