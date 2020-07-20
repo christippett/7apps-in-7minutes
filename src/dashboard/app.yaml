@@ -1,21 +1,23 @@
 runtime: python38
-env: standard
 service: default
+
+manual_scaling:
+  instances: 1
+
 instance_class: B2
+
 handlers:
   - url: /favicon\.ico
     static_files: static/favicon.ico
     require_matching_file: false
     upload: static/favicon\.ico
+
   - url: /static
     static_files: static/.*
     require_matching_file: false
     upload: static/.*
+
   - url: .*
     script: auto
     secure: always
     redirect_http_response_code: "301"
-  - url: .*
-    script: auto
-manual_scaling:
-  instances: 1
