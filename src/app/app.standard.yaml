@@ -1,3 +1,14 @@
 runtime: python38
-env: standard
 service: standard
+
+manual_scaling:
+  instances: 1
+
+env_variables:
+  APP_TITLE: "App Engine: Standard"
+
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
