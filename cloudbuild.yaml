@@ -9,7 +9,7 @@ steps:
     args:
       - "-c"
       - |
-        echo $SHORT_SHA > ./app/commit_sha.txt && \
+        echo $SHORT_SHA > ./src/app/commit_sha.txt && \
         gcloud builds submit \
           --config=cloudbuild.container.yaml \
           --substitutions=SHORT_SHA=$SHORT_SHA,_IMAGE_NAME=${_IMAGE_NAME}
