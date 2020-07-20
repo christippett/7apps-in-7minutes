@@ -1,4 +1,0 @@
-runtime: python38
-service: standard
-env_variables:
-  ENVIRONMENT: "App Engine: Standard"

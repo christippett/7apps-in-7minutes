@@ -1,6 +1,0 @@
-Flask
-pyfiglet
-gitpython
-flask-cors
-gunicorn
-

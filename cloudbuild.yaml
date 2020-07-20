@@ -29,9 +29,10 @@ steps:
       - --trigger-http
       - --runtime=python38
       - --entry-point=main
+      - --set-env-vars=APP_TITLE='Cloud Functions'
       - --source=./
       - --quiet
-    dir: "app"
+    dir: "src/app"
     waitFor: ["-"]
 
   # ============================================================================ #
@@ -49,7 +50,7 @@ steps:
       - --version=$SHORT_SHA
       - --stop-previous-version
       - --quiet
-    dir: "app"
+    dir: "src/app"
     waitFor: ["-"]
 
   # ============================================================================ #
@@ -63,12 +64,12 @@ steps:
       - app
       - deploy
       - app.flex.yaml
-      - --image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - --image-url=${_IMAGE_NAME}:$SHORT_SHA
       - --promote
       - --version=$SHORT_SHA
       - --stop-previous-version
       - --quiet
-    dir: "app"
+    dir: "src/app"
     waitFor: ["Build: Docker image"]
 
   # ============================================================================ #
@@ -82,9 +83,10 @@ steps:
       - run
       - deploy
       - ${_CLOUD_RUN_NAME}
+      - --image=${_IMAGE_NAME}:$SHORT_SHA
+      - "--set-env-vars=APP_TITLE=Cloud Run"
       - --platform=managed
       - --allow-unauthenticated
-      - --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
       - --region=${_REGION}
       - --quiet
     waitFor: ["Build: Docker image"]
@@ -100,12 +102,12 @@ steps:
       - run
       - deploy
       - ${_CLOUD_RUN_ANTHOS_NAME}
-      - --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - --image=${_IMAGE_NAME}:$SHORT_SHA
+      - "--set-env-vars=APP_TITLE=Cloud Run: Managed"
       - --platform=gke
       - --cluster=${_GKE_CLUSTER_NAME}
       - --cluster-location=${_ZONE}
       - --namespace=default
-      - --service-account=${_GKE_SERVICE_ACCOUNT}
       - --quiet
     waitFor: ["Build: Docker image"]
 
@@ -136,8 +138,8 @@ steps:
     args:
       - set
       - image
-      - deployment/gke-app-deployment
-      - 7apps-app=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+      - deployment/${_KUBERNETES_ENGINE_NAME}
+      - ${_KUBERNETES_ENGINE_NAME}=${_IMAGE_NAME}:$SHORT_SHA
     env:
       - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
       - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
@@ -153,8 +155,6 @@ substitutions:
   _REGION: us-central1
   _ZONE: us-central1-a
   _GKE_CLUSTER_NAME: tbc
-  _GKE_SERVICE_ACCOUNT: tbc
-  _DOMAIN: tbc
   _CLOUD_RUN_NAME: tbc
   _CLOUD_RUN_ANTHOS_NAME: tbc
   _CLOUD_FUNCTIONS_NAME: tbc
