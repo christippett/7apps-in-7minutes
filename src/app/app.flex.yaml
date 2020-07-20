@@ -1,0 +1,24 @@
+runtime: custom
+api_version: "1.0"
+env: flexible
+threadsafe: true
+env_variables:
+  APP_TITLE: "App Engine: Flexible"
+automatic_scaling:
+  cool_down_period: 120s
+  min_num_instances: 2
+  max_num_instances: 20
+  cpu_utilization:
+    target_utilization: 0.5
+liveness_check:
+  initial_delay_sec: 300
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 4
+  success_threshold: 2
+readiness_check:
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+  app_start_timeout_sec: 300
