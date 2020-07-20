@@ -29,7 +29,7 @@ steps:
       - --trigger-http
       - --runtime=python38
       - --entry-point=main
-      - --set-env-vars=APP_TITLE='Cloud Functions'
+      - "--set-env-vars=APP_TITLE=Cloud Function"
       - --source=./
       - --quiet
     dir: "src/app"
