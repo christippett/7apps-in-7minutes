@@ -14,7 +14,12 @@ dependencies {
   paths = ["${local.root_dir}/project"]
 }
 
+dependency "cluster" {
+  config_path = "${local.root_dir}/kubernetes_engine/cluster"
+}
+
 /* Inputs ------------------------------------------------------------------- */
 
 inputs = {
+  kubernetes_cluster_name = dependency.cluster.outputs.cluster_name
 }

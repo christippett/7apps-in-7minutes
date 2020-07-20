@@ -25,14 +25,14 @@ resource "google_cloudbuild_trigger" "deploy" {
     _REGION                  = var.region
     _ZONE                    = var.zone
     _IMAGE_NAME              = var.image_name
-    _GKE_CLUSTER_NAME        = "gke-cluster"
+    _GKE_CLUSTER_NAME        = var.kubernetes_cluster_name
     _CLOUD_RUN_NAME          = var.services.cloud_run.name
     _CLOUD_RUN_ANTHOS_NAME   = var.services.cloud_run_anthos.name
     _CLOUD_FUNCTIONS_NAME    = var.services.cloud_function.name
     _APPENGINE_STANDARD_NAME = var.services.app_engine_standard.name
     _APPENGINE_FLEXIBLE_NAME = var.services.app_engine_flexible.name
-    _COMPUTE_ENGINE_NAME     = var.services.compute_engine.name
     _KUBERNETES_ENGINE_NAME  = var.services.kubernetes_engine.name
+    _COMPUTE_ENGINE_DOMAIN   = var.services.compute_engine.domain
   }
 
   github {
