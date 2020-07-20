@@ -43,3 +43,17 @@ resource "google_cloudbuild_trigger" "deploy" {
     }
   }
 }
+
+/* IAM ---------------------------------------------------------------------- */
+
+# Give Cloud Build perimssion to deploy and do anything 🤪
+
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
+resource "google_project_iam_member" "project" {
+  project = var.project_id
+  role    = "roles/editor"
+  member  = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
+}
