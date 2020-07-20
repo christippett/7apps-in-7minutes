@@ -1,2 +1,3 @@
 runtime: python38
 env: standard
+service: standard

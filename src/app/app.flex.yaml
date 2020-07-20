@@ -1,2 +1,3 @@
 runtime: custom
 env: flexible
+service: flexible

@@ -1,5 +1,6 @@
 runtime: python38
 env: standard
+service: default
 instance_class: B2
 handlers:
   - url: /favicon\.ico
