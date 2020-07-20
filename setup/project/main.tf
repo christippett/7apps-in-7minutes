@@ -13,7 +13,7 @@ module "project_services" {
     "siteverification.googleapis.com",
     "appengine.googleapis.com",
     "run.googleapis.com",
-    "secretmanager.googleapis.com",
+    "iap.googleapis.com",
 
     # These services are required by Cloud Run (Anthos)
     "cloudresourcemanager.googleapis.com",
