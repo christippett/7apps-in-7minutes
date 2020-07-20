@@ -107,18 +107,30 @@ resource "helm_release" "traefik" {
   repository = "https://containous.github.io/traefik-helm-chart"
   name       = "traefik"
   chart      = "traefik"
-  version    = "8.8.1"
+  version    = "8.9.1"
   atomic     = true
   timeout    = 300
 
   values = [yamlencode(
     {
+      deployment = {
+        initContainers = [
+          {
+            name  = "volume-permissions"
+            image = "busybox:1.31.1"
+            command : ["sh", "-c", "chmod -Rv 600 /data/*"]
+            volumeMounts : [{ name = "data", "mountPath" : "/data" }]
+          }
+        ]
+      }
       additionalArguments = [
         "--certificatesresolvers.le.acme.email=${var.email}",
         "--certificatesresolvers.le.acme.storage=/data/acme.json",
-        "--certificatesresolvers.le.acme.tlschallenge=true",
+        "--certificatesresolvers.le.acme.httpchallenge=true",
+        "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web",
         "--entrypoints.web.http.redirections.entryPoint.to=:443",
-        "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+        "--entrypoints.web.http.redirections.entryPoint.scheme=https",
+        "--entrypoints.websecure.http.tls=le"
       ]
       persistence = {
         enabled = true
