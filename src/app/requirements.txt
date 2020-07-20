@@ -3,4 +3,5 @@ pyfiglet
 gitpython
 flask-cors
 gunicorn
+requests
 
