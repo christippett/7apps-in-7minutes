@@ -87,7 +87,7 @@ steps:
       - "--set-env-vars=APP_TITLE=Cloud Run"
       - --platform=managed
       - --allow-unauthenticated
-      - --region=${_REGION}
+      - --region=us-central1
       - --quiet
     waitFor: ["Build: Docker image"]
 
