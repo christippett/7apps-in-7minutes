@@ -70,7 +70,7 @@ steps:
       - --stop-previous-version
       - --quiet
     dir: "src/app"
-    waitFor: ["Build: Docker image"]
+    waitFor: ["docker-build"]
 
   # ============================================================================ #
   #                                 🏃‍♀️ CLOUD RUN                                 #
@@ -89,7 +89,7 @@ steps:
       - --allow-unauthenticated
       - --region=us-central1
       - --quiet
-    waitFor: ["Build: Docker image"]
+    waitFor: ["docker-build"]
 
   # ============================================================================ #
   #                             🏃‍♂️ CLOUD RUN (ANTHOS)                            #
@@ -109,7 +109,7 @@ steps:
       - --cluster-location=${_ZONE}
       - --namespace=default
       - --quiet
-    waitFor: ["Build: Docker image"]
+    waitFor: ["docker-build"]
 
   # ============================================================================ #
   #                           ⚙️ GOOGLE COMPUTE ENGINE                           #
@@ -134,7 +134,7 @@ steps:
         --header 'Content-Type: application/json'
     env:
       - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
-    waitFor: ["Build: Docker image"]
+    waitFor: ["docker-build"]
 
   # ============================================================================ #
   #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
@@ -150,7 +150,7 @@ steps:
     env:
       - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
       - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
-    waitFor: ["Build: Docker image"]
+    waitFor: ["docker-build"]
 
 # ============================================================================ #
 #                                    Fin 🏁                                    #
