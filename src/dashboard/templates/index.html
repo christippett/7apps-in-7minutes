@@ -21,70 +21,61 @@
   </head>
 
   <body>
-    <section>
-      <div class="container">
-        <div class="level is-mobile mb-5 is-hidden">
-          <div class="level-item has-text-centered is-hidden-mobile">
-            <div>
-              <p id="stopwatch" class="mb-2">00:00:00</p>
+    <section class="is-flex-desktop">
+      <div class="container is-flex-desktop">
+          <div class="preface mb-6">
+            <div class="content has-text-grey px-4 py-4">
+              <h3>7-Apps on Google Cloud</h3>
               <p>
-                <button id="start" class="button is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-play"></i>
-                  </span>
-                  <span>Start</span>
-                </button>
-                <button id="stop" class="button is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-stop"></i>
-                  </span>
-                  <span>Stop</span>
-                </button>
-                <button id="pause" class="button is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-pause"></i>
-                  </span>
-                  <span>Pause</span>
-                </button>
-                <button id="reset" class="button is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-refresh"></i>
-                  </span>
-                  <span>Reset</span>
-                </button>
+                The purpose of this demo is to showcase the various options available from Google Cloud for hosting a web application.
               </p>
+              <strong>Objectives</strong>
+              <ol class="is-upper-roman">
+                <li>Deploy the same code across all services — nothing about the application should be particular to any service (or Google Cloud for that matter)</li>
+                <li>Each application should have its own custom domain</li>
+                <li>Requests should be served over HTTPS, with SSL/TLS certificates provisioned automatically</li>
+                <li>Deployments should be 100% automated</li>
+              </ol>
+            </div>
+            <div class="box is-flex is-relative px-0 py-0">
+              <div class="box-label">
+                Cloud Build
+              </div>
+              <div class="logs ">
+              {% for i in range(0, 100) %}<span class="step">[Step #3 - "Deploy: App Engine (Flexible)]</span> Logs<br/>{% endfor %}
+            </div>
             </div>
           </div>
-        </div>
-        <div class="columns is-multiline">
-          {% for name, src in iframes.items() %}
-          <div class="column is-half">
-            <div class="iframe-container">
-              <div class="iframe-src">
-                <a target="_blank" rel="noopener noreferrer" href="{{ src }}"
-                  >{{ src }}</a
+          <div class="columns is-multiline">
+            {% for name, src in iframes.items() %}
+            <div id="{{ name|lower|replace(" ", "-") }}" class="column is-half is-flex is-relative">
+              <div class="box is-flex is-relative is-clipped px-0 py-0">
+                <div class="box-label">
+                  <a target="_blank" rel="noopener noreferrer" href="{{ src }}"
+                    >{{ src }}</a
+                  >
+                </div>
+                <div
+                  id="service-{{ loop.index }}"
+                  class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
                 >
+                  <p class="heading">🛑 {{ name }}</p>
+                  <p class="title is-size-5 mt-4"></p>
+                </div>
+                <iframe
+                  name="{{ unix_timestamp }}-{{ loop.index }}"
+                  class="is-clipped"
+                  id="{{ loop.index }}"
+                  src="{{ src }}?ts={{ unix_timestamp }}"
+                  data-id="{{ loop.index }}"
+                  data-url="{{ src }}"
+                >
+                </iframe>
               </div>
-              <div
-                id="service-{{ loop.index }}"
-                class="iframe-mask px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
-              >
-                <p class="heading">🛑 {{ name }}</p>
-                <p class="title is-size-4 mt-4"></p>
-              </div>
-              <iframe
-                name="{{ unix_timestamp }}-{{ loop.index }}"
-                id="{{ loop.index }}"
-                src="{{ src }}?ts={{ unix_timestamp }}"
-                data-id="{{ loop.index }}"
-                data-url="{{ src }}"
-              >
-              </iframe>
             </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
-      </div>
     </section>
     <footer>
       <div class="content has-text-centered has-text-grey">
@@ -101,10 +92,11 @@
       </div>
     </footer>
   </body>
-  <script src="/static/easytimer.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
+  <script src="/static/index.js?ts={{ unix_timestamp }}"></script>
   <script>
     var serviceMap = new Map();
-    var timer = new easytimer.Timer();
 
     async function checkService(iframeElement) {
       const maskEl = document.getElementById(
@@ -136,7 +128,7 @@
       }
       const data = await response.json();
       const currentVer = serviceMap.get(src);
-      const newVer = data.commit_sha;
+      const newVer = data.commit_sha.trim();
       const timestamp = Date.now();
 
       if (newVer !== currentVer) {
@@ -165,28 +157,5 @@
 
     serviceLoop();
 
-    document.getElementById("start").click(() => timer.start());
-    document.getElementById("pause").click(() => timer.pause());
-    document.getElementById("stop").click(() => timer.stop());
-    document.getElementById("reset").click(() => {
-      timer.reset();
-      timer.stop();
-    });
-    timer.addEventListener("secondsUpdated", (e) => {
-      document
-        .getElementById("stopwatch")
-        .innerText(timer.getTimeValues().toString());
-    });
-    timer.addEventListener("started", (e) => {
-      document
-        .getElementById("stopwatch")
-        .innerText(timer.getTimeValues().toString());
-    });
-    timer.addEventListener("reset", (e) => {
-      timer.stop();
-      document
-        .getElementById("stopwatch")
-        .innerText(timer.getTimeValues().toString());
-    });
   </script>
 </html>

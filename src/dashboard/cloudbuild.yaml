@@ -1,0 +1,19 @@
+steps:
+  - id: docker-pull
+    name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      ["-c", "docker pull gcr.io/$PROJECT_ID/7apps-dashboard:latest || exit 0"]
+  - id: docker-build
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - --cache-from=gcr.io/$PROJECT_ID/7apps-dashboard:latest
+      - --tag=gcr.io/$PROJECT_ID/7apps-dashboard:$SHORT_SHA
+      - --tag=gcr.io/$PROJECT_ID/7apps-dashboard:latest
+      - .
+  - id: docker-push
+    name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/7apps-dashboard:$SHORT_SHA"]
+images: ["gcr.io/$PROJECT_ID/7apps-dashboard:$SHORT_SHA"]
+timeout: 3600s

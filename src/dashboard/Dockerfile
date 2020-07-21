@@ -11,4 +11,4 @@ ADD . /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "-k", "flask_sockets.worker", "main:app"]

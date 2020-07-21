@@ -103,7 +103,7 @@ steps:
       - deploy
       - ${_CLOUD_RUN_ANTHOS_NAME}
       - --image=${_IMAGE_NAME}:$SHORT_SHA
-      - "--set-env-vars=APP_TITLE=Cloud Run: Managed"
+      - "--set-env-vars=APP_TITLE=Cloud Run: Anthos"
       - --platform=gke
       - --cluster=${_GKE_CLUSTER_NAME}
       - --cluster-location=${_ZONE}

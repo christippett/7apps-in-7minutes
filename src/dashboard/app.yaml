@@ -1,23 +1,63 @@
-runtime: python38
-service: default
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+        - image: gcr.io/servian-labs-7apps/7apps-dashboard:16b30e6
+          name: 7apps-dashboard
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          imagePullPolicy: Always
+      restartPolicy: Always
 
-manual_scaling:
-  instances: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: default
+  labels:
+    app: dashboard
+spec:
+  ports:
+    - name: dashboard-port
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: dashboard
+  type: ClusterIP
 
-instance_class: B2
-
-handlers:
-  - url: /favicon\.ico
-    static_files: static/favicon.ico
-    require_matching_file: false
-    upload: static/favicon\.ico
-
-  - url: /static
-    static_files: static/.*
-    require_matching_file: false
-    upload: static/.*
-
-  - url: .*
-    script: auto
-    secure: always
-    redirect_http_response_code: "301"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dashboard-https
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`7apps.cloud`)
+      services:
+        - name: dashboard-service
+          port: 8080
+  tls:
+    certResolver: le

@@ -1,3 +1,9 @@
 Flask
-python-dotenv
+Flask-Sockets
+flask-cors
+google-auth
+google-cloud-pubsub
 gunicorn
+python-dateutil
+python-dotenv
+requests

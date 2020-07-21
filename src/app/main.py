@@ -32,7 +32,6 @@ def main(*args, **kwargs):
     if accept_language == "application/json":
         return jsonify(commit_sha=COMMIT_SHA)
 
-    #
     ascii_header = fmt.renderText("7Apps")
     return render_template(
         "index.html",
