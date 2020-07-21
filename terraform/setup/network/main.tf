@@ -40,28 +40,6 @@ module "firewall" {
     { "protocol" : "tcp" }
   ]
 
-  # In addition to the default ports, Compute Engine also uses port 9000 to
-  # receive webhook requests that trigger app updates.
-
-  custom_rules = {
-    "${var.network_name}-ingress-tag-webhook" = {
-      description = "Allow service access to Compute Engine webhooks."
-      direction   = "INGRESS"
-      action      = "allow"
-      ranges      = ["0.0.0.0/0"]
-      sources     = []
-      targets     = ["webhook"]
-
-      use_service_accounts = false
-
-      rules = [
-        {
-          protocol = "tcp"
-          ports    = ["9000"]
-        }
-      ]
-      extra_attributes = {}
-    }
-  }
+  custom_rules = {}
 }
 
