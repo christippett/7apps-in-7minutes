@@ -116,7 +116,7 @@ steps:
   # ============================================================================ #
 
   - id: update-compute-engine
-    name: "gcr.io/cloud-builders/curl"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: bash
     args:
       - "-c"
