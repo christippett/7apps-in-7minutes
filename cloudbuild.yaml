@@ -130,6 +130,7 @@ steps:
         curl -X PATCH https://localhost:9000/hooks/update-env \
         --silent --show-error --fail --insecure \
         --data '{ "key": "CONTAINER_IMAGE_TAG", "value": "$SHORT_SHA" }' \
+        --header "Host: ${_COMPUTE_ENGINE_DOMAIN}" \
         --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
         --header 'Content-Type: application/json'
     env:
