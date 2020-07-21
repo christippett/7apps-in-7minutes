@@ -29,10 +29,12 @@ module "firewall" {
   http_source_ranges  = ["0.0.0.0/0"]
   https_source_ranges = ["0.0.0.0/0"]
   ssh_source_ranges   = ["0.0.0.0/0"]
-  internal_ranges     = [google_compute_subnetwork.default.ip_cidr_range]
 
   internal_ranges_enabled = true
-
+  internal_ranges = [
+    google_compute_subnetwork.default.ip_cidr_range,
+    "35.235.240.0/20" # IAP source IP range
+  ]
   internal_allow = [
     { "protocol" : "icmp" },
     { "protocol" : "tcp" }
@@ -42,7 +44,7 @@ module "firewall" {
   # receive webhook requests that trigger app updates.
 
   custom_rules = {
-    "${google_compute_network.default.name}-ingress-tag-webhook" = {
+    "${var.network_name}-ingress-tag-webhook" = {
       description = "Allow service access to Compute Engine webhooks."
       direction   = "INGRESS"
       action      = "allow"
@@ -62,3 +64,4 @@ module "firewall" {
     }
   }
 }
+

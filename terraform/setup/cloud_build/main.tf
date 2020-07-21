@@ -32,6 +32,7 @@ resource "google_cloudbuild_trigger" "deploy" {
     _APPENGINE_STANDARD_NAME = var.services.app_engine_standard.name
     _APPENGINE_FLEXIBLE_NAME = var.services.app_engine_flexible.name
     _KUBERNETES_ENGINE_NAME  = var.services.kubernetes_engine.name
+    _COMPUTE_ENGINE_NAME     = var.services.compute_engine.name
     _COMPUTE_ENGINE_DOMAIN   = var.services.compute_engine.domain
   }
 
@@ -49,8 +50,10 @@ resource "google_cloudbuild_trigger" "deploy" {
 # Give Cloud Build perimssion to deploy and do anything 🤪
 
 resource "google_project_iam_member" "project" {
+  for_each = toset(["roles/editor", "roles/iap.tunnelResourceAccessor"])
+
   project = var.project_id
-  role    = "roles/editor"
+  role    = each.value
   member  = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
 }
 
