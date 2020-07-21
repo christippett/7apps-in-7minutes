@@ -1,35 +1,20 @@
 steps:
-  # Pull latest image (used to speed-up builds) ------------------------------ #
-  - id: "Pull latest Docker image"
+  - id: docker-pull
     name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
-    args:
-      - "-c"
-      - docker pull ${_IMAGE_NAME}:latest || exit 0
-
-  # Build Docker image ------------------------------------------------------- #
-  - id: "Build Docker image"
-    dir: "src/app"
-    name: "gcr.io/cloud-builders/docker"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        docker build \
-          --cache-from ${_IMAGE_NAME}:latest \
-          --tag ${_IMAGE_NAME}:$SHORT_SHA \
-          --tag ${_IMAGE_NAME}:latest \
-          .
-
-  # Push image to Google Container Registry ---------------------------------- #
-  - id: "Push Docker image to Google Container Registry (GCR)"
+    args: ["-c", "docker pull ${_IMAGE_NAME}:latest || exit 0"]
+  - id: docker-build
     name: "gcr.io/cloud-builders/docker"
     args:
-      - push
-      - ${_IMAGE_NAME}:$SHORT_SHA
-
-images:
-  - ${_IMAGE_NAME}:$SHORT_SHA
-substitutions:
-  _IMAGE_NAME: tbc
+      - build
+      - --cache-from=${_IMAGE_NAME}:latest
+      - --tag=${_IMAGE_NAME}:$SHORT_SHA
+      - --tag=${_IMAGE_NAME}:latest
+      - .
+  - id: docker-push
+    name: "gcr.io/cloud-builders/docker"
+    args: ["push", "${_IMAGE_NAME}:$SHORT_SHA"]
+images: ["${_IMAGE_NAME}:$SHORT_SHA"]
 timeout: 3600s
+substitutions:
+  _IMAGE_NAME: gcr.io/$PROJECT_ID/7apps-demo
