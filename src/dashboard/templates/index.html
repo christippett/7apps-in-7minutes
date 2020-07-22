@@ -44,7 +44,7 @@
               <li>Deployments should be 100% automated</li>
             </ol>
           </div>
-          <div class="docs is-relative">
+          <nav class="mb-5">
             <div class="tabs is-centered is-boxed is-small has-text-grey">
               <ul>
                 <li class="is-active">
@@ -64,14 +64,28 @@
                 </li>
               </ul>
             </div>
-            <div id="logs" class="logs is-relative px-4"></div>
+          </nav>
+          <div class="content-container">
+            <div class="content">
+              <p>
+                Logs from Cloud Build will appear below when a deployment is active.
+              </p>
+            </div>
+            <div class="logs" id="logs">
+              {% for i in range(0, 100) %}
+              <p>{{i}}</p>
+              {% endfor %}
+            </div>
           </div>
         </div>
-        <div class="columns is-multiline">
+        <div class="content is-hidden-desktop">
+          <h3>Application frames</h3>
+        </div>
+        <div class="frames columns is-multiline">
           {% for name, src in iframes.items() %} <div id="{{ name|lower|replace(" ", "-")
           }}" class="column is-half is-flex is-relative">
-          <div class="box is-flex is-relative is-clipped px-0 py-0">
-            <div class="box-label">
+          <div class="frame box is-flex is-relative is-clipped px-0 py-0">
+            <div class="frame-label">
               <a target="_blank" rel="noopener noreferrer" href="{{ src }}">{{ src }}</a>
             </div>
             <div
