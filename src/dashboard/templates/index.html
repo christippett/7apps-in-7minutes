@@ -23,59 +23,82 @@
   <body>
     <section class="is-flex-desktop">
       <div class="container is-flex-desktop">
-          <div class="preface mb-6">
-            <div class="content has-text-grey px-4 py-4">
-              <h3>7-Apps on Google Cloud</h3>
-              <p>
-                The purpose of this demo is to showcase the various options available from Google Cloud for hosting a web application.
-              </p>
-              <strong>Objectives</strong>
-              <ol class="is-upper-roman">
-                <li>Deploy the same code across all services — nothing about the application should be particular to any service (or Google Cloud for that matter)</li>
-                <li>Each application should have its own custom domain</li>
-                <li>Requests should be served over HTTPS, with SSL/TLS certificates provisioned automatically</li>
-                <li>Deployments should be 100% automated</li>
-              </ol>
-            </div>
-            <div class="box is-flex is-relative px-0 py-0">
-              <div class="box-label">
-                Cloud Build
-              </div>
-              <div class="logs ">
-              {% for i in range(0, 100) %}<span class="step">[Step #3 - "Deploy: App Engine (Flexible)]</span> Logs<br/>{% endfor %}
-            </div>
-            </div>
+        <div class="preface has-text-grey is-relative mb-6">
+          <div class="content py-4">
+            <h3>7-Apps on Google Cloud</h3>
+            <p>
+              The purpose of this demo is to showcase the various options available from
+              Google Cloud for hosting a web application.
+            </p>
+            <strong>Objectives</strong>
+            <ol class="is-upper-roman">
+              <li>
+                Deploy the same code across all services — nothing about the application
+                should be particular to any service (or Google Cloud for that matter)
+              </li>
+              <li>Each application should have its own custom domain</li>
+              <li>
+                Requests should be served over HTTPS, with SSL/TLS certificates
+                provisioned automatically
+              </li>
+              <li>Deployments should be 100% automated</li>
+            </ol>
           </div>
-          <div class="columns is-multiline">
-            {% for name, src in iframes.items() %}
-            <div id="{{ name|lower|replace(" ", "-") }}" class="column is-half is-flex is-relative">
-              <div class="box is-flex is-relative is-clipped px-0 py-0">
-                <div class="box-label">
-                  <a target="_blank" rel="noopener noreferrer" href="{{ src }}"
-                    >{{ src }}</a
-                  >
-                </div>
-                <div
-                  id="service-{{ loop.index }}"
-                  class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
-                >
-                  <p class="heading">🛑 {{ name }}</p>
-                  <p class="title is-size-5 mt-4"></p>
-                </div>
-                <iframe
-                  name="{{ unix_timestamp }}-{{ loop.index }}"
-                  class="is-clipped"
-                  id="{{ loop.index }}"
-                  src="{{ src }}?ts={{ unix_timestamp }}"
-                  data-id="{{ loop.index }}"
-                  data-url="{{ src }}"
-                >
-                </iframe>
-              </div>
+          <div class="docs is-relative">
+            <div class="tabs is-centered is-boxed is-small has-text-grey">
+              <ul>
+                <li class="is-active">
+                  <a>
+                    <span>Logs</span>
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <span>Leaderboard</span>
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <span>Cost</span>
+                  </a>
+                </li>
+              </ul>
             </div>
-            {% endfor %}
+            <div class="logs px-4">
+              {% for i in range(0, 100) %}<span class="step">
+                [Step #3 - "Deploy: App Engine (Flexible)]
+              </span>
+              Logs<br />{% endfor %}
+            </div>
           </div>
         </div>
+        <div class="columns is-multiline">
+          {% for name, src in iframes.items() %} <div id="{{ name|lower|replace(" ", "-")
+          }}" class="column is-half is-flex is-relative">
+          <div class="box is-flex is-relative is-clipped px-0 py-0">
+            <div class="box-label">
+              <a target="_blank" rel="noopener noreferrer" href="{{ src }}">{{ src }}</a>
+            </div>
+            <div
+              id="service-{{ loop.index }}"
+              class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
+            >
+              <p class="heading">🛑 {{ name }}</p>
+              <p class="title is-size-5 mt-4"></p>
+            </div>
+            <iframe
+              name="{{ unix_timestamp }}-{{ loop.index }}"
+              class="is-clipped"
+              id="{{ loop.index }}"
+              src="{{ src }}?ts={{ unix_timestamp }}"
+              data-id="{{ loop.index }}"
+              data-url="{{ src }}"
+            >
+            </iframe>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     </section>
     <footer>
       <div class="content has-text-centered has-text-grey">
@@ -86,22 +109,20 @@
             target="_blank"
             rel="noopener noreferrer"
             >GitHub</a
-          >. Licensed
-          <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+          >. Licensed <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
         </p>
       </div>
     </footer>
   </body>
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/labella/1.1.4/labella.min.js"></script>
   <script src="/static/index.js?ts={{ unix_timestamp }}"></script>
   <script>
     var serviceMap = new Map();
 
     async function checkService(iframeElement) {
-      const maskEl = document.getElementById(
-        `service-${iframeElement.dataset.id}`
-      );
+      const maskEl = document.getElementById(`service-${iframeElement.dataset.id}`);
       const parentEl = iframeElement.parentElement;
       const src = iframeElement.dataset.url;
 
@@ -156,6 +177,5 @@
     }
 
     serviceLoop();
-
   </script>
 </html>
