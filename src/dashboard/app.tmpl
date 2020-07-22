@@ -1,21 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dashboard
+  name: {{ env.Getenv "APP" }}
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dashboard
+      app: {{ env.Getenv "APP" }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 100%
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app: dashboard
+        app: {{ env.Getenv "APP" }}
     spec:
       containers:
-        - image: gcr.io/servian-labs-7apps/7apps-dashboard:16b30e6
-          name: 7apps-dashboard
+        - image: {{env.Getenv "IMAGE" }}
+          name: {{ env.Getenv "APP" }}
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -30,34 +35,34 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dashboard-service
+  name: {{ env.Getenv "APP" }}-service
   namespace: default
   labels:
-    app: dashboard
+    app: {{ env.Getenv "APP" }}
 spec:
   ports:
-    - name: dashboard-port
+    - name: {{ env.Getenv "APP" }}-port
       port: 8080
       protocol: TCP
       targetPort: 8080
   selector:
-    app: dashboard
+    app: {{ env.Getenv "APP" }}
   type: ClusterIP
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: dashboard-https
+  name: {{ env.Getenv "APP" }}-https
   namespace: default
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`7apps.cloud`)
+      match: Host(`{{ env.Getenv "DOMAIN" }}`)
       services:
-        - name: dashboard-service
+        - name: {{ env.Getenv "APP" }}-service
           port: 8080
   tls:
     certResolver: le
