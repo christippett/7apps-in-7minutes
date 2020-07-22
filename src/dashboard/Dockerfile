@@ -13,4 +13,4 @@ ADD ./static/favicon.ico /app/
 EXPOSE 8080
 
 CMD ["python"]
-ENTRYPOINT ["main.py"]
+ENTRYPOINT ["/app/main.py"]
