@@ -1,18 +1,18 @@
-import logging
 import os
 import time
 
-import gevent
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
-from flask_sockets import Sockets
+from flask_socketio import SocketIO
 from requests.exceptions import HTTPError
 
 from utils import CloudBuildLogHandler, get_active_builds, trigger_build
 
 load_dotenv()
 
+PORT = int(os.getenv("FLASK_PORT", 9000))
+DEBUG = os.getenv("FLASK_DEBUG", False) == "True"
 SOURCES = {
     "App Engine: Standard": os.getenv("APPENGINE_STANDARD_URL"),
     "App Engine: Flexible": os.getenv("APPENGINE_FLEXIBLE_URL"),
@@ -25,17 +25,15 @@ SOURCES = {
 }
 
 app = Flask(__name__)
-app.debug = True
 CORS(app, origins=[os.environ.get("DOMAIN", "*"), "*"])
-sockets = Sockets(app)
+socketio = SocketIO(app)
 
-log_handler = CloudBuildLogHandler()
-log_handler.start()
+log_handler = CloudBuildLogHandler(socketio)
+log_handler.subscribe()
 
 
 @app.route("/", methods=["GET"])
 def index():
-    logging.warning(log_handler.build_logs)
     return render_template(
         "index.html",
         iframes=SOURCES,
@@ -70,16 +68,5 @@ def build():
         return {"error": "Unable to trigger build"}, 502
 
 
-@sockets.route("/logs")
-def chat_socket(ws):
-    log_handler.register(ws)
-    while not ws.closed:
-        gevent.sleep(0.1)
-
-
 if __name__ == "__main__":
-    from gevent import pywsgi
-    from geventwebsocket.handler import WebSocketHandler
-
-    server = pywsgi.WSGIServer(("", 5000), app, handler_class=WebSocketHandler)
-    server.serve_forever()
+    socketio.run(app, host="0.0.0.0", port=PORT, debug=DEBUG)

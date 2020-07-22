@@ -1,5 +1,5 @@
 Flask
-Flask-Sockets
+flask-socketio
 flask-cors
 google-auth
 google-cloud-pubsub
@@ -7,3 +7,5 @@ gunicorn
 python-dateutil
 python-dotenv
 requests
+gevent
+gevent-websocket

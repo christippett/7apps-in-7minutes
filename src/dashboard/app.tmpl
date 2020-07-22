@@ -21,6 +21,11 @@ spec:
       containers:
         - image: {{env.Getenv "IMAGE" }}
           name: {{ env.Getenv "APP" }}
+          env:
+          - name: FLASK_PORT
+            value: "8080"
+          - name: FLASK_DEBUG
+            value: "False"
           ports:
             - containerPort: 8080
               protocol: TCP

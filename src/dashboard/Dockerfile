@@ -8,7 +8,9 @@ RUN pip install -r requirements.txt
 
 # copy app source
 ADD . /app/
+ADD ./static/favicon.ico /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "-k", "flask_sockets.worker", "main:app"]
+CMD ["python"]
+ENTRYPOINT ["main.py"]

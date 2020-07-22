@@ -1,11 +1,10 @@
 import json
 import logging
 import os
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Any, Dict, Optional
 
 import dateutil.parser
-import gevent
 import google.auth
 from dotenv import load_dotenv
 from google.auth.transport.requests import AuthorizedSession
@@ -19,6 +18,8 @@ GITHUB_BRANCH = os.getenv("GITHUB_BRANCH")
 CLOUD_BUILD_API = "https://cloudbuild.googleapis.com/v1"
 CLOUD_BUILD_TRIGGER_ID = os.getenv("CLOUD_BUILD_TRIGGER_ID")
 CLOUD_BUILD_SUBSCRIPTION_ID = os.getenv("CLOUD_BUILD_SUBSCRIPTION_ID")
+
+logging.basicConfig(level=logging.INFO)
 
 credentials, project = google.auth.default(
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
@@ -66,26 +67,16 @@ def trigger_build(
 
 
 class CloudBuildLogHandler:
-    def __init__(self):
+    def __init__(self, socketio_client):
         self.pubsub = pubsub_v1.SubscriberClient()
-        self.build_logs = defaultdict(list)
-        self.clients = list()
-
-    def register(self, client):
-        """Register a WebSocket connection Pub/Sub updates."""
-        self.clients.append(client)
-
-    def send(self, client, data):
-        """Send given data to the registered client.
-        Automatically discards invalid connections."""
-        try:
-            client.send(data)
-        except Exception as e:
-            logging.exception(e)
-            self.clients.remove(client)
+        self.build_logs = defaultdict(lambda: deque(maxlen=50))
+        self.socketio = socketio_client
+        logging.info("logging handler created")
 
     def handle_message(self, message):
         data = json.loads(message.data, encoding="utf-8")
+        with open("logs.json", "a") as fp:
+            fp.write(message.data.decode("utf-8"))
         build_id = data["resource"]["labels"]["build_id"]
         log_message = {
             "build_step": data["labels"]["build_step"],
@@ -95,11 +86,11 @@ class CloudBuildLogHandler:
             "build_id": build_id,
         }
         self.build_logs[build_id].append(log_message)
-        for client in self.clients:
-            client.send(json.dumps(log_message))
+        self.socketio.emit("cloudbuild", json.dumps(log_message))
 
     def subscribe(self):
         """Listens for new Pub/Sub messages."""
+        logging.info("subscribing to pubsub")
         future = self.pubsub.subscribe(CLOUD_BUILD_SUBSCRIPTION_ID, self._callback())
         # try:
         #     future.result()
@@ -109,13 +100,8 @@ class CloudBuildLogHandler:
         #     raise
         return future
 
-    def start(self):
-        """Maintains Pub/Sub subscription in the background."""
-        gevent.spawn(self.subscribe)
-
     def _callback(self):
         def callback(message):
-            logging.info(message)
             self.handle_message(message)
             message.ack()
 

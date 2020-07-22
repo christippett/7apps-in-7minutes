@@ -122,13 +122,39 @@
         </p>
       </div>
     </footer>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"
+      integrity="sha512-hcPg/5yQzb6Ocz2NHy+XdRfmET1kTOtZc1l6Yt2TyriHW6WpK80hoLfaKG5wI7SqLt/x6IiV9kRoInYCA/BEWw=="
+      crossorigin="anonymous"
+    ></script>
   </body>
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/labella/1.1.4/labella.min.js"></script>
   <script src="/static/index.js?ts={{ unix_timestamp }}"></script>
   <script>
-    var serviceMap = new Map();
+    // eslint-disable-next-line no-undef
+    var socket = io();
+    var logsEl = document.getElementById("logs");
+
+    socket.on("connect", function () {
+      console.log("Connected");
+    });
+
+    socket.on("disconnect", function () {
+      console.log("Disconnected");
+    });
+
+    socket.on("cloudbuild", function (data) {
+      var log = JSON.parse(data);
+      console.log(log);
+      var messageEl = document.createElement("p");
+      messageEl.innerHTML = log.text;
+      logsEl.appendChild(messageEl);
+      logsEl.scrollTop = logsEl.scrollHeight;
+    });
+
+    // Poll application endpoints for new versions
+    const serviceMap = new Map();
 
     async function checkService(iframeElement) {
       const maskEl = document.getElementById(`service-${iframeElement.dataset.id}`);
@@ -183,42 +209,6 @@
         checkService(iframes[i]);
       }
       setTimeout(serviceLoop, 2000);
-    })();
-
-    (function pubsub() {
-      /* If the main page is served via https, the WebSocket must be served via
-         "wss" (WebSocket Secure) */
-      var scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
-      var webSocketUri =
-        scheme +
-        window.location.hostname +
-        (location.port ? ":" + location.port : "") +
-        "/logs";
-      var logsEl = document.getElementById("logs");
-
-      /* Establish the WebSocket connection and register event handlers. */
-      var websocket = new WebSocket(webSocketUri);
-
-      websocket.onopen = function () {
-        console.log("Connected");
-      };
-
-      websocket.onclose = function () {
-        console.log("Closed");
-      };
-
-      websocket.onmessage = function (e) {
-        var data = JSON.parse(e.data);
-        var messageEl = document.createElement("p");
-        messageEl.innerHTML = data.text;
-        logsEl.appendChild(messageEl);
-        logsEl.scrollTop = logsEl.scrollHeight;
-      };
-
-      websocket.onerror = function (e) {
-        console.log("Error (see console)");
-        console.log(e);
-      };
     })();
   </script>
 </html>
