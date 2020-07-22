@@ -71,10 +71,10 @@
                 Logs from Cloud Build will appear below when a deployment is active.
               </p>
             </div>
-            <div class="logs" id="logs">
-              {% for i in range(0, 100) %}
-              <p>{{i}}</p>
-              {% endfor %}
+            <div class="logs noselect" id="logs">
+              {% for id, logs in build_logs.items() %} {% for log in logs %}
+              <p>{{ log.text }}</p>
+              {% endfor %} {% endfor %}
             </div>
           </div>
         </div>
@@ -212,6 +212,7 @@
         var messageEl = document.createElement("p");
         messageEl.innerHTML = data.text;
         logsEl.appendChild(messageEl);
+        logsEl.scrollTop = logsEl.scrollHeight;
       };
 
       websocket.onerror = function (e) {

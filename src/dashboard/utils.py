@@ -86,13 +86,15 @@ class CloudBuildLogHandler:
 
     def handle_message(self, message):
         data = json.loads(message.data, encoding="utf-8")
+        build_id = data["resource"]["labels"]["build_id"]
         log_message = {
             "build_step": data["labels"]["build_step"],
             "level": data["severity"],
             "text": data["textPayload"],
             "timestamp": data["timestamp"],
-            "build_id": data["resource"]["labels"]["build_id"],
+            "build_id": build_id,
         }
+        self.build_logs[build_id].append(log_message)
         for client in self.clients:
             client.send(json.dumps(log_message))
 

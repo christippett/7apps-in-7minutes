@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -34,8 +35,12 @@ log_handler.start()
 
 @app.route("/", methods=["GET"])
 def index():
+    logging.warning(log_handler.build_logs)
     return render_template(
-        "index.html", iframes=SOURCES, unix_timestamp=int(time.time())
+        "index.html",
+        iframes=SOURCES,
+        unix_timestamp=int(time.time()),
+        build_logs=log_handler.build_logs,
     )
 
 
