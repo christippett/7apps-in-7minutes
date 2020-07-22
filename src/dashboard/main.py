@@ -1,19 +1,17 @@
 import os
 import time
 
+import gevent
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 from flask_sockets import Sockets
-from google.cloud import pubsub_v1
-from google.cloud.pubsub_v1.types import PubsubMessage
 from requests.exceptions import HTTPError
 
-from utils import format_log_message, get_active_builds, trigger_build
+from utils import CloudBuildLogHandler, get_active_builds, trigger_build
 
 load_dotenv()
 
-CLOUD_BUILD_LOG_SUBSCRIPTION_ID = os.getenv("CLOUD_BUILD_LOG_SUBSCRIPTION_ID")
 SOURCES = {
     "App Engine: Standard": os.getenv("APPENGINE_STANDARD_URL"),
     "App Engine: Flexible": os.getenv("APPENGINE_FLEXIBLE_URL"),
@@ -26,8 +24,12 @@ SOURCES = {
 }
 
 app = Flask(__name__)
+app.debug = True
+CORS(app, origins=[os.environ.get("DOMAIN", "*"), "*"])
 sockets = Sockets(app)
-CORS(app, origins=[os.environ.get("DOMAIN", "*")])
+
+log_handler = CloudBuildLogHandler()
+log_handler.start()
 
 
 @app.route("/", methods=["GET"])
@@ -65,28 +67,14 @@ def build():
 
 @sockets.route("/logs")
 def chat_socket(ws):
-    logs = []
-
-    def callback(message: PubsubMessage):
-        log = format_log_message(message.data)
-        logs.append(log)
-        message.ack()  # Asynchronously acknowledge the message.
-
-    subscriber = pubsub_v1.SubscriberClient()
-    future = subscriber.subscribe(CLOUD_BUILD_LOG_SUBSCRIPTION_ID, callback)
-
+    log_handler.register(ws)
     while not ws.closed:
-        message = ws.receive()
-        if message is None:  # message is "None" if the client has closed.
-            continue
-        # Send the message to all clients connected to this webserver
-        # process. (To support multiple processes or instances, an
-        # extra-instance storage or messaging system would be required.)
-        clients = ws.handler.server.clients.values()
-        for client in clients:
-            client.ws.send(message)
-    future.cancel()
+        gevent.sleep(0.1)
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8081, debug=True)
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+
+    server = pywsgi.WSGIServer(("", 5000), app, handler_class=WebSocketHandler)
+    server.serve_forever()

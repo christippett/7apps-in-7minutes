@@ -27,8 +27,8 @@
           <div class="content py-4">
             <h3>7-Apps on Google Cloud</h3>
             <p>
-              The purpose of this demo is to showcase the various options available from
-              Google Cloud for hosting a web application.
+              The purpose of this demo is to showcase the various options for deploying
+              web apps on Google Cloud.
             </p>
             <strong>Objectives</strong>
             <ol class="is-upper-roman">
@@ -64,12 +64,7 @@
                 </li>
               </ul>
             </div>
-            <div class="logs px-4">
-              {% for i in range(0, 100) %}<span class="step">
-                [Step #3 - "Deploy: App Engine (Flexible)]
-              </span>
-              Logs<br />{% endfor %}
-            </div>
+            <div id="logs" class="logs is-relative px-4"></div>
           </div>
         </div>
         <div class="columns is-multiline">
@@ -168,14 +163,47 @@
       }
     }
 
-    async function serviceLoop() {
+    (async function serviceLoop() {
       var iframes = document.getElementsByTagName("iframe");
       for (var i = 0, max = iframes.length; i < max; i++) {
         checkService(iframes[i]);
       }
       setTimeout(serviceLoop, 2000);
-    }
+    })();
 
-    serviceLoop();
+    (function pubsub() {
+      /* If the main page is served via https, the WebSocket must be served via
+         "wss" (WebSocket Secure) */
+      var scheme = window.location.protocol == "https:" ? "wss://" : "ws://";
+      var webSocketUri =
+        scheme +
+        window.location.hostname +
+        (location.port ? ":" + location.port : "") +
+        "/logs";
+      var logsEl = document.getElementById("logs");
+
+      /* Establish the WebSocket connection and register event handlers. */
+      var websocket = new WebSocket(webSocketUri);
+
+      websocket.onopen = function () {
+        console.log("Connected");
+      };
+
+      websocket.onclose = function () {
+        console.log("Closed");
+      };
+
+      websocket.onmessage = function (e) {
+        var data = JSON.parse(e.data);
+        var messageEl = document.createElement("p");
+        messageEl.innerHTML = data.text;
+        logsEl.appendChild(messageEl);
+      };
+
+      websocket.onerror = function (e) {
+        console.log("Error (see console)");
+        console.log(e);
+      };
+    })();
   </script>
 </html>

@@ -1,8 +1,11 @@
+import json
+import logging
 import os
 from collections import defaultdict
 from typing import Any, Dict, Optional
 
 import dateutil.parser
+import gevent
 import google.auth
 from dotenv import load_dotenv
 from google.auth.transport.requests import AuthorizedSession
@@ -15,6 +18,7 @@ GITHUB_REPO = os.getenv("GITHUB_REPO")
 GITHUB_BRANCH = os.getenv("GITHUB_BRANCH")
 CLOUD_BUILD_API = "https://cloudbuild.googleapis.com/v1"
 CLOUD_BUILD_TRIGGER_ID = os.getenv("CLOUD_BUILD_TRIGGER_ID")
+CLOUD_BUILD_SUBSCRIPTION_ID = os.getenv("CLOUD_BUILD_SUBSCRIPTION_ID")
 
 credentials, project = google.auth.default(
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
@@ -61,18 +65,56 @@ def trigger_build(
     return operation["metadata"]["build"]["id"]
 
 
-def format_log_message(data: Dict[str, Any]) -> Dict[str, Any]:
-    build_step = data["labels"]["build_step"]
-    level = data["severity"]
-    text = data["textPayload"]
-    timestamp = dateutil.parser.parse(data["timestamp"])
-    build_id = data["resource"]["labels"]["build_id"]
-    return {"log": ""}
-
-
-class LogStreamClientHandler:
-    def __init__(self, subscription_path):
-        self.client = pubsub_v1.SubscriberClient()
+class CloudBuildLogHandler:
+    def __init__(self):
+        self.pubsub = pubsub_v1.SubscriberClient()
         self.build_logs = defaultdict(list)
         self.clients = list()
 
+    def register(self, client):
+        """Register a WebSocket connection Pub/Sub updates."""
+        self.clients.append(client)
+
+    def send(self, client, data):
+        """Send given data to the registered client.
+        Automatically discards invalid connections."""
+        try:
+            client.send(data)
+        except Exception as e:
+            logging.exception(e)
+            self.clients.remove(client)
+
+    def handle_message(self, message):
+        data = json.loads(message.data, encoding="utf-8")
+        log_message = {
+            "build_step": data["labels"]["build_step"],
+            "level": data["severity"],
+            "text": data["textPayload"],
+            "timestamp": data["timestamp"],
+            "build_id": data["resource"]["labels"]["build_id"],
+        }
+        for client in self.clients:
+            client.send(json.dumps(log_message))
+
+    def subscribe(self):
+        """Listens for new Pub/Sub messages."""
+        future = self.pubsub.subscribe(CLOUD_BUILD_SUBSCRIPTION_ID, self._callback())
+        # try:
+        #     future.result()
+        # except Exception as e:
+        #     logging.exception(e)
+        #     self.pubsub.close()
+        #     raise
+        return future
+
+    def start(self):
+        """Maintains Pub/Sub subscription in the background."""
+        gevent.spawn(self.subscribe)
+
+    def _callback(self):
+        def callback(message):
+            logging.info(message)
+            self.handle_message(message)
+            message.ack()
+
+        return callback
