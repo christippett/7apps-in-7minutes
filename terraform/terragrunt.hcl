@@ -91,6 +91,7 @@ locals {
   zone       = "australia-southeast1-a"
   domain     = "7apps.cloud"
   email      = "chris.tippett@servian.com"
+  image      = "7apps-demo"
 
   src_dir = find_in_parent_folders("src")
 }
@@ -105,7 +106,7 @@ inputs = {
 
   domain     = local.domain
   email      = local.email
-  image_name = "gcr.io/${local.project_id}/7apps-demo"
+  image_name = "gcr.io/${local.project_id}/${local.image}"
 
   github_owner  = "servian"
   github_repo   = "7apps7minutes"

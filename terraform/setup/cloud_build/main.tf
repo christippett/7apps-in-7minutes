@@ -22,18 +22,19 @@ resource "google_cloudbuild_trigger" "deploy" {
   filename      = "cloudbuild.yaml"
 
   substitutions = {
-    _REGION                  = var.region
-    _ZONE                    = var.zone
-    _IMAGE_NAME              = var.image_name
-    _GKE_CLUSTER_NAME        = var.kubernetes_cluster_name
-    _CLOUD_RUN_NAME          = var.services.cloud_run.name
-    _CLOUD_RUN_ANTHOS_NAME   = var.services.cloud_run_anthos.name
-    _CLOUD_FUNCTIONS_NAME    = var.services.cloud_function.name
-    _APPENGINE_STANDARD_NAME = var.services.app_engine_standard.name
-    _APPENGINE_FLEXIBLE_NAME = var.services.app_engine_flexible.name
-    _KUBERNETES_ENGINE_NAME  = var.services.kubernetes_engine.name
-    _COMPUTE_ENGINE_NAME     = var.services.compute_engine.name
-    _COMPUTE_ENGINE_DOMAIN   = var.services.compute_engine.domain
+    _REGION                 = var.region
+    _ZONE                   = var.zone
+    _IMAGE                  = split("/", var.image_name, )[2]
+    _CLOUD_RUN_APP          = var.services.cloud_run.name
+    _CLOUD_RUN_ANTHOS_APP   = var.services.cloud_run_anthos.name
+    _CLOUD_FUNCTIONS_APP    = var.services.cloud_function.name
+    _APPENGINE_STANDARD_APP = var.services.app_engine_standard.name
+    _APPENGINE_FLEXIBLE_APP = var.services.app_engine_flexible.name
+    _COMPUTE_ENGINE_APP     = var.services.compute_engine.name
+    _COMPUTE_ENGINE_DOMAIN  = var.services.compute_engine.domain
+    _GKE_CLUSTER            = var.kubernetes_cluster_name
+    _GKE_APP                = var.services.kubernetes_engine.name
+    _GKE_DOMAIN             = var.services.kubernetes_engine.domain
   }
 
   github {

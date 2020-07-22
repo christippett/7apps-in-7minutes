@@ -3,29 +3,35 @@ steps:
   #                            📦 BUILD DOCKER IMAGE                            #
   # ============================================================================ #
 
+  - id: docker-pull
+    name: gcr.io/cloud-builders/docker
+    entrypoint: "bash"
+    args: ["-c", "docker pull gcr.io/$PROJECT_ID/${_IMAGE}:latest || exit 0"]
+
   - id: docker-build
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: bash
+    dir: ./src/app
+    name: gcr.io/cloud-builders/docker
     args:
-      - "-c"
-      - |
-        echo $SHORT_SHA > ./src/app/commit_sha.txt && \
-        gcloud builds submit \
-          --config=cloudbuild.container.yaml \
-          --substitutions=SHORT_SHA=$SHORT_SHA,_IMAGE_NAME=${_IMAGE_NAME}
-    waitFor: ["-"]
+      - build
+      - --cache-from=gcr.io/$PROJECT_ID/${_IMAGE}:latest
+      - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
+      - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:latest
+      - .
+  - id: docker-push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA"]
 
   # ============================================================================ #
   #                              🕹️ CLOUD FUNCTIONS                              #
   # ============================================================================ #
 
-  - id: functions-deploy
+  - id: gcloud-functions-deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
       - functions
       - deploy
-      - ${_CLOUD_FUNCTIONS_NAME}
+      - ${_CLOUD_FUNCTIONS_APP}
       - --trigger-http
       - --runtime=python38
       - --entry-point=main
@@ -39,7 +45,7 @@ steps:
   #                           💪 APP ENGINE (STANDARD)                           #
   # ============================================================================ #
 
-  - id: app-deploy-standard
+  - id: gcloud-app-deploy-standard
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -57,14 +63,14 @@ steps:
   #                           🦾 APP ENGINE (FLEXIBLE)                           #
   # ============================================================================ #
 
-  - id: app-deploy-flexible
+  - id: gcloud-app-deploy-flexible
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
       - app
       - deploy
       - app.flex.yaml
-      - --image-url=${_IMAGE_NAME}:$SHORT_SHA
+      - --image-url=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - --promote
       - --version=$SHORT_SHA
       - --stop-previous-version
@@ -76,14 +82,14 @@ steps:
   #                                 🏃‍♀️ CLOUD RUN                                 #
   # ============================================================================ #
 
-  - id: run-deploy-managed
+  - id: gcloud-run-deploy-managed
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
       - run
       - deploy
-      - ${_CLOUD_RUN_NAME}
-      - --image=${_IMAGE_NAME}:$SHORT_SHA
+      - ${_CLOUD_RUN_APP}
+      - --image=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - "--set-env-vars=APP_TITLE=Cloud Run"
       - --platform=managed
       - --allow-unauthenticated
@@ -95,17 +101,17 @@ steps:
   #                             🏃‍♂️ CLOUD RUN (ANTHOS)                            #
   # ============================================================================ #
 
-  - id: run-deploy-anthos
+  - id: gcloud-run-deploy-anthos
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
       - run
       - deploy
-      - ${_CLOUD_RUN_ANTHOS_NAME}
-      - --image=${_IMAGE_NAME}:$SHORT_SHA
+      - ${_CLOUD_RUN_ANTHOS_APP}
+      - --image=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - "--set-env-vars=APP_TITLE=Cloud Run: Anthos"
       - --platform=gke
-      - --cluster=${_GKE_CLUSTER_NAME}
+      - --cluster=${_GKE_CLUSTER}
       - --cluster-location=${_ZONE}
       - --namespace=default
       - --quiet
@@ -121,11 +127,11 @@ steps:
     args:
       - "-c"
       - |
-        gcloud compute start-iap-tunnel ${_COMPUTE_ENGINE_NAME} 9000 \
+        gcloud compute start-iap-tunnel ${_COMPUTE_ENGINE_APP} 9000 \
           --local-host-port=localhost:9000 &
 
-        # wait for tunnel to connect
-        sleep 10;
+        # give tunnel time to connect
+        sleep 15;
 
         curl -X PATCH https://localhost:9000/hooks/update-env \
         --silent --show-error --fail --insecure \
@@ -141,35 +147,48 @@ steps:
   #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
   # ============================================================================ #
 
-  - id: update-kubernetes-engine
-    name: "gcr.io/cloud-builders/kubectl"
-    args:
-      - set
-      - image
-      - deployment/${_KUBERNETES_ENGINE_NAME}
-      - ${_KUBERNETES_ENGINE_NAME}=${_IMAGE_NAME}:$SHORT_SHA
+  - id: gomplate-config
+    name: hairyhenderson/gomplate
+    args: ["-f", "app.k8s.tmpl", "-o", "app.k8s.yaml"]
+    dir: "src/app"
+    env:
+      - "IMAGE=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA"
+      - "APP=${_GKE_APP}"
+      - "DOMAIN=${_GKE_DOMAIN}"
+
+  - id: kubectl-apply
+    name: gcr.io/cloud-builders/kubectl
+    args: ["apply", "-f", "app.k8s.yaml"]
+    dir: "src/app"
     env:
       - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
-      - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER_NAME}"
-    waitFor: ["docker-build"]
+      - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}"
+    waitFor: ["docker-build", "gomplate-config"]
 
 # ============================================================================ #
 #                                    Fin 🏁                                    #
 # ============================================================================ #
 
+images:
+  - gcr.io/$PROJECT_ID/${_IMAGE}:latest
+  - gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
+
 timeout: 3600s
+
 options:
   substitution_option: ALLOW_LOOSE
+
 substitutions:
-  _IMAGE_NAME: gcr.io/$PROJECT_ID/7apps-demo
+  _IMAGE: 7apps-demo
   _REGION: australia-southeast1
   _ZONE: australia-southeast1-a
-  _GKE_CLUSTER_NAME: gke-cluster
-  _CLOUD_RUN_NAME: run
-  _CLOUD_RUN_ANTHOS_NAME: run-anthos
-  _CLOUD_FUNCTIONS_NAME: function
-  _APPENGINE_STANDARD_NAME: default
-  _APPENGINE_FLEXIBLE_NAME: flexible
-  _KUBERNETES_ENGINE_NAME: gke-app
-  _COMPUTE_ENGINE_NAME: compute
+  _CLOUD_RUN_APP: run
+  _CLOUD_RUN_ANTHOS_APP: run-anthos
+  _CLOUD_FUNCTIONS_APP: function
+  _APPENGINE_STANDARD_APP: default
+  _APPENGINE_FLEXIBLE_APP: flexible
+  _COMPUTE_ENGINE_APP: compute
   _COMPUTE_ENGINE_DOMAIN: compute.7apps.cloud
+  _GKE_CLUSTER: gke-cluster
+  _GKE_APP: gke-app
+  _GKE_DOMAIN: gke.7apps.cloud

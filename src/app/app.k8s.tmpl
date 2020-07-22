@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ env.Getenv "APP" }}
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ env.Getenv "APP" }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 100%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ env.Getenv "APP" }}
+    spec:
+      containers:
+        - image: {{env.Getenv "IMAGE" }}
+          name: {{ env.Getenv "APP" }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          imagePullPolicy: Always
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ env.Getenv "APP" }}-service
+  namespace: default
+  labels:
+    app: {{ env.Getenv "APP" }}
+spec:
+  ports:
+    - name: {{ env.Getenv "APP" }}-port
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: {{ env.Getenv "APP" }}
+  type: ClusterIP
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ env.Getenv "APP" }}-https
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ env.Getenv "DOMAIN" }}`)
+      services:
+        - name: {{ env.Getenv "APP" }}-service
+          port: 8080
+  tls:
+    certResolver: le
