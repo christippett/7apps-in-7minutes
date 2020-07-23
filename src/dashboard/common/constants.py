@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SOURCES = {
+APP_LIST = {
     "App Engine: Standard": os.getenv("APPENGINE_STANDARD_URL"),
     "App Engine: Flexible": os.getenv("APPENGINE_FLEXIBLE_URL"),
     "Cloud Run": os.getenv("CLOUD_RUN_URL"),

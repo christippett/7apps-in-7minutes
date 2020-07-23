@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional
 
@@ -26,6 +27,13 @@ credentials, project = google.auth.default(
 )
 
 loop = asyncio.get_event_loop()
+
+
+def extract_app_name_from_url(url):
+    m = re.search(r"^https?://(?P<name>.*?)[\.|:|/]", url, re.IGNORECASE)
+    if m:
+        return m.group("name")
+    raise ValueError("Invalid application URL")
 
 
 def get_active_builds(session: Optional[Session] = None) -> List[Dict[str, Any]]:

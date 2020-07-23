@@ -10,7 +10,7 @@ class Style(BaseModel):
 
 
 class DeploymentConfig(BaseModel):
-    style = Style
+    style: Style
 
 
 class DeployJob(BaseModel):

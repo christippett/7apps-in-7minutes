@@ -82,26 +82,30 @@
           <h3>Application frames</h3>
         </div>
         <div class="frames columns is-multiline">
-          {% for name, src in iframes.items() %} <div id="{{ name|lower|replace(" ", "-")
-          }}" class="column is-half is-flex is-relative">
+          {% for app in app_list %} <div id="{{ name|lower|replace(" ", "-") }}"
+          class="column is-half is-flex is-relative">
           <div class="frame box is-flex is-relative is-clipped px-0 py-0">
             <div class="frame-label">
-              <a target="_blank" rel="noopener noreferrer" href="{{ src }}">{{ src }}</a>
+              <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}"
+                >{{ app.url }}</a
+              >
             </div>
             <div
-              id="service-{{ loop.index }}"
+              id="app-{{ loop.index }}"
               class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
             >
-              <p class="heading">🛑 {{ name }}</p>
+              <p class="heading">🛑 {{ app.title }}</p>
               <p class="title is-size-5 mt-4"></p>
             </div>
             <iframe
               name="{{ unix_timestamp }}-{{ loop.index }}"
               class="is-clipped"
               id="{{ loop.index }}"
-              src="{{ src }}?ts={{ unix_timestamp }}"
+              src="{{ app.url }}?ts={{ unix_timestamp }}"
               data-id="{{ loop.index }}"
-              data-url="{{ src }}"
+              data-url="{{ app.url }}"
+              data-name="{{ app.name }}"
+              data-title="{{ app.title }}"
             >
             </iframe>
           </div>
@@ -126,67 +130,13 @@
   </body>
 
   <script>
-    // eslint-disable-next-line no-undef
-    var logElement = document.getElementById("logs");
-    logStream.connect();
-    logStream.setParentElement(logElement);
+    /* eslint-disable no-undef */
 
-    // Poll application endpoints for new versions
-    const serviceMap = new Map();
+    // Poll each app endpoint for liveliness and version changes
+    App.monitorStatus();
 
-    async function checkService(iframeElement) {
-      const maskEl = document.getElementById(`service-${iframeElement.dataset.id}`);
-      const parentEl = iframeElement.parentElement;
-      const src = iframeElement.dataset.url;
-
-      // get latest commit sha from app
-      var response;
-      try {
-        response = await fetch(src, {
-          cache: "no-cache",
-          headers: { "Accept-Language": "application/json" },
-        });
-      } catch (e) {
-        // mask iframe with error message
-        maskEl.classList.remove("is-hidden");
-        maskEl.getElementsByClassName("title")[0].innerText = e.message;
-        return;
-      }
-      if (response == undefined || !response.ok) {
-        // mask iframe with http status
-        maskEl.classList.remove("is-hidden");
-        maskEl.getElementsByClassName("title")[0].innerText = response.status;
-        return;
-      } else {
-        maskEl.classList.add("is-hidden");
-      }
-      const data = await response.json();
-      const currentVer = serviceMap.get(src);
-      const newVer = data.commit_sha.trim();
-      const timestamp = Date.now();
-
-      if (newVer !== currentVer) {
-        console.log(`🕵️ new version detected on ${src} (${newVer})`);
-        serviceMap.set(src, newVer);
-
-        // cache-bust iframe
-        iframeElement.name = `${iframeElement.name.split("-")[0]}-${timestamp}`;
-        iframeElement.src = `${src}?ts=${timestamp}`; // refresh iframe
-
-        // animate iframe if a new version is detected
-        if (currentVer !== undefined) {
-          parentEl.classList.add("has-new-version");
-          setTimeout(() => parentEl.classList.remove("has-new-version"), 3000);
-        }
-      }
-    }
-
-    (async function serviceLoop() {
-      var iframes = document.getElementsByTagName("iframe");
-      for (var i = 0, max = iframes.length; i < max; i++) {
-        checkService(iframes[i]);
-      }
-      setTimeout(serviceLoop, 2000);
-    })();
+    // Setup Cloud Build log sink
+    var logContainerElement = document.getElementById("logs");
+    LogStreamClient.connect(logContainerElement);
   </script>
 </html>
