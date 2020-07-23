@@ -8,7 +8,7 @@ from pyfiglet import Figlet
 # TODO: get gradient programmatically from https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json
 
 APP_TITLE = os.environ.get("APP_TITLE", "Localhost")
-COMMIT_SHA = os.getenv("COMMIT_SHA", "Unknown").strip()
+COMMIT_SHA = os.getenv("COMMIT_SHA", "Unknown")
 
 app = Flask("7apps")
 

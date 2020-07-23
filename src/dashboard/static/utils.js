@@ -54,33 +54,33 @@
       const appUrl = iframeElement.dataset.url;
       const appName = iframeElement.dataset.name;
       const appTitle = iframeElement.dataset.title;
+      const timestamp = Date.now();
+      const app = appMap.get(appName);
 
-      // Get latest commit hash from app
       try {
+        // Get current app version (git commit hash)
         var response = await fetch(appUrl, {
           cache: "no-cache",
           headers: { "Accept-Language": "application/json" },
         });
+        var data = await response.json();
+        var newVersion = data.commit_sha;
       } catch (e) {
-        // Display error message in lieu of an iframe
         overlayElement.classList.remove("is-hidden");
         overlayElement.getElementsByClassName("title")[0].innerText = e.message;
         return;
       }
-      if (response == undefined || !response.ok) {
+
+      if (response === undefined || !response.ok || newVersion === undefined) {
         // Although there's no error, something's still not right
         overlayElement.classList.remove("is-hidden");
-        overlayElement.getElementsByClassName("title")[0].innerText = response.status;
+        overlayElement.getElementsByClassName("title")[0].innerHTML =
+          '<span class="is-size-3">🙈</span>';
         return;
-      } else {
-        // Remove overlay and reveal iframe
-        overlayElement.classList.add("is-hidden");
       }
 
-      var app = appMap.get(appName);
-      const data = await response.json();
-      const newVersion = data.commit_sha.trim();
-      const timestamp = Date.now();
+      // Remove overlay from iframe and reveal app
+      overlayElement.classList.add("is-hidden");
 
       if (app === undefined) {
         appMap.set(appName, {
@@ -114,7 +114,7 @@
           checkStatus(iframes[i]);
         }
       }
-      setTimeout(monitorStatus, interval);
+      setTimeout(() => monitorStatus({ interval }), interval);
     };
 
     const pauseMonitoring = () => (monitoringEnabled = false);
