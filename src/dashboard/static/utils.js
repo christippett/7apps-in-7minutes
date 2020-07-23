@@ -107,14 +107,14 @@
     };
 
     // Start polling loop
-    const monitorStatus = async () => {
+    const monitorStatus = async ({ interval }) => {
       if (monitoringEnabled) {
         var iframes = document.getElementsByTagName("iframe");
         for (var i = 0, max = iframes.length; i < max; i++) {
           checkStatus(iframes[i]);
         }
       }
-      setTimeout(monitorStatus, 2000);
+      setTimeout(monitorStatus, interval);
     };
 
     const pauseMonitoring = () => (monitoringEnabled = false);

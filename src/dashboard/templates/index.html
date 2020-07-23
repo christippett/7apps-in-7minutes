@@ -133,7 +133,7 @@
     /* eslint-disable no-undef */
 
     // Poll each app endpoint for liveliness and version changes
-    App.monitorStatus();
+    App.monitorStatus({ interval: 4000 });
 
     // Setup Cloud Build log sink
     var logContainerElement = document.getElementById("logs");
