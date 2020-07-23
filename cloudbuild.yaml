@@ -1,5 +1,16 @@
 steps:
   # ============================================================================ #
+  #                                   📜 Setup                                   #
+  # ============================================================================ #
+
+  - id: version-file
+    name: alpine
+    entrypoint: sh
+    args: ["-c", "echo $SHORT_SHA > .version"]
+    dir: "src/app"
+    waitFor: ["-"]
+
+  # ============================================================================ #
   #                            📦 BUILD DOCKER IMAGE                            #
   # ============================================================================ #
 
@@ -11,6 +22,7 @@ steps:
         "-c",
         "docker --log-level=error pull --quiet gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest || exit 0",
       ]
+    waitFor: ["-"]
 
   - id: docker-build
     name: gcr.io/cloud-builders/docker
@@ -19,14 +31,13 @@ steps:
         "--log-level=error",
         "build",
         "--quiet",
-        "--build-arg=COMMIT_SHA=$SHORT_SHA",
         "--cache-from=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
         "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
         "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
         ".",
       ]
     dir: ./src/app
-    waitFor: ["docker-pull"]
+    waitFor: ["docker-pull", "version-file"]
 
   - id: docker-push
     name: gcr.io/cloud-builders/docker
@@ -51,7 +62,7 @@ steps:
         "--source=./",
       ]
     dir: "src/app"
-    waitFor: ["-"]
+    waitFor: ["version-file"]
 
   # ============================================================================ #
   #                           💪 APP ENGINE (STANDARD)                           #
@@ -62,7 +73,7 @@ steps:
     entrypoint: gcloud
     args: ["app", "deploy", "app.standard.yaml", "--version=1"]
     dir: "src/app"
-    waitFor: ["-"]
+    waitFor: ["version-file"]
 
   # ============================================================================ #
   #                           🦾 APP ENGINE (FLEXIBLE)                           #
@@ -145,7 +156,7 @@ steps:
   #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
   # ============================================================================ #
 
-  - id: gke-1
+  - id: k8s-config
     name: hairyhenderson/gomplate
     args: ["-f", "app.k8s.tmpl", "-o", "app.k8s.yaml"]
     dir: "src/app"
@@ -155,11 +166,11 @@ steps:
       - DOMAIN=${_GKE_DOMAIN}
     waitFor: ["docker-push"]
 
-  - id: gke-2
+  - id: kubernetes-engine
     name: gcr.io/cloud-builders/kubectl
     args: ["apply", "-f", "app.k8s.yaml"]
     dir: "src/app"
-    waitFor: ["gke-1"]
+    waitFor: ["k8s-config"]
 
 # ============================================================================ #
 #                                    Fin 🏁                                    #

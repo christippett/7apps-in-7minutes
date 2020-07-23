@@ -6,7 +6,10 @@ from flask_cors import cross_origin
 from pyfiglet import Figlet
 
 APP_TITLE = os.environ.get("APP_TITLE", "Localhost")
-COMMIT_SHA = os.getenv("COMMIT_SHA", "Unknown")
+
+with open(".version", "r") as fp:
+    COMMIT_SHA = fp.read().strip()
+
 
 app = Flask("7apps")
 fmt = Figlet(font=ascii_font)
