@@ -13,4 +13,6 @@ RUN poetry install --no-root --no-dev
 
 ADD . /app/
 
-ENV COMMIT_SHA="$SHORT_SHA"
+ARG COMMIT_SHA
+
+ENV COMMIT_SHA $COMMIT_SHA

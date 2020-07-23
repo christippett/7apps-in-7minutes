@@ -13,6 +13,7 @@ steps:
     args:
       - build
       - --quiet
+      - --build-arg=COMMIT_SHA=$SHORT_SHA
       - --cache-from=gcr.io/$PROJECT_ID/${_IMAGE}:latest
       - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:latest
@@ -37,7 +38,6 @@ steps:
       - deploy
       - ${_CLOUD_FUNCTIONS_APP}
       - --region=${_REGION}
-      - --allow-unauthenticated
       - --trigger-http
       - --runtime=python38
       - --entry-point=main
