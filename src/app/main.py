@@ -5,13 +5,10 @@ from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
 from pyfiglet import Figlet
 
-# TODO: get gradient programmatically from https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json
-
 APP_TITLE = os.environ.get("APP_TITLE", "Localhost")
 COMMIT_SHA = os.getenv("COMMIT_SHA", "Unknown")
 
 app = Flask("7apps")
-
 fmt = Figlet(font=ascii_font)
 
 

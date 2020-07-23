@@ -11,6 +11,14 @@
 
     const createLogElement = (data) => {
       let el = document.createElement("p");
+      el.setAttribute("data-id", data.id);
+      el.setAttribute("data-step", data.step_id);
+      el.setAttribute("data-severity", data.severity);
+      el.setAttribute("data-timestamp", data.timestamp);
+      el.setAttribute("data-type", data.type);
+      el.setAttribute("data-start", data.is_start);
+      el.setAttribute("data-finish", data.is_finish);
+      el.setAttribute("data-command", data.is_command);
       el.innerHTML = data.text;
       return el;
     };

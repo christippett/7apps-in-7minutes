@@ -1,10 +1,12 @@
 import asyncio
 import json
 import logging
+import os
 import re
 from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional
 
+import aiofiles
 import dateutil.parser
 import google.auth
 from fastapi import WebSocket
@@ -12,6 +14,7 @@ from google.auth.transport.requests import AuthorizedSession
 from google.cloud import pubsub_v1
 from requests import Session
 
+from .constants import CENSOR_SYMBOL as X
 from .constants import (
     CLOUD_BUILD_API,
     CLOUD_BUILD_SUBSCRIPTION_ID,
@@ -87,12 +90,9 @@ class PubSubMessageBroker:
     async def get_stream_generator(self):
         while True:
             data = yield
-            await self._send(data)
+            await self.send(data)
 
     async def send(self, data: str):
-        await self.generator.asend(data)
-
-    async def _send(self, data: str):
         living_connections = []
         while len(self.connections) > 0:
             # Looping like this is necessary in case a disconnection is handled
@@ -109,18 +109,66 @@ class PubSubMessageBroker:
     def disconnect(self, websocket: WebSocket):
         self.connections.remove(websocket)
 
+    def parse_log_record(self, data):
+        build_step = data["labels"]["build_step"]
+        text = data["textPayload"]
+        rec = {
+            "id": data["resource"]["labels"]["build_id"],
+            "step": None,
+            "command": None,
+            "type": None,
+            "timestamp": data["timestamp"],
+            "severity": data["severity"],
+            "is_start": build_step.startswith("Starting"),
+            "is_finish": build_step.startswith("Finishing"),
+        }
+
+        # log source
+        if build_step.startswith("gsutil"):
+            rec["type"] = "gsutil"
+        elif build_step.startswith("MAIN"):
+            rec["type"] = "main"
+        elif build_step.startswith("PUSH"):
+            rec["type"] = "push"
+        elif build_step.startswith("Step"):
+            rec["type"] = "step"
+        else:
+            rec["type"] = "other"
+
+        # extract metadata from common patterns
+        m = re.match(r"Step #(?P<step_no>\d{1,2}).+?\"(?P<step>.*?)\"", text)
+        rec.update(m.groupdict() if m else {})
+        m = re.match(r"^Step.+?: (?P<command>.+?)$", text)
+        rec.update(m.groupdict() if m else {})
+
+        # remove step prefix
+        text = text.replace(f"{build_step}:", "").strip()
+        text = re.sub(r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} ", "", text)
+
+        # sanitise potentially sensitive data
+        text = re.sub(r"(?<=projects/)\S+?(?=/|$)", "".rjust(10, X), text)
+        text = re.sub(r"(?<=gs://)(\S+?)(?=/|\s|$)", "".rjust(10, X), text)
+        text = re.sub(r"(?<=gcr\.io/)(\S+?)(?=/|$)", "".rjust(10, X), text)
+        text = re.sub(r"\S+?@\S+?(?=\.|$)", "@".rjust(10, X).ljust(20, X), text)
+        rec["text"] = text
+
+        return rec
+
+    async def save_to_file(self, data: str, filename: str):
+        save_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        async with aiofiles.open(os.path.join(save_dir, filename), mode="a") as f:
+            await f.write(data + "\n")
+
     async def handle_message(self, message):
         data = json.loads(message.data, encoding="utf-8")
-        build_id = data["resource"]["labels"]["build_id"]
-        log = {
-            "build_step": data["labels"]["build_step"],
-            "level": data["severity"],
-            "text": data["textPayload"],
-            "timestamp": data["timestamp"],
-            "build_id": build_id,
-        }
-        self.log_collection[build_id].append(log)
-        await self.send(json.dumps(log))
+        log = self.parse_log_record(data)
+
+        # persist logs so they're available to new/late-arriving clients
+        self.log_collection[log["id"]].append(log)
+
+        json_log = json.dumps(log, ensure_ascii=False, separators=(",", ":"))
+        await self.save_to_file(json_log, f"{log['id']}.log")
+        await self.generator.asend(json_log)
 
     def subscribe(self):
         """Listens for new Pub/Sub messages."""
