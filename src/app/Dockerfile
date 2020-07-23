@@ -9,10 +9,6 @@ RUN pip install -r requirements.txt
 # copy app source
 ADD . /app/
 
-ARG COMMIT_SHA
-
-ENV COMMIT_SHA $COMMIT_SHA
-
 EXPOSE 8080
 
 ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]

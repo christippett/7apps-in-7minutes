@@ -11,15 +11,21 @@
 
     const createLogElement = (data) => {
       let el = document.createElement("p");
-      el.setAttribute("data-id", data.id);
-      el.setAttribute("data-step", data.step_id);
-      el.setAttribute("data-severity", data.severity);
+
+      el.setAttribute("data-build-id", data.id);
+      el.setAttribute("data-step-id", data.step_id);
+      el.setAttribute("data-step-name", data.step_name);
       el.setAttribute("data-timestamp", data.timestamp);
-      el.setAttribute("data-type", data.type);
-      el.setAttribute("data-start", data.is_start);
-      el.setAttribute("data-finish", data.is_finish);
-      el.setAttribute("data-command", data.is_command);
-      el.innerHTML = data.text;
+      el.setAttribute("data-source", data.source);
+      el.setAttribute("data-state", data.state);
+
+      let ts = new Date(data.timestamp);
+      let tsHours = ts.getHours().toString().padStart(2, "0");
+      let tsMinutes = ts.getMinutes().toString().padStart(2, "0");
+      let tsHtml = `<span class="lg-ts">${tsHours}:${tsMinutes}</span>`;
+      let stepHtml = `<span class="lg-step">${data.step_name}</span>`;
+
+      el.innerHTML = `${tsHtml} ${stepHtml} ${data.text}`;
       return el;
     };
 

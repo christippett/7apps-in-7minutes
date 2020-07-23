@@ -71,7 +71,7 @@ steps:
   - id: app-engine-standard
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
-    args: ["app", "deploy", "app.standard.yaml", "--version=1"]
+    args: ["app", "deploy", "app.standard.yaml"]
     dir: "src/app"
     waitFor: ["version-file"]
 
@@ -87,7 +87,6 @@ steps:
         "app",
         "deploy",
         "app.flex.yaml",
-        "--version=1",
         "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
       ]
     dir: "src/app"
