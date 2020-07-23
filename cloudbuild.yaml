@@ -6,13 +6,14 @@ steps:
   - id: docker-pull
     name: gcr.io/cloud-builders/docker
     entrypoint: "bash"
-    args: ["-c", "docker pull gcr.io/$PROJECT_ID/${_IMAGE}:latest || exit 0"]
+    args: ["-c", "docker pull -q gcr.io/$PROJECT_ID/${_IMAGE}:latest || exit 0"]
 
   - id: docker-build
     dir: ./src/app
     name: gcr.io/cloud-builders/docker
     args:
       - build
+      - --quiet
       - --cache-from=gcr.io/$PROJECT_ID/${_IMAGE}:latest
       - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:latest
@@ -32,12 +33,12 @@ steps:
       - functions
       - deploy
       - ${_CLOUD_FUNCTIONS_APP}
+      - --region=${_REGION}
+      - --allow-unauthenticated
       - --trigger-http
       - --runtime=python38
       - --entry-point=main
-      - "--set-env-vars=APP_TITLE=Cloud Function"
       - --source=./
-      - --quiet
     dir: "src/app"
     waitFor: ["-"]
 
@@ -52,10 +53,9 @@ steps:
       - app
       - deploy
       - app.standard.yaml
-      - --promote
       - --version=$SHORT_SHA
+      - --promote
       - --stop-previous-version
-      - --quiet
     dir: "src/app"
     waitFor: ["-"]
 
@@ -71,10 +71,9 @@ steps:
       - deploy
       - app.flex.yaml
       - --image-url=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
-      - --promote
       - --version=$SHORT_SHA
+      - --promote
       - --stop-previous-version
-      - --quiet
     dir: "src/app"
     waitFor: ["docker-build"]
 
@@ -90,10 +89,8 @@ steps:
       - deploy
       - ${_CLOUD_RUN_APP}
       - --image=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
-      - "--set-env-vars=APP_TITLE=Cloud Run"
       - --platform=managed
       - --region=us-central1
-      - --quiet
     waitFor: ["docker-build"]
 
   # ============================================================================ #
@@ -108,12 +105,10 @@ steps:
       - deploy
       - ${_CLOUD_RUN_ANTHOS_APP}
       - --image=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
-      - "--set-env-vars=APP_TITLE=Cloud Run: Anthos"
       - --platform=gke
       - --cluster=${_GKE_CLUSTER}
       - --cluster-location=${_ZONE}
       - --namespace=default
-      - --quiet
     waitFor: ["docker-build"]
 
   # ============================================================================ #
@@ -138,8 +133,6 @@ steps:
         --header "Host: ${_COMPUTE_ENGINE_DOMAIN}" \
         --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
         --header 'Content-Type: application/json'
-    env:
-      - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
     waitFor: ["docker-build"]
 
   # ============================================================================ #
@@ -150,18 +143,11 @@ steps:
     name: hairyhenderson/gomplate
     args: ["-f", "app.k8s.tmpl", "-o", "app.k8s.yaml"]
     dir: "src/app"
-    env:
-      - "IMAGE=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA"
-      - "APP=${_GKE_APP}"
-      - "DOMAIN=${_GKE_DOMAIN}"
 
   - id: kubectl-apply
     name: gcr.io/cloud-builders/kubectl
     args: ["apply", "-f", "app.k8s.yaml"]
     dir: "src/app"
-    env:
-      - "CLOUDSDK_COMPUTE_ZONE=${_ZONE}"
-      - "CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}"
     waitFor: ["docker-build", "gomplate-config"]
 
 # ============================================================================ #
@@ -172,10 +158,15 @@ images:
   - gcr.io/$PROJECT_ID/${_IMAGE}:latest
   - gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
 
-timeout: 3600s
-
 options:
   substitution_option: ALLOW_LOOSE
+  env:
+    - IMAGE=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
+    - APP=${_GKE_APP}
+    - DOMAIN=${_GKE_DOMAIN}
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
+    - CLOUDSDK_COMPUTE_ZONE=${_ZONE}
+    - CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}
 
 substitutions:
   _IMAGE: 7apps-demo
@@ -191,3 +182,5 @@ substitutions:
   _GKE_CLUSTER: gke-cluster
   _GKE_APP: gke-app
   _GKE_DOMAIN: gke.7apps.cloud
+
+timeout: 3600s
