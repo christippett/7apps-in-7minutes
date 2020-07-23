@@ -12,7 +12,3 @@ COPY pyproject.toml poetry.lock* /app/
 RUN poetry install --no-root --no-dev
 
 ADD . /app/
-
-ARG COMMIT_SHA
-
-ENV COMMIT_SHA $COMMIT_SHA
