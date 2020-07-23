@@ -47,6 +47,7 @@
 
   window.App = (() => {
     const appMap = new Map();
+    const versionMap = new Map();
 
     const checkStatus = async (iframeElement) => {
       const overlayElement = document.getElementById(`app-${iframeElement.dataset.id}`);
@@ -90,13 +91,22 @@
         });
       } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
         console.log(`💾 New version found for ${appTitle}: ${newVersion}`);
+
         appMap.set(appName, {
           version: newVersion,
           previousVersion: app.version,
           lastUpdated: timestamp,
         });
 
-        // Add query string to avoid potential caching issues
+        // Record new version for leaderboard
+        var versionStats = versionMap.get(newVersion);
+        if (versionStats === undefined) {
+          versionStats = new Array();
+          versionMap.set(newVersion, versionStats);
+        }
+        versionStats.push({ app: app.name, title: app.title, updated: timestamp });
+
+        // Add query string to avoid any caching issues
         iframeElement.name = `${iframeElement.name.split("-")[0]}-${timestamp}`;
         iframeElement.src = `${appUrl}?ts=${timestamp}`; // forces refresh
 
@@ -127,6 +137,7 @@
       pauseMonitoring,
       resumingMonitoring,
       apps: appMap,
+      versionStats: versionMap,
     };
   })();
 
