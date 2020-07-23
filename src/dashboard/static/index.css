@@ -82,9 +82,8 @@ ol > li {
 
 .logs {
   flex: 1 0 0;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
-  line-height: 1.2;
   background: #292828;
   color: #f0f0f0;
   border-radius: 6px;

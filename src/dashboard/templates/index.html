@@ -27,8 +27,8 @@
           <div class="content py-4">
             <h3>7-Apps on Google Cloud</h3>
             <p>
-              The purpose of this demo is to showcase the various options for deploying
-              web apps on Google Cloud.
+              The purpose of this demo is to showcase the many ways you can deploy a web
+              app on Google Cloud.
             </p>
             <strong>Objectives</strong>
             <ol class="is-upper-roman">
@@ -82,7 +82,7 @@
           <h3>Application frames</h3>
         </div>
         <div class="frames columns is-multiline">
-          {% for app in app_list %} <div id="{{ name|lower|replace(" ", "-") }}"
+          {% for app in app_list %} <div id="{{ app.name }}"
           class="column is-half is-flex is-relative">
           <div class="frame box is-flex is-relative is-clipped px-0 py-0">
             <div class="frame-label">
@@ -91,7 +91,7 @@
               >
             </div>
             <div
-              id="app-{{ loop.index }}"
+              id="{{ app.name }}-overlay"
               class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
             >
               <p class="heading">🛑 {{ app.title }}</p>
@@ -100,7 +100,6 @@
             <iframe
               name="{{ unix_timestamp }}-{{ loop.index }}"
               class="is-clipped"
-              id="{{ loop.index }}"
               src="{{ app.url }}?ts={{ unix_timestamp }}"
               data-id="{{ loop.index }}"
               data-url="{{ app.url }}"

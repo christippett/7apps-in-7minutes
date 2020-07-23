@@ -32,7 +32,7 @@ loop = asyncio.get_event_loop()
 def extract_app_name_from_url(url):
     m = re.search(r"^https?://(?P<name>.*?)[\.|:|/]", url, re.IGNORECASE)
     if m:
-        return m.group("name")
+        return m.group("name").replace("_", "-").lower()
     raise ValueError("Invalid application URL")
 
 

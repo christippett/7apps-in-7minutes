@@ -50,7 +50,9 @@
     const versionMap = new Map();
 
     const checkStatus = async (iframeElement) => {
-      const overlayElement = document.getElementById(`app-${iframeElement.dataset.id}`);
+      const overlayElement = document.getElementById(
+        `${iframeElement.dataset.name}-overlay`
+      );
       const parentElement = iframeElement.parentElement;
       const appUrl = iframeElement.dataset.url;
       const appName = iframeElement.dataset.name;
