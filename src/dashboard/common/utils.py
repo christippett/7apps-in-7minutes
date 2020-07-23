@@ -1,23 +1,23 @@
+import asyncio
 import json
 import logging
-import os
 from collections import defaultdict, deque
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import dateutil.parser
 import google.auth
-from dotenv import load_dotenv
+from fastapi import WebSocket
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import pubsub_v1
 from requests import Session
 
-load_dotenv()
-
-GITHUB_REPO = os.getenv("GITHUB_REPO")
-GITHUB_BRANCH = os.getenv("GITHUB_BRANCH")
-CLOUD_BUILD_API = "https://cloudbuild.googleapis.com/v1"
-CLOUD_BUILD_TRIGGER_ID = os.getenv("CLOUD_BUILD_TRIGGER_ID")
-CLOUD_BUILD_SUBSCRIPTION_ID = os.getenv("CLOUD_BUILD_SUBSCRIPTION_ID")
+from .constants import (
+    CLOUD_BUILD_API,
+    CLOUD_BUILD_SUBSCRIPTION_ID,
+    CLOUD_BUILD_TRIGGER_ID,
+    GITHUB_BRANCH,
+    GITHUB_REPO,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,8 +25,10 @@ credentials, project = google.auth.default(
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
 )
 
+loop = asyncio.get_event_loop()
 
-def get_active_builds(session: Optional[Session] = None) -> Dict[str, Any]:
+
+def get_active_builds(session: Optional[Session] = None) -> List[Dict[str, Any]]:
     if session is None:
         session = AuthorizedSession(credentials)
     builds_query = {"filter": 'status="QUEUED" OR status="WORKING"'}
@@ -35,7 +37,7 @@ def get_active_builds(session: Optional[Session] = None) -> Dict[str, Any]:
         f"{CLOUD_BUILD_API}/projects/{project}/builds", params=builds_query,
     )
     resp.raise_for_status()
-    builds = resp.json().get("builds", [])
+    builds: List[Dict[str, str]] = resp.json().get("builds", [])
     return [
         {
             "id": b["id"],
@@ -66,43 +68,66 @@ def trigger_build(
     return operation["metadata"]["build"]["id"]
 
 
-class CloudBuildLogHandler:
-    def __init__(self, socketio_client):
+class PubSubMessageBroker:
+    def __init__(self):
+        self.connections: List[WebSocket] = list()
         self.pubsub = pubsub_v1.SubscriberClient()
-        self.build_logs = defaultdict(lambda: deque(maxlen=50))
-        self.socketio = socketio_client
-        logging.info("logging handler created")
+        self.log_collection = defaultdict(lambda: deque(maxlen=50))
+        self.generator = self.get_stream_generator()
+        self.subscribe()
 
-    def handle_message(self, message):
+    async def get_stream_generator(self):
+        while True:
+            data = yield
+            await self._send(data)
+
+    async def send(self, data: str):
+        await self.generator.asend(data)
+
+    async def _send(self, data: str):
+        living_connections = []
+        while len(self.connections) > 0:
+            # Looping like this is necessary in case a disconnection is handled
+            # during await websocket.send_text(message)
+            websocket = self.connections.pop()
+            await websocket.send_text(data)
+            living_connections.append(websocket)
+        self.connections = living_connections
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.connections.remove(websocket)
+
+    async def handle_message(self, message):
         data = json.loads(message.data, encoding="utf-8")
-        with open("logs.json", "a") as fp:
-            fp.write(message.data.decode("utf-8"))
         build_id = data["resource"]["labels"]["build_id"]
-        log_message = {
+        log = {
             "build_step": data["labels"]["build_step"],
             "level": data["severity"],
             "text": data["textPayload"],
             "timestamp": data["timestamp"],
             "build_id": build_id,
         }
-        self.build_logs[build_id].append(log_message)
-        self.socketio.emit("cloudbuild", json.dumps(log_message))
+        self.log_collection[build_id].append(log)
+        await self.send(json.dumps(log))
 
     def subscribe(self):
         """Listens for new Pub/Sub messages."""
         logging.info("subscribing to pubsub")
-        future = self.pubsub.subscribe(CLOUD_BUILD_SUBSCRIPTION_ID, self._callback())
-        # try:
-        #     future.result()
-        # except Exception as e:
-        #     logging.exception(e)
-        #     self.pubsub.close()
-        #     raise
+        future = self.pubsub.subscribe(
+            CLOUD_BUILD_SUBSCRIPTION_ID, self._handle_message()
+        )
         return future
 
-    def _callback(self):
+    def _handle_message(self):
         def callback(message):
-            self.handle_message(message)
+            future = asyncio.run_coroutine_threadsafe(
+                self.handle_message(message), loop
+            )
+            future.result()
             message.ack()
 
         return callback

@@ -72,7 +72,7 @@
               </p>
             </div>
             <div class="logs noselect" id="logs">
-              {% for id, logs in build_logs.items() %} {% for log in logs %}
+              {% for id, logs in log_collection.items() %} {% for log in logs %}
               <p>{{ log.text }}</p>
               {% endfor %} {% endfor %}
             </div>
@@ -122,36 +122,14 @@
         </p>
       </div>
     </footer>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"
-      integrity="sha512-hcPg/5yQzb6Ocz2NHy+XdRfmET1kTOtZc1l6Yt2TyriHW6WpK80hoLfaKG5wI7SqLt/x6IiV9kRoInYCA/BEWw=="
-      crossorigin="anonymous"
-    ></script>
+    <script src="/static/utils.js?ts={{ unix_timestamp }}"></script>
   </body>
-  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-firestore.js"></script>
-  <script src="/static/index.js?ts={{ unix_timestamp }}"></script>
+
   <script>
     // eslint-disable-next-line no-undef
-    var socket = io();
-    var logsEl = document.getElementById("logs");
-
-    socket.on("connect", function () {
-      console.log("Connected");
-    });
-
-    socket.on("disconnect", function () {
-      console.log("Disconnected");
-    });
-
-    socket.on("cloudbuild", function (data) {
-      var log = JSON.parse(data);
-      console.log(log);
-      var messageEl = document.createElement("p");
-      messageEl.innerHTML = log.text;
-      logsEl.appendChild(messageEl);
-      logsEl.scrollTop = logsEl.scrollHeight;
-    });
+    var logElement = document.getElementById("logs");
+    logStream.connect();
+    logStream.setParentElement(logElement);
 
     // Poll application endpoints for new versions
     const serviceMap = new Map();

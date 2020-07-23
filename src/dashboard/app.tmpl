@@ -21,13 +21,8 @@ spec:
       containers:
         - image: {{env.Getenv "IMAGE" }}
           name: {{ env.Getenv "APP" }}
-          env:
-          - name: FLASK_PORT
-            value: "8080"
-          - name: FLASK_DEBUG
-            value: "False"
           ports:
-            - containerPort: 8080
+            - containerPort: 80
               protocol: TCP
           resources:
             limits:
@@ -47,9 +42,9 @@ metadata:
 spec:
   ports:
     - name: {{ env.Getenv "APP" }}-port
-      port: 8080
+      port: 80
       protocol: TCP
-      targetPort: 8080
+      targetPort: 80
   selector:
     app: {{ env.Getenv "APP" }}
   type: ClusterIP
@@ -68,6 +63,6 @@ spec:
       match: Host(`{{ env.Getenv "DOMAIN" }}`)
       services:
         - name: {{ env.Getenv "APP" }}-service
-          port: 8080
+          port: 80
   tls:
     certResolver: le
