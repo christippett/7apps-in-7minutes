@@ -89,7 +89,7 @@ ol > li {
   border-radius: 6px;
   overflow: scroll;
   padding: 0.75rem;
-  min-height: 250px;
+  min-height: 200px;
 }
 
 .logs > p {
@@ -108,7 +108,7 @@ ol > li {
 
 .frame {
   flex: 1 0 100%;
-  min-height: 200px;
+  min-height: 250px;
   border: 2px solid white;
 }
 
