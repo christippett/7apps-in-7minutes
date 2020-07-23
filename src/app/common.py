@@ -56,7 +56,6 @@ ASCII_FONT_OPTIONS = [
     "slant",
     "bubble",
     "lockergnome",
-    "digital",
     "relief2",
     "o8",
     "tubular",
