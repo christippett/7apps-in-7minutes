@@ -9,7 +9,6 @@ steps:
     args: ["-c", "docker pull -q gcr.io/$PROJECT_ID/${_IMAGE}:latest || exit 0"]
 
   - id: docker-build
-    dir: ./src/app
     name: gcr.io/cloud-builders/docker
     args:
       - build
@@ -18,15 +17,19 @@ steps:
       - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - --tag=gcr.io/$PROJECT_ID/${_IMAGE}:latest
       - .
+    dir: ./src/app
+    waitFor: ["docker-pull"]
+
   - id: docker-push
     name: gcr.io/cloud-builders/docker
     args: ["push", "gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA"]
+    waitFor: ["docker-build"]
 
   # ============================================================================ #
   #                              🕹️ CLOUD FUNCTIONS                              #
   # ============================================================================ #
 
-  - id: gcloud-functions-deploy
+  - id: cloud-functions
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -46,7 +49,7 @@ steps:
   #                           💪 APP ENGINE (STANDARD)                           #
   # ============================================================================ #
 
-  - id: gcloud-app-deploy-standard
+  - id: app-engine-standard
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -63,7 +66,7 @@ steps:
   #                           🦾 APP ENGINE (FLEXIBLE)                           #
   # ============================================================================ #
 
-  - id: gcloud-app-deploy-flexible
+  - id: app-engine-flexible
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -75,13 +78,13 @@ steps:
       - --promote
       - --stop-previous-version
     dir: "src/app"
-    waitFor: ["docker-build"]
+    waitFor: ["docker-push"]
 
   # ============================================================================ #
   #                                 🏃‍♀️ CLOUD RUN                                 #
   # ============================================================================ #
 
-  - id: gcloud-run-deploy-managed
+  - id: cloud-run-managed
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -91,13 +94,13 @@ steps:
       - --image=gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
       - --platform=managed
       - --region=us-central1
-    waitFor: ["docker-build"]
+    waitFor: ["docker-push"]
 
   # ============================================================================ #
   #                             🏃‍♂️ CLOUD RUN (ANTHOS)                            #
   # ============================================================================ #
 
-  - id: gcloud-run-deploy-anthos
+  - id: cloud-run-anthos
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -109,13 +112,13 @@ steps:
       - --cluster=${_GKE_CLUSTER}
       - --cluster-location=${_ZONE}
       - --namespace=default
-    waitFor: ["docker-build"]
+    waitFor: ["docker-push"]
 
   # ============================================================================ #
   #                           ⚙️ GOOGLE COMPUTE ENGINE                           #
   # ============================================================================ #
 
-  - id: update-compute-engine
+  - id: compute-engine
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: bash
     args:
@@ -133,22 +136,23 @@ steps:
         --header "Host: ${_COMPUTE_ENGINE_DOMAIN}" \
         --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
         --header 'Content-Type: application/json'
-    waitFor: ["docker-build"]
+    waitFor: ["docker-push"]
 
   # ============================================================================ #
   #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
   # ============================================================================ #
 
-  - id: gomplate-config
+  - id: gke-1
     name: hairyhenderson/gomplate
     args: ["-f", "app.k8s.tmpl", "-o", "app.k8s.yaml"]
     dir: "src/app"
+    waitFor: ["docker-push"]
 
-  - id: kubectl-apply
+  - id: gke-2
     name: gcr.io/cloud-builders/kubectl
     args: ["apply", "-f", "app.k8s.yaml"]
     dir: "src/app"
-    waitFor: ["docker-build", "gomplate-config"]
+    waitFor: ["gke-1"]
 
 # ============================================================================ #
 #                                    Fin 🏁                                    #
@@ -157,7 +161,6 @@ steps:
 images:
   - gcr.io/$PROJECT_ID/${_IMAGE}:latest
   - gcr.io/$PROJECT_ID/${_IMAGE}:$SHORT_SHA
-
 options:
   substitution_option: ALLOW_LOOSE
   env:
@@ -167,7 +170,6 @@ options:
     - CLOUDSDK_CORE_DISABLE_PROMPTS=1
     - CLOUDSDK_COMPUTE_ZONE=${_ZONE}
     - CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}
-
 substitutions:
   _IMAGE: 7apps-demo
   _REGION: australia-southeast1
@@ -182,5 +184,4 @@ substitutions:
   _GKE_CLUSTER: gke-cluster
   _GKE_APP: gke-app
   _GKE_DOMAIN: gke.7apps.cloud
-
 timeout: 3600s
