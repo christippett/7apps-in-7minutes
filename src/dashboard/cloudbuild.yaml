@@ -29,7 +29,6 @@ steps:
 images:
   - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest
   - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
-
 options:
   substitution_option: ALLOW_LOOSE
   env:
@@ -38,13 +37,11 @@ options:
     - DOMAIN=${_DOMAIN}
     - CLOUDSDK_CORE_DISABLE_PROMPTS=1
     - CLOUDSDK_COMPUTE_ZONE=${_ZONE}
-    - CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}
-
+    - CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER}
 substitutions:
   _ZONE: australia-southeast1-a
   _CLUSTER: gke-cluster
   _IMAGE_NAME: 7apps-dashboard
   _DOMAIN: 7apps.cloud
   _APP: dashboard
-
 timeout: 3600s
