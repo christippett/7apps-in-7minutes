@@ -1,23 +1,14 @@
 import os
 
+from common import ascii_font, background_gradient, page_font
 from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
 from pyfiglet import Figlet
 
-from common import ascii_font, background_gradient, page_font
-
 # TODO: get gradient programmatically from https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json
 
 APP_TITLE = os.environ.get("APP_TITLE", "Localhost")
-
-
-try:
-    COMMIT_SHA = open("commit_sha.txt", "r").read()
-except FileNotFoundError:
-    import git
-
-    repo = git.Repo(search_parent_directories=True)
-    COMMIT_SHA = repo.head.object.hexsha[:7]
+COMMIT_SHA = os.getenv("COMMIT_SHA")
 
 app = Flask("7apps")
 
