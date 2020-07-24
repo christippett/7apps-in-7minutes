@@ -26,15 +26,15 @@ class AppConfig:
             return "App Engine: Standard"
         elif os.getenv("GAE_SERVICE") == "flexible":
             return "App Engine: Flexible"
-        elif "K_SERVICE" in os.environ.keys() and any(
-            "ANTHOS" in v for v in os.environ.keys()
-        ):
+        elif "FUNCTION_TARGET" in os.environ:
+            return "Cloud Function"
+        elif "K_SERVICE" in os.environ and any("ANTHOS" in v for v in os.environ):
             return "Cloud Run: Anthos"
-        elif "K_SERVICE" in os.environ.keys():
+        elif "K_SERVICE" in os.environ:
             return "Cloud Run: Managed"
-        elif any(v.startswith("GKE_APP") for v in os.environ.keys()):
+        elif any(v.startswith("GKE_APP") for v in os.environ):
             return "Kubernetes Engine"
-        elif "GCE_APP" in os.environ.keys():
+        elif "GCE_APP" in os.environ:
             return "Compute Engine"
         else:
             host = request.headers.get("Host", "7apps")
@@ -43,11 +43,7 @@ class AppConfig:
 
     @property
     def version(self) -> Optional[str]:
-        version = os.getenv("VERSION")
-        if os.path.exists(".version") and version is None:
-            with open(".version", "r") as fp:
-                version = fp.read().strip()
-        return version
+        return os.getenv("VERSION") or os.getenv("GAE_VERSION")
 
     @property
     def header(self) -> str:
@@ -64,7 +60,7 @@ app_config = AppConfig()
 
 @app.route("/")
 @cross_origin(send_wildcard=True)
-def main():
+def main(*args, **kwargs):
     if request.headers.get("Accept") == "application/json":
         return jsonify(**dataclass.asdict(app_config))
     return render_template("index.html", app=app_config)

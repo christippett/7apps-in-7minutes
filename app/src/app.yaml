@@ -1,12 +1,16 @@
 service: default
 runtime: python38
+main: src
 
-entrypoint: gunicorn -b :8080 main:app
+entrypoint: gunicorn -b :8080 -w 2 main:app
 
 instance_class: B2
 
 manual_scaling:
   instances: 1
+
+env_variables:
+  APP_TITLE: "App Engine: Standard"
 
 handlers:
   - url: /.*

@@ -21,9 +21,6 @@ spec:
       containers:
         - image: {{env.Getenv "IMAGE" }}
           name: {{ env.Getenv "APP" }}
-          env:
-          - name: APP_TITLE
-            value: "Kubernetes Engine"
           ports:
             - containerPort: 8080
               protocol: TCP

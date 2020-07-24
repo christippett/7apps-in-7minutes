@@ -3,10 +3,14 @@ steps:
   #                                   📜 Setup                                   #
   # ============================================================================ #
 
-  - id: version-file
-    name: alpine
-    entrypoint: sh
-    args: ["-c", "echo $SHORT_SHA > .version"]
+  - id: requirements-txt
+    name: python:3.8-slim
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        pip install -q poetry && \
+        poetry export --without-hashes -f requirements.txt > src/requirements.txt
     waitFor: ["-"]
 
   # ============================================================================ #
@@ -30,13 +34,13 @@ steps:
         "--log-level=error",
         "build",
         "--quiet",
+        "--build-arg=VERSION=$SHORT_SHA",
         "--cache-from=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
         "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
         "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
         ".",
       ]
-    dir: ./src/app
-    waitFor: ["docker-pull", "version-file"]
+    waitFor: ["docker-pull", "requirements-txt"]
 
   - id: docker-push
     name: gcr.io/cloud-builders/docker
@@ -58,9 +62,11 @@ steps:
         "--trigger-http",
         "--runtime=python38",
         "--entry-point=main",
-        "--source=src",
+        "--set-env-vars=VERSION=$SHORT_SHA",
+        "--source=.",
       ]
-    waitFor: ["version-file"]
+    dir: "src"
+    waitFor: ["requirements-txt"]
 
   # ============================================================================ #
   #                           💪 APP ENGINE (STANDARD)                           #
@@ -68,10 +74,13 @@ steps:
 
   - id: app-engine-standard
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: gcloud
-    args: ["app", "deploy", "../app.standard.yaml"]
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        cp ../app.standard.yaml app.yaml && gcloud app deploy --version=$SHORT_SHA
     dir: "src"
-    waitFor: ["version-file"]
+    waitFor: ["requirements-txt"]
 
   # ============================================================================ #
   #                           🦾 APP ENGINE (FLEXIBLE)                           #
@@ -199,4 +208,5 @@ substitutions:
   _GKE_CLUSTER: gke-cluster
   _GKE_APP: gke-app
   _GKE_DOMAIN: gke.7apps.cloud
+tags: ["app"]
 timeout: 3600s
