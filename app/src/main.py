@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Optional
 
 from flask import Flask, jsonify, render_template, request
@@ -11,6 +11,7 @@ from pyfiglet import Figlet
 
 @dataclass
 class AppConfig:
+    version: Optional[str] = field(init=False)
     font: str = "Staatliches"
     ascii_font: str = "slant"
     theme: Optional[str] = None
@@ -19,6 +20,15 @@ class AppConfig:
         with open("gradients.json", "r") as f:
             self.gradients = {i["name"]: i["colors"] for i in json.load(f)}
         self.random_theme = random.choice(list(self.gradients.keys()))
+        self.version = os.getenv("VERSION") or os.getenv("GAE_VERSION")
+
+    @property
+    def header(self) -> str:
+        return Figlet(font=self.ascii_font).renderText("7Apps")
+
+    @property
+    def colors(self):
+        return self.gradients[self.theme or self.random_theme]
 
     @property
     def title(self):
@@ -40,18 +50,6 @@ class AppConfig:
             host = request.headers.get("Host", "7apps")
             title, _, _ = host.partition(":")
             return title
-
-    @property
-    def version(self) -> Optional[str]:
-        return os.getenv("VERSION") or os.getenv("GAE_VERSION")
-
-    @property
-    def header(self) -> str:
-        return Figlet(font=self.ascii_font).renderText("7Apps")
-
-    @property
-    def colors(self):
-        return self.gradients[self.theme or self.random_theme]
 
 
 app = Flask("7apps")
