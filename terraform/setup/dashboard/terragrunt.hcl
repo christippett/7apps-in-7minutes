@@ -30,6 +30,7 @@ dependency "cloud_build" {
 /* Inputs ------------------------------------------------------------------- */
 
 inputs = {
+  app_dir                = "${local.root_dir}/dashboard"
   cloud_build_trigger_id = dependency.cloud_build.outputs.cloud_build_trigger_id
   cloud_build_topic      = dependency.cloud_build.outputs.cloud_build_topic
 }

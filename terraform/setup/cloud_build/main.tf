@@ -4,7 +4,7 @@
 
 resource "null_resource" "initial_container_build" {
   provisioner "local-exec" {
-    working_dir = "${var.src_dir}/../"
+    working_dir = var.app_dir
     command     = <<EOT
     gcloud builds submit \
       --config cloudbuild.container.yaml \

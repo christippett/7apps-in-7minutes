@@ -40,7 +40,7 @@ generate "provider" {
 variable "project_id" { type = string }
 variable "region" { type = string }
 variable "zone" { type = string }
-variable "src_dir" { type = string }
+variable "app_dir" { type = string }
 
 variable "domain" { type = string }
 variable "email" { type = string }
@@ -93,7 +93,7 @@ locals {
   email      = "chris.tippett@servian.com"
   image      = "7apps-demo"
 
-  src_dir = find_in_parent_folders("src")
+  root_dir = get_parent_terragrunt_dir()
 }
 
 /* Inputs ------------------------------------------------------------------- */
@@ -102,7 +102,7 @@ inputs = {
   project_id = local.project_id
   region     = local.region
   zone       = local.zone
-  src_dir    = local.src_dir
+  app_dir    = "${local.root_dir}/app"
 
   domain     = local.domain
   email      = local.email

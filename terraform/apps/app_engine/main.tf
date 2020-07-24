@@ -4,7 +4,6 @@ module "app_engine_standard" {
 
   service     = var.services.app_engine_standard.name
   description = var.services.app_engine_standard.description
-  app_dir     = "${var.src_dir}/app"
 
   domain         = var.services.app_engine_standard.domain
   cloud_dns_zone = var.cloud_dns_zone

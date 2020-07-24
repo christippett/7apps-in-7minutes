@@ -30,10 +30,10 @@ data "archive_file" "function_zip" {
   output_path = "${path.module}/.uploads/function.zip"
 
   dynamic "source" {
-    for_each = fileset("${var.src_dir}/app", "**/*.{py,html,txt,version}")
+    for_each = fileset("${var.app_dir}/src", "**/*.{py,html,txt,version}")
     content {
       filename = source.value
-      content  = file("${var.src_dir}/app/${source.value}")
+      content  = file("${var.app_dir}/src/${source.value}")
     }
   }
 

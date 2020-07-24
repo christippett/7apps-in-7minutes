@@ -18,7 +18,7 @@ locals {
 # Populate .env file for local development / testing
 
 resource "local_file" "dot_env" {
-  filename = "${var.src_dir}/dashboard/.env"
+  filename = "${var.app_dir}/.env"
   content  = join("\n", [for k, v in local.env_vars : "${k}=${v}"])
 }
 

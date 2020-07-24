@@ -6,8 +6,6 @@ variable "description" { type = string }
 
 variable "domain" { type = string }
 
-variable "app_dir" { type = string }
-
 variable "cloud_dns_zone" { type = string }
 
 variable "google_cname" {

@@ -13,10 +13,8 @@ module "container" {
   enable_webhook = true
 
   container = {
-    image = "${var.image_name}:latest"
-    environment = [
-      "APP_TITLE=${var.services.compute_engine.description}"
-    ]
+    image       = "${var.image_name}:latest"
+    environment = ["GCE_APP=1"]
   }
 
   files = [
