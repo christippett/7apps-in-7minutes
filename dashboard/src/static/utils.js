@@ -78,7 +78,7 @@
         // Get current app version (git commit hash)
         var response = await fetch(appUrl, {
           cache: "no-cache",
-          headers: { "Accept-Language": "application/json" },
+          headers: { Accept: "application/json" },
         });
         var data = await response.json();
         var newVersion = data.commit_sha;

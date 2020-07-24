@@ -44,4 +44,5 @@ substitutions:
   _IMAGE_NAME: 7apps-dashboard
   _DOMAIN: 7apps.cloud
   _APP: dashboard
+tags: ["dashboard"]
 timeout: 3600s
