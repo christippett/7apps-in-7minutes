@@ -59,7 +59,7 @@ app_config = AppConfig()
 
 
 @app.route("/")
-@cross_origin(send_wildcard=True)
+@cross_origin(origins=["7apps.cloud"])
 def main(*args, **kwargs):
     if request.headers.get("Accept") == "application/json":
         return jsonify(**dataclass.asdict(app_config))

@@ -11,4 +11,4 @@ COPY pyproject.toml poetry.lock* /app/
 
 RUN poetry install --no-root --no-dev
 
-ADD src /app/
+ADD src .env /app/
