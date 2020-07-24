@@ -18,7 +18,7 @@ resource "google_cloudbuild_trigger" "deploy" {
   project  = var.project_id
   name     = "7-APPS-DEPLOYMENT"
 
-  ignored_files = ["setup/**", "docs/**"]
+  ignored_files = ["dashboard/**", "docs/**", "terraform/**"]
   filename      = "app/cloudbuild.yaml"
 
   substitutions = {
