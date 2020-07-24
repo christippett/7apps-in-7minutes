@@ -74,6 +74,14 @@
       const timestamp = Date.now();
       const app = appMap.get(appName);
 
+      if (app === undefined) {
+        appMap.set(appName, {
+          version: null,
+          previousVersion: null,
+          lastUpdated: timestamp,
+        });
+      }
+
       try {
         // Get current app version (git commit hash)
         var response = await fetch(appUrl, {
@@ -91,20 +99,8 @@
       if (response === undefined || !response.ok || newVersion === undefined) {
         // Although there's no error, something's still not right
         overlayElement.classList.remove("is-hidden");
-        overlayElement.getElementsByClassName("title")[0].innerHTML =
-          '<span class="is-size-3">🙈</span>';
+        overlayElement.getElementsByClassName("title")[0].innerHTML = "Unavailable";
         return;
-      }
-
-      // Remove overlay from iframe and reveal app
-      overlayElement.classList.add("is-hidden");
-
-      if (app === undefined) {
-        appMap.set(appName, {
-          version: newVersion,
-          previousVersion: null,
-          lastUpdated: timestamp,
-        });
       } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
         console.log(`💾 New version found for ${appTitle}: ${newVersion}`);
 
@@ -130,6 +126,9 @@
         parentElement.classList.add("has-new-version");
         setTimeout(() => parentElement.classList.remove("has-new-version"), 3000);
       }
+
+      // Reveal app if it was previously mased by an error
+      overlayElement.classList.add("is-hidden");
     };
 
     // Start polling loop
