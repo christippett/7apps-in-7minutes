@@ -14,10 +14,6 @@ resource "google_cloudfunctions_function" "app" {
   trigger_http          = true
   entry_point           = "main"
 
-  environment_variables = {
-    APP_TITLE = var.services.cloud_function.description
-  }
-
   # lifecycle {
   #   ignore_changes = [source_archive_object, labels]
   # }
@@ -35,11 +31,6 @@ data "archive_file" "function_zip" {
       filename = source.value
       content  = file("${var.app_dir}/src/${source.value}")
     }
-  }
-
-  source {
-    content  = "latest"
-    filename = "commit_sha.txt"
   }
 }
 

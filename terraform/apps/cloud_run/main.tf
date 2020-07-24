@@ -14,10 +14,6 @@ resource "google_cloud_run_service" "managed" {
 
       containers {
         image = "${var.image_name}:latest"
-        env {
-          name  = "APP_TITLE"
-          value = var.services.cloud_run.description
-        }
         resources {
           limits = {
             cpu    = "1000m"

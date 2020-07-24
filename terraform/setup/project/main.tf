@@ -14,6 +14,7 @@ module "project_services" {
     "appengine.googleapis.com",
     "run.googleapis.com",
     "iap.googleapis.com",
+    "webfonts.googleapis.com",
 
     # These services are required by Cloud Run (Anthos)
     "cloudresourcemanager.googleapis.com",

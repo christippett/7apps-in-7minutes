@@ -24,7 +24,6 @@ resource "null_resource" "cloud_run_anthos" {
     when    = create
     command = <<EOT
     gcloud run deploy ${self.triggers.name} ${self.triggers.opts} \
-      --set-env-vars 'APP_TITLE=${self.triggers.description}' \
       --image '${self.triggers.image}';
 EOT
   }

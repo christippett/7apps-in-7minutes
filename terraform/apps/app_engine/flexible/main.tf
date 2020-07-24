@@ -18,10 +18,6 @@ resource "google_app_engine_flexible_app_version" "app" {
     }
   }
 
-  env_variables = {
-    APP_TITLE = var.description
-  }
-
   network {
     name       = var.network_name
     subnetwork = var.subnet_name

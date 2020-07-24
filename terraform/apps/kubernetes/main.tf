@@ -28,10 +28,6 @@ resource "kubernetes_deployment" "app" {
           port {
             container_port = 8080
           }
-          env {
-            name  = "APP_TITLE"
-            value = var.services.kubernetes_engine.description
-          }
           resources {
             limits {
               cpu    = "250m"
