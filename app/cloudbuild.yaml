@@ -11,6 +11,7 @@ steps:
       - |
         pip install -q poetry && \
         poetry export --without-hashes -f requirements.txt > src/requirements.txt
+    dir: "app"
     waitFor: ["-"]
 
   # ============================================================================ #
@@ -40,6 +41,7 @@ steps:
         "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
         ".",
       ]
+    dir: "app"
     waitFor: ["docker-pull", "requirements-txt"]
 
   - id: docker-push
@@ -65,7 +67,7 @@ steps:
         "--set-env-vars=VERSION=$SHORT_SHA",
         "--source=.",
       ]
-    dir: "src"
+    dir: "app/src"
     waitFor: ["requirements-txt"]
 
   # ============================================================================ #
@@ -79,7 +81,7 @@ steps:
       - "-c"
       - |
         cp ../app.standard.yaml app.yaml && gcloud app deploy --version=$SHORT_SHA
-    dir: "src"
+    dir: "app/src"
     waitFor: ["requirements-txt"]
 
   # ============================================================================ #
@@ -96,6 +98,7 @@ steps:
         "app.flex.yaml",
         "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
       ]
+    dir: "app"
     waitFor: ["docker-push"]
 
   # ============================================================================ #
@@ -168,11 +171,13 @@ steps:
       - IMAGE=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
       - APP=${_GKE_APP}
       - DOMAIN=${_GKE_DOMAIN}
+    dir: "app"
     waitFor: ["docker-push"]
 
   - id: kubernetes-engine
     name: gcr.io/cloud-builders/kubectl
     args: ["apply", "-f", "app.k8s.yaml"]
+    dir: "app"
     waitFor: ["k8s-config"]
 
 # ============================================================================ #

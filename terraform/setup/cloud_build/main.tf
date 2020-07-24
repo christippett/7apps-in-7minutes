@@ -19,7 +19,7 @@ resource "google_cloudbuild_trigger" "deploy" {
   name     = "7-APPS-DEPLOYMENT"
 
   ignored_files = ["setup/**", "docs/**"]
-  filename      = "cloudbuild.yaml"
+  filename      = "app/cloudbuild.yaml"
 
   substitutions = {
     _REGION                 = var.region
