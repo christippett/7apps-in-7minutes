@@ -1,108 +1,3 @@
-
-# With Compute Engine you have to do everything yourself. Thankfully there's a
-#  Terraform module that uses cloud-init to set up an instance with everything
-#  needed to deploy a container with automated SSL certificates.
-
-module "container" {
-  source  = "christippett/container-server/cloudinit"
-  version = "1.2.0-alpha.4"
-
-  domain = var.services.compute_engine.domain
-  email  = var.email
-
-  enable_webhook = true
-
-  container = {
-    image       = "${var.image_name}:latest"
-    environment = ["GCE_APP=1"]
-  }
-
-  files = [
-    { filename = "users", content = base64encode("admin:$apr1$DvcU1VRX$prt1QwvJWSxGLohP9f8.l0") }
-  ]
-
-  env = {
-    TRAEFIK_API_DASHBOARD = true
-  }
-
-  cloudinit_part = [
-    {
-      content_type = "text/cloud-config"
-      content      = local.cloudinit_configure_gcr
-    },
-    {
-      content_type = "text/cloud-config"
-      content      = local.cloudinit_disk
-    }
-  ]
-}
-
-# Create cloud-init config to enable the use of Google Container Registry.
-
-locals {
-  cloudinit_configure_gcr = <<EOT
-#cloud-config
-
-write_files:
-  - path: /etc/systemd/system/gcr.service
-    permissions: 0644
-    content: |
-      [Unit]
-      Description=Configure Google Container Registry
-      Before=docker.service
-
-      [Service]
-      Type=oneshot
-      Environment=HOME=/run/app
-      PassEnvironment=HOME
-      ExecStart=/usr/bin/docker-credential-gcr configure-docker
-
-      [Install]
-      WantedBy=multi-user.target
-
-runcmd:
-  - systemctl enable --now gcr.service
-
-EOT
-}
-
-/* Persistent disk ---------------------------------------------------------- */
-
-# We're using Google's Container Optimized OS, which has a stateless filesystem.
-#  We make use of a persistent disk to ensure we can keep our SSL certificates
-#  between reboots.
-
-resource "google_compute_disk" "app" {
-  project = var.project_id
-  name    = "persistent-disk"
-  type    = "pd-standard"
-  zone    = var.zone
-  size    = 10
-}
-
-resource "google_compute_attached_disk" "app" {
-  disk     = google_compute_disk.app.id
-  instance = google_compute_instance.app.id
-}
-
-# Cloud-init config to format and prepare the persistent disk
-
-locals {
-  cloudinit_disk = <<EOT
-#cloud-config
-
-bootcmd:
-  - fsck.ext4 -tvy /dev/sdb || mkfs.ext4 /dev/sdb
-  - mkdir -p /run/app
-  - mount -o defaults -t ext4 /dev/sdb /run/app
-
-EOT
-}
-
-/* Compute Engine instance -------------------------------------------------- */
-
-# Create instance and integrate with all of the above components.
-
 resource "google_compute_instance" "app" {
   name         = var.services.compute_engine.name
   project      = var.project_id
@@ -143,6 +38,96 @@ resource "google_compute_instance" "app" {
     ignore_changes = [attached_disk]
   }
 }
+
+/* Persistent disk ---------------------------------------------------------- */
+
+# We're using Google's Container Optimized OS, which has a stateless filesystem.
+#  We make use of a persistent disk to ensure we can keep our SSL certificates
+#  between reboots.
+
+resource "google_compute_disk" "app" {
+  project = var.project_id
+  name    = "persistent-disk"
+  type    = "pd-standard"
+  zone    = var.zone
+  size    = 10
+}
+
+resource "google_compute_attached_disk" "app" {
+  disk     = google_compute_disk.app.id
+  instance = google_compute_instance.app.id
+}
+
+/* Setup container ----------------------------  ---------------------------- */
+
+# With Compute Engine you have to do everything yourself! The Terraform module
+# below takes care of most of things - it uses cloud-init to configure our
+# instance so that it runs our container, including SSL and a webhook we can use
+# during deployments to update the container image.
+
+module "container" {
+  source  = "christippett/container-server/cloudinit"
+  version = "1.2.0-alpha.4"
+
+  domain = var.services.compute_engine.domain
+  email  = var.email
+
+  enable_webhook = true
+
+  container = {
+    image       = "${var.image_name}:latest"
+    environment = ["GCE_APP=1"]
+  }
+
+  files = [
+    { filename = "users", content = base64encode("admin:$apr1$DvcU1VRX$prt1QwvJWSxGLohP9f8.l0") }
+  ]
+
+  env = {
+    TRAEFIK_API_DASHBOARD = true
+  }
+
+  cloudinit_part = [
+    {
+      content_type = "text/cloud-config"
+      content      = local.cloudinit_extra
+    }
+  ]
+}
+
+# Add extra cloud-init config to enable Google Container Registry + setup disk.
+
+locals {
+  cloudinit_extra = <<EOT
+#cloud-config
+
+write_files:
+  - path: /etc/systemd/system/gcr.service
+    permissions: 0644
+    content: |
+      [Unit]
+      Description=Configure Google Container Registry
+      Before=docker.service
+
+      [Service]
+      Type=oneshot
+      Environment=HOME=/run/app
+      PassEnvironment=HOME
+      ExecStart=/usr/bin/docker-credential-gcr configure-docker
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - systemctl enable --now gcr.service
+bootcmd:
+  - fsck.ext4 -tvy /dev/sdb || mkfs.ext4 /dev/sdb
+  - mkdir -p /run/app
+  - mount -o defaults -t ext4 /dev/sdb /run/app
+
+EOT
+}
+
 
 /* DNS ---------------------------------------------------------------------- */
 
