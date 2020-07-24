@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Optional
 
 from flask import Flask, jsonify, render_template, request
@@ -59,10 +59,10 @@ app_config = AppConfig()
 
 
 @app.route("/")
-@cross_origin(origins=["7apps.cloud"])
+@cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
     if request.headers.get("Accept") == "application/json":
-        return jsonify(**dataclass.asdict(app_config))
+        return jsonify(**asdict(app_config))
     return render_template("index.html", app=app_config)
 
 
