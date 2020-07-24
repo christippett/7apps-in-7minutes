@@ -7,7 +7,6 @@ steps:
     name: alpine
     entrypoint: sh
     args: ["-c", "echo $SHORT_SHA > .version"]
-    dir: "src/app"
     waitFor: ["-"]
 
   # ============================================================================ #
@@ -59,9 +58,8 @@ steps:
         "--trigger-http",
         "--runtime=python38",
         "--entry-point=main",
-        "--source=./",
+        "--source=src",
       ]
-    dir: "src/app"
     waitFor: ["version-file"]
 
   # ============================================================================ #
@@ -71,8 +69,8 @@ steps:
   - id: app-engine-standard
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
-    args: ["app", "deploy", "app.standard.yaml"]
-    dir: "src/app"
+    args: ["app", "deploy", "../app.standard.yaml"]
+    dir: "src"
     waitFor: ["version-file"]
 
   # ============================================================================ #
@@ -89,7 +87,6 @@ steps:
         "app.flex.yaml",
         "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
       ]
-    dir: "src/app"
     waitFor: ["docker-push"]
 
   # ============================================================================ #
@@ -158,7 +155,6 @@ steps:
   - id: k8s-config
     name: hairyhenderson/gomplate
     args: ["-f", "app.k8s.tmpl", "-o", "app.k8s.yaml"]
-    dir: "src/app"
     env:
       - IMAGE=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
       - APP=${_GKE_APP}
@@ -168,7 +164,6 @@ steps:
   - id: kubernetes-engine
     name: gcr.io/cloud-builders/kubectl
     args: ["apply", "-f", "app.k8s.yaml"]
-    dir: "src/app"
     waitFor: ["k8s-config"]
 
 # ============================================================================ #

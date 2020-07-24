@@ -95,7 +95,7 @@ ol > li {
 .logs > p {
   width: 100%;
   display: block;
-  white-space: pre;
+  white-space: nowrap;
   text-overflow: clip;
   overflow: hidden;
   margin: 0 !important;
@@ -104,6 +104,10 @@ ol > li {
 .logs::-webkit-scrollbar,
 .logs::-webkit-scrollbar-thumb {
   display: none;
+}
+
+.lg-step {
+  min-width: 20px;
 }
 
 .frame {

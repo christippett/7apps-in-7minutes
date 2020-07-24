@@ -11,21 +11,21 @@
 
     const createLogElement = (data) => {
       let el = document.createElement("p");
-
-      el.setAttribute("data-build-id", data.id);
-      el.setAttribute("data-step-id", data.step_id);
-      el.setAttribute("data-step-name", data.step_name);
-      el.setAttribute("data-timestamp", data.timestamp);
+      el.setAttribute("data-id", data.id);
+      el.setAttribute("data-step", data.step_name);
       el.setAttribute("data-source", data.source);
       el.setAttribute("data-state", data.state);
 
       let ts = new Date(data.timestamp);
-      let tsHours = ts.getHours().toString().padStart(2, "0");
-      let tsMinutes = ts.getMinutes().toString().padStart(2, "0");
-      let tsHtml = `<span class="lg-ts">${tsHours}:${tsMinutes}</span>`;
-      let stepHtml = `<span class="lg-step">${data.step_name}</span>`;
+      let tsHour = ts.getHours().toString().padStart(2, "0");
+      let tsMin = ts.getMinutes().toString().padStart(2, "0");
+      let logHtml = [
+        `<span class="lg-ts">${tsHour}:${tsMin}</span>`,
+        `<span class="lg-step">Step ${data.step_id}</span>`,
+        `<span class="lg-text">${data.text}</span>`,
+      ];
 
-      el.innerHTML = `${tsHtml} ${stepHtml} ${data.text}`;
+      el.innerHTML = logHtml.join("");
       return el;
     };
 

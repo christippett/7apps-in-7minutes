@@ -115,9 +115,9 @@ class PubSubMessageBroker:
         rec = {
             "id": data["resource"]["labels"]["build_id"],
             "source": "other",
-            "step_id": "",
-            "step_name": "",
-            "state": "",
+            "step_id": None,
+            "step_name": None,
+            "state": None,
             "timestamp": data["timestamp"],
             "command": None,
         }
@@ -128,7 +128,12 @@ class PubSubMessageBroker:
         text = text.strip()
 
         # log step #
-        m = re.match(r".*?Step #(?P<step_id>\d{1,2}).+?\"(?P<step_name>.*?)\"", text)
+        step_p = re.compile(
+            r"step #(?P<step_id>\d{1,2}).+?\"(?P<step_name>.*?)\"", flags=re.IGNORECASE
+        )
+        m = step_p.match(text)
+        rec.update(m.groupdict() if m else {})
+        m = step_p.match(build_step)
         rec.update(m.groupdict() if m else {})
 
         # log state
