@@ -86,10 +86,10 @@
         font-weight: 500;
       }
 
-      {% with gradient = range(1, 360)|random|string + "deg, " + app.gradient_colors|join(", ") %}
+      {% with gradient = range(1, 360)|random|string + "deg, " + app.colors|join(", ") %}
       .bg {
         color: white;
-        background: {{ app.gradient_colors|first }};
+        background: {{ app.colors|first }};
         background: linear-gradient({{ gradient }}) 0% 0% / 400% 400%;
         -webkit-animation: 30s ease 0s infinite normal none running gradient-slider;
         animation: 30s ease 0s infinite normal none running gradient-slider;

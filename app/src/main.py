@@ -1,8 +1,8 @@
 import json
 import os
 import random
-from dataclasses import asdict, dataclass
-from typing import Optional
+from dataclasses import asdict, dataclass, field
+from typing import List, Optional
 
 from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
@@ -17,6 +17,7 @@ GRADIENT = os.getenv("GRADIENT")
 @dataclass
 class AppConfig:
     title: str
+    colors: List[str] = field(init=False)
     font: Optional[str] = None
     ascii_font: Optional[str] = None
     gradient: Optional[str] = None
@@ -31,14 +32,11 @@ class AppConfig:
             self.font = random.choice(theme["fonts"])
         if self.ascii_font is None:
             self.ascii_font = random.choice(theme["ascii_fonts"])
+        self.colors = self.gradients[self.gradient]
 
     @property
     def header(self) -> str:
         return Figlet(font=self.ascii_font).renderText("7-Apps")
-
-    @property
-    def gradient_colors(self):
-        return self.gradients[self.gradient]
 
 
 # Infer runtime environment from available environment variables + set title
