@@ -67,7 +67,7 @@ resource "google_compute_attached_disk" "app" {
 
 module "container" {
   source  = "christippett/container-server/cloudinit"
-  version = "1.2.0-alpha.8"
+  version = "1.2.0-alpha.9"
 
   domain = var.services.compute_engine.domain
   email  = var.email
