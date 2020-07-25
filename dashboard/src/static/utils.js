@@ -74,14 +74,6 @@
       const timestamp = Date.now();
       const app = appMap.get(appName);
 
-      if (app === undefined) {
-        appMap.set(appName, {
-          version: null,
-          previousVersion: null,
-          lastUpdated: timestamp,
-        });
-      }
-
       try {
         // Get current app version (git commit hash)
         var response = await fetch(appUrl, {
@@ -96,12 +88,24 @@
         return;
       }
 
+      document.getElementById(appName).classList.remove("is-hidden");
+
       if (response === undefined || !response.ok || newVersion === undefined) {
         // Although there's no error, something's still not right
         overlayElement.classList.remove("is-hidden");
         overlayElement.getElementsByClassName("title")[0].innerHTML = "Unavailable";
         return;
-      } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
+      }
+
+      if (app === undefined) {
+        appMap.set(appName, {
+          version: newVersion,
+          previousVersion: null,
+          lastUpdated: timestamp,
+        });
+      }
+
+      if (newVersion !== app.version && newVersion !== app.previousVersion) {
         console.log(`💾 New version detected for ${appTitle} (${newVersion})`);
 
         appMap.set(appName, {

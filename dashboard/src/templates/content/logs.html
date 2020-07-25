@@ -1,0 +1,16 @@
+<div class="logs noselect" id="logs">
+  {% for id, logs in log_collection.items() %} {% for log in logs %}
+  <p
+    data-id="{{ log.id }}"
+    data-step="{{ log.step_name }}"
+    data-source="{{ log.source }}"
+    data-state="{{ log.state }}"
+  >
+    <span class="lg-ts">{{ log.text }}</span>
+    <span class="lg-step">
+      {% if log.step_id %}Step {{ log.step_id }}{% endif %}
+    </span>
+    <span class="lg-text">{{ log.text }}</span>
+  </p>
+  {% endfor %} {% endfor %}
+</div>

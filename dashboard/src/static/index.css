@@ -33,21 +33,13 @@ ol > li {
   padding-left: 0.4rem;
 }
 
-.tabs.is-boxed li.is-active a {
-  background-color: #f5f6fa;
-}
-
-.tabs a {
-  color: #7a7a7a;
-}
-
-.tabs.is-boxed a:hover {
-  background-color: #dbdbdb50;
-}
-
 .content {
   line-height: 1.4;
   font-size: 0.9rem;
+}
+
+.tabs {
+  font-size: 0.8rem;
 }
 
 .preface {
@@ -89,7 +81,7 @@ ol > li {
   border-radius: 6px;
   overflow: scroll;
   padding: 0.75rem;
-  min-height: 200px;
+  min-height: 350px;
 }
 
 .logs > p {

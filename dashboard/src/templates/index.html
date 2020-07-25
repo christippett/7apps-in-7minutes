@@ -18,80 +18,59 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css"
     />
     <link href="/static/index.css?ts={{ unix_timestamp }}" rel="stylesheet" />
+    <script
+      src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"
+      defer
+    ></script>
   </head>
 
   <body>
     <section class="is-flex-desktop">
       <div class="container is-flex-desktop">
-        <div class="preface has-text-grey is-relative mb-6">
-          <div class="content py-4">
-            <h3>7-Apps on Google Cloud</h3>
-            <p>
-              The purpose of this demo is to showcase the many ways you can deploy a web
-              app on Google Cloud.
+        <div x-data="{ tab: 'overview' }" class="preface has-text-grey is-relative mb-6">
+          <div class="content">
+            <p class="title is-4">7-Apps on Google Cloud</p>
+            <p class="subtitle is-6">
+              One codebase. Seven services.
             </p>
-            <strong>Objectives</strong>
-            <ol class="is-upper-roman">
-              <li>
-                Deploy the same code across all services — nothing about the application
-                should be particular to any service (or Google Cloud for that matter)
-              </li>
-              <li>Each application should have its own custom domain</li>
-              <li>
-                Requests should be served over HTTPS, with SSL/TLS certificates
-                provisioned automatically
-              </li>
-              <li>Deployments should be 100% automated</li>
-            </ol>
           </div>
           <nav class="mb-5">
-            <div class="tabs is-centered is-boxed is-small has-text-grey">
+            <div class="tabs">
               <ul>
-                <li class="is-active">
-                  <a>
+                <li :class="{ 'is-active': tab === 'overview' }">
+                  <a @click="tab = 'overview'">
+                    <span>Overview</span>
+                  </a>
+                </li>
+                <li :class="{ 'is-active': tab === 'deployments' }">
+                  <a @click="tab = 'deployments'">
+                    <span>Deployments</span>
+                  </a>
+                </li>
+                <li :class="{ 'is-active': tab === 'logs' }">
+                  <a @click="tab = 'logs'">
                     <span>Logs</span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span>Leaderboard</span>
-                  </a>
-                </li>
-                <li>
-                  <a>
-                    <span>Cost</span>
                   </a>
                 </li>
               </ul>
             </div>
           </nav>
-          <div class="content-container">
-            <div class="content">
-              <p>
-                Logs from Cloud Build will appear below when a deployment is active.
-              </p>
-            </div>
-            <div class="logs noselect" id="logs">
-              {% for id, logs in log_collection.items() %} {% for log in logs %}
-              <p data-id="{{ log.id }}" data-step="{{ log.step_name }}"
-                 data-source="{{ log.source }}" data-state="{{ log.state }}"
-              >
-                <span class="lg-ts">{{ log.text }}</span>
-                <span class="lg-step">
-                  {% if log.step_id %}Step {{ log.step_id }}{% endif %}
-                </span>
-                <span class="lg-text">{{ log.text }}</span>
-              </p>
-              {% endfor %} {% endfor %}
-            </div>
+          <div x-show="tab === 'overview'" class="content-container">
+            {% include "content/overview.html" %}
+          </div>
+          <div x-show="tab === 'logs'" class="content-container" style="display: none;">
+            {% include "content/logs.html" %}
           </div>
         </div>
         <div class="content is-hidden-desktop">
-          <h3>Application frames</h3>
+          <p class="title is-4">Application IFrames</p>
+          <p class="subtitle is-6">
+            A live preview of each app.
+          </p>
         </div>
         <div class="frames columns is-multiline">
-          {% for app in app_list %} <div id="{{ app.name }}"
-          class="column is-half is-flex is-relative">
+          {% for app in app_list %} <div id="{{ app.name }}" class="column is-half is-flex
+          is-relative {% if app.name == "localhost" %}is-hidden{% endif %}">
           <div class="frame box is-flex is-relative is-clipped px-0 py-0">
             <div class="frame-label">
               <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}"
