@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
 
 html,
 body {
@@ -61,13 +61,16 @@ ol > li {
   stroke: #dbdbdb;
 }
 .timeline-label {
-  text-shadow: 1px 0 2px rgba(0, 0, 0, 0.4);
+  text-shadow: 1px 1px 2px rgb(75 75 75 / 60%);
   fill: #ffffff;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 svg .tick {
-  font-size: 0.7rem;
+  font-size: 0.5rem;
+  font-style: italic;
+  fill: #b1b1b1;
+  letter-spacing: 1px;
 }
 
 /* ---------------------------------- Logs ---------------------------------- */

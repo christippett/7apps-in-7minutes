@@ -119,8 +119,8 @@
         </p>
       </div>
     </footer>
-    <script src="/static/utils.js?ts={{ unix_timestamp }}"></script>
   </body>
+  <script src="/static/utils.js?ts={{ unix_timestamp }}"></script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/labella/1.1.4/labella.min.js"
     integrity="sha512-CvciuHWpGI0ygZhWN/t/zqiiDI26Zclrsqcd77VDLYN5MyfyyPvy18eFwWZZUdUgofBi/vbOKUAqPRIJ7GyO0g=="
@@ -129,6 +129,11 @@
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"
     integrity="sha512-FHsFVKQ/T1KWJDGSbrUhTJyS1ph3eRrxI228ND0EGaEp6v4a/vGwPWd3Dtd/+9cI7ccofZvl/wulICEurHN1pg=="
+    crossorigin="anonymous"
+  ></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/humanize-duration/3.23.1/humanize-duration.min.js"
+    integrity="sha512-om3N51eLuxygBOt9NLKvGQAlFU/0w4z77iF6csfGevWBlBw02Xv9SLtVii85n160wQyHJboLPL2CvKbi0BJaYw=="
     crossorigin="anonymous"
   ></script>
   <script>
@@ -162,7 +167,7 @@
       {
         id: "run",
         date: new Date(2020, 7, 24, 14, 24, 01),
-        colors: ["#A1FFCE", "#FAFFD1"],
+        colors: ["#f2709c", "#ff9472"],
         name: "Cloud Run: Managed",
       },
       {
@@ -195,6 +200,7 @@
       margin: { left: 50, right: 10, top: 15, bottom: 15 },
       initialWidth: "100%",
       initialHeight: 300,
+      maxDuration: 8 * 60,
     };
 
     var innerWidth = options.initialWidth - options.margin.left - options.margin.right;
@@ -216,10 +222,11 @@
       .attr("y", "-30%")
       .attr("x", "-30%")
       .append("feDropShadow")
-      .attr("dx", 3)
+      .attr("dx", 1)
       .attr("dy", 2)
       .attr("stdDeviation", 3)
-      .attr("flood-opacity", 0.075);
+      .attr("flood-opacity", 0.1)
+      .attr("flood-color", "#0a0a0a");
 
     // Create linear-gradient filter to match each app's background
     function createLinearGradient(d) {
@@ -247,16 +254,27 @@
       return `${d.name} (${duration}s)`;
     }
 
+    function gradient(d, i) {
+      return `url(#${d.data.id})`;
+    }
+
+    function color(d, i) {
+      return d.data.colors[0];
+    }
+
     var vis = timeline
       .append("g")
       .attr("transform", `translate(${options.margin.left}, ${options.margin.top})`);
 
-    var durationScale = d3.scaleLinear().domain([0, 480]).range([0, innerHeight]);
+    var durationScale = d3
+      .scaleLinear()
+      .domain([0, options.maxDuration])
+      .range([0, innerHeight]);
 
     // compute labels dimension
     var dummyText = vis.append("text").classed("timeline-label", true);
     var nodes = data.map(function (d) {
-      var bbox = dummyText.text(labelText(d)).node().getBBox();
+      var bbox = dummyText.text(d.name).node().getBBox();
       d.h = bbox.height;
       d.w = bbox.width;
       d.duration = (d.date - startTime) / 1000;
@@ -268,17 +286,42 @@
     // Create gradient background that's the same as app's
     data.forEach(createLinearGradient);
 
-    // ---------------------------------------------------
-    // Draw dots on the timeline
-    // ---------------------------------------------------
-
+    // Create timeline axis
     vis.append("line").classed("timeline", true).attr("y2", innerHeight);
+    vis
+      .append("g")
+      .selectAll("circle.dot")
+      .data([0, innerHeight])
+      .enter()
+      .append("circle")
+      .classed("dot", true)
+      .style("fill", "#dbdbdb")
+      .attr("r", 3)
+      .attr("cy", (d) => d);
 
-    var linkLayer = vis.append("g");
-    var labelLayer = vis.append("g");
-    var dotLayer = vis.append("g");
+    // Create axis ticks/labels
+    var axisTicks = Array.from(Array(options.maxDuration / 30 + 1), (_, i) => {
+      return { tick: i * 30, y: durationScale(i * 30) };
+    });
 
-    dotLayer
+    vis
+      .append("g")
+      .selectAll("text.tick")
+      .data(axisTicks)
+      .enter()
+      .append("text")
+      .attr("x", 0)
+      .attr("y", (d) => d.y)
+      .attr("transform", "translate(-12, 2.5)")
+      .attr("text-anchor", "end")
+      .classed("tick", true)
+      .text((d) => {
+        return d.tick % 60 == 0 ? `${d.tick / 60}min` : "-";
+      });
+
+    // Create node markers
+    vis
+      .append("g")
       .selectAll("circle.dot")
       .data(nodes)
       .enter()
@@ -286,34 +329,10 @@
       .classed("dot", true)
       .style("fill", color)
       .attr("r", 3)
-      .attr("cy", function (d) {
-        return d.getRoot().idealPos;
-      });
-
-    vis
-      .selectAll("text.tick")
-      .data(nodes)
-      .enter()
-      .append("g")
-      .attr("transform", function (d) {
-        return `translate(-40, ${d.getRoot().idealPos})`;
-      })
-      .append("text")
-      .classed("tick", true)
-      .text(function (d) {
-        return `${d.data.duration}s`;
-      });
-
-    function gradient(d, i) {
-      return `url(#${d.data.id})`;
-    }
-
-    function color(d, i) {
-      return d.data.colors[0];
-    }
+      .attr("cy", (d) => d.getRoot().idealPos);
 
     //---------------------------------------------------
-    // Labella has utility to help rendering
+    // Labella renderer
     //---------------------------------------------------
 
     var renderer = new labella.Renderer({
@@ -327,50 +346,42 @@
       renderer.layout(nodes);
 
       // Draw label rectangles
-      var sEnter = labelLayer
+      var labelLayer = vis
+        .append("g")
         .selectAll("rect.flag")
         .data(nodes)
         .enter()
         .append("g")
-        .attr("transform", function (d) {
-          return `translate(${d.x}, ${d.y - d.dy / 2})`;
-        });
+        .attr("transform", (d) => `translate(${d.x}, ${d.y - d.dy / 2})`);
 
-      sEnter
+      labelLayer
         .append("rect")
         .classed("flag", true)
-        .attr("width", function (d) {
-          return d.data.w + 17;
-        })
-        .attr("height", function (d) {
-          return d.dy + 1;
-        })
+        .attr("width", (d) => d.data.w + 17)
+        .attr("height", (d) => d.dy + 1)
         .attr("rx", 4)
         .attr("ry", 4)
         .attr("fill", gradient)
         .attr("filter", "url(#shadow)")
         .attr("stroke", "#ffffff")
-        .attr("stroke-width", "2");
+        .attr("stroke-width", "1.5");
 
-      sEnter
+      labelLayer
         .append("text")
         .attr("x", 8)
         .attr("y", 17)
         .classed("timeline-label", true)
-        .text(function (d) {
-          return labelText(d.data);
-        });
+        .text((d) => d.data.name);
 
       // Draw path from point on the timeline to the label rectangle
-      linkLayer
+      vis
+        .append("g")
         .selectAll("path.link")
         .data(nodes)
         .enter()
         .append("path")
         .classed("link", true)
-        .attr("d", function (d) {
-          return renderer.generatePath(d);
-        })
+        .attr("d", (d) => renderer.generatePath(d))
         .style("stroke", color)
         .style("stroke-width", 2)
         .style("opacity", 0.6)
