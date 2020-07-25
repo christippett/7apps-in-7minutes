@@ -22,7 +22,7 @@ class AppConfig:
     gradient: Optional[str] = None
 
     def __post_init__(self):
-        with open("templates/theme.json", "r") as f:
+        with open("theme.json", "r") as f:
             theme = json.load(f)
         self.gradients = {i["name"]: i["colors"] for i in theme["gradients"]}
         if self.gradient is None:
