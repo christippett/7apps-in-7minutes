@@ -98,11 +98,12 @@
       }
 
       if (app === undefined) {
-        appMap.set(appName, {
+        app = {
           version: newVersion,
           previousVersion: null,
           lastUpdated: timestamp,
-        });
+        };
+        appMap.set(appName, app);
       }
 
       if (newVersion !== app.version && newVersion !== app.previousVersion) {
