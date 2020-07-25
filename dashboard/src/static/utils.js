@@ -89,7 +89,7 @@
           headers: { Accept: "application/json" },
         });
         var data = await response.json();
-        var newVersion = data.commit_sha;
+        var newVersion = data.version;
       } catch (e) {
         overlayElement.classList.remove("is-hidden");
         overlayElement.getElementsByClassName("title")[0].innerText = e.message;
@@ -102,7 +102,7 @@
         overlayElement.getElementsByClassName("title")[0].innerHTML = "Unavailable";
         return;
       } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
-        console.log(`💾 New version found for ${appTitle}: ${newVersion}`);
+        console.log(`💾 ${appTitle}: new version detected (${newVersion}`);
 
         appMap.set(appName, {
           version: newVersion,
