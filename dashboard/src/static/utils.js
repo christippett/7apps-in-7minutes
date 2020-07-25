@@ -64,16 +64,15 @@
     const versionMap = new Map();
 
     const checkStatus = async (iframeElement) => {
-      const overlayElement = document.getElementById(
-        `${iframeElement.dataset.name}-overlay`
-      );
-      const parentElement = iframeElement.parentElement;
-      const appUrl = iframeElement.dataset.url;
-      const appName = iframeElement.dataset.name;
-      const appTitle = iframeElement.dataset.title;
       const timestamp = new Date();
+      const appName = iframeElement.dataset.name;
+      const appUrl = iframeElement.dataset.url;
+      const appTitle = iframeElement.dataset.title;
       const app = appMap.get(appName);
+      const overlayElement = document.getElementById(`${appName}-overlay`);
+      const appElement = document.getElementById(appName);
 
+      var errorMessage = null;
       try {
         // Get current app version (git commit hash)
         var response = await fetch(appUrl, {
@@ -83,16 +82,24 @@
         var data = await response.json();
         var newVersion = data.version;
       } catch (e) {
-        overlayElement.classList.remove("is-hidden");
-        overlayElement.getElementsByClassName("title")[0].innerText = e.message;
-        return;
+        errorMessage = e.message;
       }
 
       if (response === undefined || !response.ok || newVersion === undefined) {
-        // Although there's no error, something's still not right
+        iframeElement.setAttribute("data-error", true);
         overlayElement.classList.remove("is-hidden");
-        overlayElement.getElementsByClassName("title")[0].innerHTML = "Unavailable";
+        overlayElement.getElementsByClassName("title")[0].innerHTML =
+          errorMessage || "Unavailable";
         return;
+      } else if (
+        iframeElement.hasAttribute("data-error") ||
+        appElement.classList.contains("is-hidden")
+      ) {
+        // Reveal app if it was previously mased by an error
+        iframeElement.removeAttribute("data-error");
+        iframeElement.src = `${appUrl}?ts=${timestamp}`; // refresh iframe
+        overlayElement.classList.add("is-hidden");
+        appElement.classList.remove("is-hidden");
       }
 
       if (app === undefined) {
@@ -103,7 +110,6 @@
         });
       } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
         console.log(`💾 New version detected for ${appTitle} (${newVersion})`);
-
         appMap.set(appName, {
           version: newVersion,
           previousVersion: app.version,
@@ -122,14 +128,10 @@
         iframeElement.name = `${iframeElement.name.split("-")[0]}-${timestamp}`;
         iframeElement.src = `${appUrl}?ts=${timestamp}`; // forces refresh
 
-        // Draw attention to the app if a new version is detected
-        parentElement.classList.add("has-new-version");
-        setTimeout(() => parentElement.classList.remove("has-new-version"), 3000);
+        // Draw attention to the app when a new version is detected
+        appElement.classList.add("has-new-version");
+        setTimeout(() => appElement.classList.remove("has-new-version"), 3000);
       }
-
-      // Reveal app if it was previously mased by an error
-      document.getElementById(appName).classList.remove("is-hidden");
-      overlayElement.classList.add("is-hidden");
     };
 
     // Start polling loop
