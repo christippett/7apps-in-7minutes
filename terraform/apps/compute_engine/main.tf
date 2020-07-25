@@ -67,7 +67,7 @@ resource "google_compute_attached_disk" "app" {
 
 module "container" {
   source  = "christippett/container-server/cloudinit"
-  version = "1.2.0-alpha.4"
+  version = "1.2.0-alpha.8"
 
   domain = var.services.compute_engine.domain
   email  = var.email
@@ -77,14 +77,6 @@ module "container" {
   container = {
     image       = "${var.image_name}:latest"
     environment = ["GCE_APP=1"]
-  }
-
-  files = [
-    { filename = "users", content = base64encode("admin:$apr1$DvcU1VRX$prt1QwvJWSxGLohP9f8.l0") }
-  ]
-
-  env = {
-    TRAEFIK_API_DASHBOARD = true
   }
 
   cloudinit_part = [
