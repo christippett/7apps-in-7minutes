@@ -36,7 +36,7 @@
       websocket.onclose = () => {
         console.log("🔌 Log stream disconnected");
         // Attempt to re-connect
-        setTimeout(() => connect(logContainerElement), 1000);
+        setTimeout(() => connect(logContainerElement), 10000);
       };
       websocket.onmessage = (event) => {
         if (logContainerElement === null) return;
