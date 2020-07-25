@@ -88,8 +88,6 @@
         return;
       }
 
-      document.getElementById(appName).classList.remove("is-hidden");
-
       if (response === undefined || !response.ok || newVersion === undefined) {
         // Although there's no error, something's still not right
         overlayElement.classList.remove("is-hidden");
@@ -130,6 +128,7 @@
       }
 
       // Reveal app if it was previously mased by an error
+      document.getElementById(appName).classList.remove("is-hidden");
       overlayElement.classList.add("is-hidden");
     };
 
