@@ -36,7 +36,7 @@ class AppConfig:
 
     @property
     def header(self) -> str:
-        return Figlet(font=self.ascii_font).renderText("7-Apps")
+        return Figlet(font=self.ascii_font).renderText("7Apps")
 
 
 # Infer runtime environment from available environment variables + set title
