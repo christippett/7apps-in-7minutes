@@ -3,8 +3,9 @@ import json
 import logging
 import os
 import re
-from collections import defaultdict, deque
-from typing import Any, Dict, List, Optional
+import sys
+from collections import defaultdict, deque, namedtuple
+from typing import Any, Dict, List
 
 import aiofiles
 import dateutil.parser
@@ -12,13 +13,13 @@ import google.auth
 from fastapi import WebSocket
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import pubsub_v1
-from requests import Session
 
 from .constants import CENSOR_SYMBOL as X
 from .constants import (
     CLOUD_BUILD_API,
     CLOUD_BUILD_SUBSCRIPTION_ID,
     CLOUD_BUILD_TRIGGER_ID,
+    CLOUDSDK_HOME,
     GITHUB_BRANCH,
     GITHUB_REPO,
 )
@@ -39,44 +40,68 @@ def extract_app_name_from_url(url):
     raise ValueError("Invalid application URL")
 
 
-def get_active_builds(session: Optional[Session] = None) -> List[Dict[str, Any]]:
-    if session is None:
-        session = AuthorizedSession(credentials)
-    builds_query = {"filter": 'status="QUEUED" OR status="WORKING"'}
-    project = "servian-labs-7apps"
-    resp = session.get(
-        f"{CLOUD_BUILD_API}/projects/{project}/builds", params=builds_query,
-    )
-    resp.raise_for_status()
-    builds: List[Dict[str, str]] = resp.json().get("builds", [])
-    return [
-        {
-            "id": b["id"],
-            "start_time": dateutil.parser.parse(b["startTime"]),
-            "finish_time": dateutil.parser.parse(b["finishTime"])
-            if b.get("finishTime") is not None
-            else None,
+class CloudBuildClient:
+    def __init__(self):
+        self.session = AuthorizedSession(credentials)
+
+    def _googlesdk_cloudbuild(self):
+        third_party_dir = os.path.join(CLOUDSDK_HOME, "lib", "third_party")
+        if os.path.isdir(third_party_dir) and third_party_dir not in sys.path:
+            sys.path.insert(0, third_party_dir)
+        from googlecloudsdk.api_lib.cloudbuild import logs
+
+        return logs
+
+    def get_build(self, id: str) -> Dict[str, Any]:
+        resp = self.session.get(f"{CLOUD_BUILD_API}/projects/{project}/builds/{id}")
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_logs(self, id: str, messenger):
+        class _LogWriter:
+            def Print(self, text):
+                for log in text.split("\n"):
+                    data = json.dumps({"log": log})
+                    asyncio.create_task(messenger(data))
+
+        cb = self._googlesdk_cloudbuild()
+        BuildRef = namedtuple("BuildRef", ["projectId", "id"])
+        build_ref = BuildRef(id=id, projectId=project)
+        out = _LogWriter()
+        cb.CloudBuildClient().Stream(build_ref, out=out)
+
+    def get_active_builds(self) -> List[Dict[str, Any]]:
+        builds_query = {"filter": 'status="QUEUED" OR status="WORKING"'}
+        project = "servian-labs-7apps"
+        resp = self.session.get(
+            f"{CLOUD_BUILD_API}/projects/{project}/builds", params=builds_query,
+        )
+        resp.raise_for_status()
+        builds: List[Dict[str, str]] = resp.json().get("builds", [])
+        return [
+            {
+                "id": b["id"],
+                "start_time": dateutil.parser.parse(b["startTime"]),
+                "finish_time": dateutil.parser.parse(b["finishTime"])
+                if b.get("finishTime") is not None
+                else None,
+            }
+            for b in builds
+        ]
+
+    def trigger_build(self, substitutions: Dict[str, str]) -> str:
+        source = {
+            "repoName": GITHUB_REPO,
+            "branchName": GITHUB_BRANCH,
+            "substitutions": substitutions,
         }
-        for b in builds
-    ]
+        resp = self.session.post(
+            f"{CLOUD_BUILD_API}/{CLOUD_BUILD_TRIGGER_ID}:run", json=source,
+        )
+        resp.raise_for_status()
 
-
-def trigger_build(
-    substitutions: Dict[str, str], session: Optional[Session] = None
-) -> str:
-    if session is None:
-        session = AuthorizedSession(credentials)
-
-    source = {
-        "repoName": GITHUB_REPO,
-        "branchName": GITHUB_BRANCH,
-        "substitutions": substitutions,
-    }
-    resp = session.post(f"{CLOUD_BUILD_API}/{CLOUD_BUILD_TRIGGER_ID}:run", json=source,)
-    resp.raise_for_status()
-
-    operation = resp.json()
-    return operation["metadata"]["build"]["id"]
+        operation = resp.json()
+        return operation["metadata"]["build"]["id"]
 
 
 class PubSubMessageBroker:
@@ -85,7 +110,7 @@ class PubSubMessageBroker:
         self.pubsub = pubsub_v1.SubscriberClient()
         self.log_collection = defaultdict(lambda: deque(maxlen=50))
         self.generator = self.get_stream_generator()
-        self.subscribe()
+        # self.subscribe()
 
     async def get_stream_generator(self):
         while True:

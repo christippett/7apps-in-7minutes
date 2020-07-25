@@ -3,15 +3,19 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Style(BaseModel):
-    gradient_name: Optional[str] = None
+class AppConfig(BaseModel):
+    gradient: Optional[str] = None
     ascii_font: Optional[str] = None
-    title_font: Optional[str] = None
+    font: Optional[str] = None
 
-
-class DeploymentConfig(BaseModel):
-    style: Style
+    def get_build_substitutions(self):
+        substitutions = {
+            "_GRADIENT": self.gradient,
+            "_FONT": self.font,
+            "_ASCII_FONT": self.ascii_font,
+        }
+        return {k: v for k, v in substitutions.items() if v is not None}
 
 
 class DeployJob(BaseModel):
-    id: int
+    id: str
