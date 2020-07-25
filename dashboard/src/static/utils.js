@@ -102,7 +102,7 @@
         overlayElement.getElementsByClassName("title")[0].innerHTML = "Unavailable";
         return;
       } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
-        console.log(`💾 ${appTitle}: new version detected (${newVersion}`);
+        console.log(`💾 New version detected for ${appTitle} (${newVersion})`);
 
         appMap.set(appName, {
           version: newVersion,
@@ -142,15 +142,17 @@
       setTimeout(() => monitorStatus({ interval }), interval);
     };
 
-    const pauseMonitoring = () => (monitoringEnabled = false);
-    const resumingMonitoring = () => (monitoringEnabled = true);
+    const stopMonitor = () => (monitoringEnabled = false);
+    const startMonitor = (payload) => {
+      monitoringEnabled = true;
+      monitorStatus(payload);
+    };
 
     var monitoringEnabled = true;
 
     return {
-      monitorStatus,
-      pauseMonitoring,
-      resumingMonitoring,
+      startMonitor,
+      stopMonitor,
       apps: appMap,
       versionStats: versionMap,
     };
