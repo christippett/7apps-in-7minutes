@@ -26,11 +26,11 @@ class AppConfig:
         with open("theme.json", "r") as f:
             theme = json.load(f)
         self.gradients = {i["name"]: i["colors"] for i in theme["gradients"]}
-        if self.gradient is None:
+        if not self.gradient:
             self.gradient = random.choice(list(self.gradients.keys()))
-        if self.font is None:
+        if not self.font:
             self.font = random.choice(theme["fonts"])
-        if self.ascii_font is None:
+        if not self.ascii_font:
             self.ascii_font = random.choice(theme["ascii_fonts"])
         self.colors = self.gradients[self.gradient]
 

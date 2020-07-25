@@ -9,9 +9,14 @@ RUN pip install -r requirements.txt
 # Copy source code
 ADD src /app/
 
-EXPOSE 8080
-
+# App configuration
 ARG VERSION
-ENV VERSION $VERSION
+ARG GRADIENT
+ARG FONT
+ARG ASCII_FONT
+
+ENV VERSION=$VERSION GRADIENT=$GRADIENT FONT=$FONT ASCII_FONT=$ASCII_FONT
+
+EXPOSE 8080
 
 ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
