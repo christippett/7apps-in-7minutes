@@ -98,15 +98,12 @@
       }
 
       if (app === undefined) {
-        app = {
+        appMap.set(appName, {
           version: newVersion,
           previousVersion: null,
           lastUpdated: timestamp,
-        };
-        appMap.set(appName, app);
-      }
-
-      if (newVersion !== app.version && newVersion !== app.previousVersion) {
+        });
+      } else if (newVersion !== app.version && newVersion !== app.previousVersion) {
         console.log(`💾 New version detected for ${appTitle} (${newVersion})`);
 
         appMap.set(appName, {
