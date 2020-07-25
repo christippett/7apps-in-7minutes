@@ -25,8 +25,9 @@ resource "local_file" "dot_env" {
 /* Pub/Sub subscription to Cloud Build logs --------------------------------- */
 
 resource "google_pubsub_subscription" "cloud_build_logs" {
-  name  = "${var.cloud_build_topic.name}-subscription"
-  topic = var.cloud_build_topic.name
+  project = var.project_id
+  name    = "${var.cloud_build_topic.name}-subscription"
+  topic   = var.cloud_build_topic.name
 
   # 20 minutes
   message_retention_duration = "1200s"
@@ -39,10 +40,15 @@ resource "google_pubsub_subscription" "cloud_build_logs" {
   }
 }
 
+data "google_compute_default_service_account" "default" {
+  project = var.project_id
+}
+
 resource "google_pubsub_subscription_iam_binding" "cloud_build_logs" {
-  subscription = google_pubsub_subscription.cloud_build_logs.name
+  project      = var.project_id
+  subscription = google_pubsub_subscription.cloud_build_logs.id
   role         = "roles/editor"
   members = [
-    "serviceAccount:service-${data.google_project.project.number}@gae-api-prod.google.com.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}.svc.id.goog[default/default]"
   ]
 }
