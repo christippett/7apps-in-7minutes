@@ -24,23 +24,7 @@ section {
   flex: 1;
 }
 
-iframe {
-  border-radius: 6px;
-  width: 100%;
-}
-
-ol > li {
-  padding-left: 0.4rem;
-}
-
-.content {
-  line-height: 1.4;
-  font-size: 0.9rem;
-}
-
-.tabs {
-  font-size: 0.8rem;
-}
+/* --------------------------------- Content -------------------------------- */
 
 .preface {
   flex: 1 0 auto;
@@ -50,12 +34,43 @@ ol > li {
   margin-bottom: 2rem;
 }
 
+.tabs {
+  font-size: 0.8rem;
+}
+
 .content-container {
   flex: 1;
   width: 100%;
   display: flex;
   flex-direction: column;
 }
+
+.content {
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+ol > li {
+  padding-left: 0.4rem;
+}
+
+/* -------------------------------- Timeline -------------------------------- */
+
+.timeline {
+  stroke-width: 2px;
+  stroke: #dbdbdb;
+}
+.timeline-label {
+  text-shadow: 1px 0 2px rgba(0, 0, 0, 0.4);
+  fill: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+svg .tick {
+  font-size: 0.7rem;
+}
+
+/* ---------------------------------- Logs ---------------------------------- */
 
 .logs::-webkit-scrollbar {
   background: transparent;
@@ -102,6 +117,13 @@ ol > li {
   min-width: 20px;
 }
 
+/* --------------------------------- IFrames -------------------------------- */
+
+iframe {
+  border-radius: 6px;
+  width: 100%;
+}
+
 .frame {
   flex: 1 0 100%;
   min-height: 250px;
@@ -126,21 +148,6 @@ ol > li {
   max-width: 95%;
   overflow-x: hidden;
   white-space: nowrap;
-}
-
-@media screen and (min-width: 1024px) {
-  .preface {
-    height: 75%;
-    margin: 2rem 8rem 2rem 0;
-    flex: 0;
-    min-width: 35%;
-    align-self: center;
-  }
-  .frames {
-    max-width: 75%;
-    height: 95%;
-    align-self: center;
-  }
 }
 
 .has-new-version {
@@ -171,6 +178,23 @@ ol > li {
     );
   background-size: 60px 60px;
   background-position: 0 0, 30px 30px;
+}
+
+/* ---------------------------------- Misc ---------------------------------- */
+
+@media screen and (min-width: 1024px) {
+  .preface {
+    height: 75%;
+    margin: 2rem 8rem 2rem 0;
+    flex: 0;
+    min-width: 35%;
+    align-self: center;
+  }
+  .frames {
+    max-width: 75%;
+    height: 95%;
+    align-self: center;
+  }
 }
 
 .noselect {

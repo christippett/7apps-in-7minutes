@@ -71,7 +71,7 @@
       const appUrl = iframeElement.dataset.url;
       const appName = iframeElement.dataset.name;
       const appTitle = iframeElement.dataset.title;
-      const timestamp = Date.now();
+      const timestamp = new Date();
       const app = appMap.get(appName);
 
       try {
