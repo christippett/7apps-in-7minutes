@@ -60,11 +60,21 @@ ol > li {
   stroke-width: 2px;
   stroke: #dbdbdb;
 }
-.timeline-label {
+.labels text {
   text-shadow: 1px 1px 2px rgb(75 75 75 / 60%);
   fill: #ffffff;
   font-size: 0.8rem;
   font-weight: 500;
+}
+.labels rect {
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  filter: url(#shadow);
+}
+.links path {
+  stroke-width: 2;
+  opacity: 0.6;
+  fill: none;
 }
 svg .tick {
   font-size: 0.5rem;

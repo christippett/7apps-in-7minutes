@@ -136,265 +136,27 @@
     integrity="sha512-om3N51eLuxygBOt9NLKvGQAlFU/0w4z77iF6csfGevWBlBw02Xv9SLtVii85n160wQyHJboLPL2CvKbi0BJaYw=="
     crossorigin="anonymous"
   ></script>
+  <script src="/static/timeline.js"></script>
   <script>
     /* eslint-disable no-undef */
+
+    // =======================
     // Connect WebSocket
+    // =======================
     LogStreamClient.connect();
 
-    // ---------------------------------------------------
-    // Create dummy data
-    // ---------------------------------------------------
-
-    var startTime = new Date(2020, 7, 24, 14, 22, 52);
-
-    var data = [
-      {
-        id: "gke",
-        date: new Date(2020, 7, 24, 14, 23, 21),
-        colors: ["#1D4350", "#A43931"],
-        name: "Kubernetes Engine",
-      },
-      {
-        id: "compute",
-        date: new Date(2020, 7, 24, 14, 23, 51),
-        colors: ["#73C8A9", "#373B44"],
-        name: "Compute Engine",
-      },
-      {
-        id: "run",
-        date: new Date(2020, 7, 24, 14, 24, 01),
-        colors: ["#f2709c", "#ff9472"],
-        name: "Cloud Run: Managed",
-      },
-      {
-        id: "run-anthos",
-        date: new Date(2020, 7, 24, 14, 24, 12),
-        colors: ["#FF4E50", "#F9D423"],
-        name: "Cloud Run: Anthos",
-      },
-      {
-        id: "standard",
-        date: new Date(2020, 7, 24, 14, 24, 50),
-        colors: ["#20002c", "#cbb4d4"],
-        name: "App Engine: Standard",
-      },
-      {
-        id: "functions",
-        date: new Date(2020, 7, 24, 14, 25, 05),
-        colors: ["#00C9FF", "#92FE9D"],
-        name: "Cloud Functions",
-      },
-      {
-        id: "flexible",
-        date: new Date(2020, 7, 24, 14, 29, 34),
-        colors: ["#457fca", "#5691c8"],
-        name: "App Engine: Flexible",
-      },
-    ];
-
+    // =======================
+    // Timeline
+    // =======================
     var options = {
       margin: { left: 50, right: 10, top: 15, bottom: 15 },
       initialWidth: "100%",
       initialHeight: 300,
-      maxDuration: 8 * 60,
+      timelineLimit: 8 * 60, // max seconds
     };
 
-    var innerWidth = options.initialWidth - options.margin.left - options.margin.right;
-    var innerHeight = options.initialHeight - options.margin.top - options.margin.bottom;
-
-    var timeline = d3
-      .select("#timeline")
-      .append("svg")
-      .attr("width", options.initialWidth)
-      .attr("height", options.initialHeight);
-
-    // Create box-shadow filter
-    timeline
-      .append("defs")
-      .append("filter")
-      .attr("id", "shadow")
-      .attr("width", "200%")
-      .attr("height", "200%")
-      .attr("y", "-30%")
-      .attr("x", "-30%")
-      .append("feDropShadow")
-      .attr("dx", 1)
-      .attr("dy", 2)
-      .attr("stdDeviation", 3)
-      .attr("flood-opacity", 0.1)
-      .attr("flood-color", "#0a0a0a");
-
-    // Create linear-gradient filter to match each app's background
-    function createLinearGradient(d) {
-      var gradient = timeline
-        .select("defs")
-        .append("linearGradient")
-        .attr("id", d.id)
-        .attr("x1", -1.5)
-        .attr("x2", 1.5)
-        .attr("y1", -2)
-        .attr("y2", 2)
-        .attr("gradientTransform", "rotate(-15)");
-      var offsetScale = d3
-        .scaleSqrt()
-        .domain([0, d.colors.length - 1])
-        .range([0, 100]);
-      d.colors.forEach((c) => {
-        let idx = d.colors.indexOf(c);
-        gradient.append("stop").attr("stop-color", c).attr("offset", offsetScale(idx));
-      });
-    }
-
-    function labelText(d) {
-      let duration = (d.date - startTime) / 1000;
-      return `${d.name} (${duration}s)`;
-    }
-
-    function gradient(d, i) {
-      return `url(#${d.data.id})`;
-    }
-
-    function color(d, i) {
-      return d.data.colors[0];
-    }
-
-    var vis = timeline
-      .append("g")
-      .attr("transform", `translate(${options.margin.left}, ${options.margin.top})`);
-
-    var durationScale = d3
-      .scaleLinear()
-      .domain([0, options.maxDuration])
-      .range([0, innerHeight]);
-
-    // compute labels dimension
-    var dummyText = vis.append("text").classed("timeline-label", true);
-    var nodes = data.map(function (d) {
-      var bbox = dummyText.text(d.name).node().getBBox();
-      d.h = bbox.height;
-      d.w = bbox.width;
-      d.duration = (d.date - startTime) / 1000;
-      return new labella.Node(durationScale(d.duration), d.h + 8, d);
-    });
-
-    dummyText.remove();
-
-    // Create gradient background that's the same as app's
-    data.forEach(createLinearGradient);
-
-    // Create timeline axis
-    vis.append("line").classed("timeline", true).attr("y2", innerHeight);
-    vis
-      .append("g")
-      .selectAll("circle.dot")
-      .data([0, innerHeight])
-      .enter()
-      .append("circle")
-      .classed("dot", true)
-      .style("fill", "#dbdbdb")
-      .attr("r", 3)
-      .attr("cy", (d) => d);
-
-    // Create axis ticks/labels
-    var axisTicks = Array.from(Array(options.maxDuration / 30 + 1), (_, i) => {
-      return { tick: i * 30, y: durationScale(i * 30) };
-    });
-
-    vis
-      .append("g")
-      .selectAll("text.tick")
-      .data(axisTicks)
-      .enter()
-      .append("text")
-      .attr("x", 0)
-      .attr("y", (d) => d.y)
-      .attr("transform", "translate(-12, 2.5)")
-      .attr("text-anchor", "end")
-      .classed("tick", true)
-      .text((d) => {
-        return d.tick % 60 == 0 ? `${d.tick / 60}min` : "-";
-      });
-
-    // Create node markers
-    vis
-      .append("g")
-      .selectAll("circle.dot")
-      .data(nodes)
-      .enter()
-      .append("circle")
-      .classed("dot", true)
-      .style("fill", color)
-      .attr("r", 3)
-      .attr("cy", (d) => d.getRoot().idealPos);
-
-    //---------------------------------------------------
-    // Labella renderer
-    //---------------------------------------------------
-
-    var renderer = new labella.Renderer({
-      layerGap: 60,
-      nodeHeight: nodes[0].width,
-      direction: "right",
-    });
-
-    function draw(nodes) {
-      // Add x,y,dx,dy to node
-      renderer.layout(nodes);
-
-      // Draw label rectangles
-      var labelLayer = vis
-        .append("g")
-        .selectAll("rect.flag")
-        .data(nodes)
-        .enter()
-        .append("g")
-        .attr("transform", (d) => `translate(${d.x}, ${d.y - d.dy / 2})`);
-
-      labelLayer
-        .append("rect")
-        .classed("flag", true)
-        .attr("width", (d) => d.data.w + 17)
-        .attr("height", (d) => d.dy + 1)
-        .attr("rx", 4)
-        .attr("ry", 4)
-        .attr("fill", gradient)
-        .attr("filter", "url(#shadow)")
-        .attr("stroke", "#ffffff")
-        .attr("stroke-width", "1.5");
-
-      labelLayer
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 17)
-        .classed("timeline-label", true)
-        .text((d) => d.data.name);
-
-      // Draw path from point on the timeline to the label rectangle
-      vis
-        .append("g")
-        .selectAll("path.link")
-        .data(nodes)
-        .enter()
-        .append("path")
-        .classed("link", true)
-        .attr("d", (d) => renderer.generatePath(d))
-        .style("stroke", color)
-        .style("stroke-width", 2)
-        .style("opacity", 0.6)
-        .style("fill", "none");
-    }
-
-    //---------------------------------------------------
-    // Use labella.Force to place the labels
-    //---------------------------------------------------
-
-    var force = new labella.Force({
-      minPos: -10,
-      nodeSpacing: 10,
-    })
-      .nodes(nodes)
-      .compute();
-
-    draw(force.nodes());
+    var timeline = Timeline({ options });
+    data.forEach((d) => timeline.add(d));
+    timeline.create("#timeline");
   </script>
 </html>
