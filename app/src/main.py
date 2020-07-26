@@ -4,9 +4,12 @@ import random
 from dataclasses import asdict, dataclass, field
 from typing import List, Optional
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
 from pyfiglet import Figlet
+
+load_dotenv(dotenv_path="theme.env", verbose=True)
 
 VERSION = os.getenv("VERSION") or os.getenv("GAE_VERSION")
 FONT = os.getenv("FONT")
