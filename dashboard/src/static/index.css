@@ -236,22 +236,22 @@ iframe {
   content: "🎬 ";
 }
 
-.logs > p[data-id="app-engine-flexible"] .lg-id {
+.logs > p[data-id="gae-flexible"] .lg-id {
   color: #f28779;
 }
-.logs > p[data-id="app-engine-standard"] .lg-id {
+.logs > p[data-id="gae-standard"] .lg-id {
   color: #73d0ff;
 }
-.logs > p[data-id="cloud-functions"] .lg-id {
+.logs > p[data-id="function"] .lg-id {
   color: #ffd580;
 }
-.logs > p[data-id="cloud-run-anthos"] .lg-id {
+.logs > p[data-id="run-anthos"] .lg-id {
   color: #ff657a;
 }
-.logs > p[data-id="cloud-run-managed"] .lg-id {
+.logs > p[data-id="run-managed"] .lg-id {
   color: #6dde9d;
 }
-.logs > p[data-id="compute-engine"] .lg-id {
+.logs > p[data-id="gce"] .lg-id {
   color: #ee9471;
 }
 .logs > p[data-id="docker-build"] .lg-id {
@@ -263,10 +263,7 @@ iframe {
 .logs > p[data-id="docker-push"] .lg-id {
   color: #3e91df;
 }
-.logs > p[data-id="k8s-config"] .lg-id {
-  color: #6fd4d6;
-}
-.logs > p[data-id="kubernetes-engine"] .lg-id {
+.logs > p[data-id="gke"] .lg-id {
   color: #da8de4;
 }
 .logs > p[data-id="requirements-txt"] .lg-id {
