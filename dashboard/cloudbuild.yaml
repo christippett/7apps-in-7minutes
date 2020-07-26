@@ -36,11 +36,9 @@ options:
     - APP=${_APP}
     - DOMAIN=${_DOMAIN}
     - CLOUDSDK_CORE_DISABLE_PROMPTS=1
-    - CLOUDSDK_COMPUTE_ZONE=${_ZONE}
-    - CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER}
+    - CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a
+    - CLOUDSDK_CONTAINER_CLUSTER=gke-cluster
 substitutions:
-  _ZONE: australia-southeast1-a
-  _CLUSTER: gke-cluster
   _IMAGE_NAME: 7apps-dashboard
   _DOMAIN: 7apps.cloud
   _APP: dashboard

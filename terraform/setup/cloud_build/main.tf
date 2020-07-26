@@ -21,20 +21,6 @@ resource "google_cloudbuild_trigger" "deploy" {
   ignored_files = ["dashboard/**", "docs/**", "terraform/**"]
   filename      = "app/cloudbuild.yaml"
 
-  substitutions = {
-    _REGION                = var.region
-    _ZONE                  = var.zone
-    _IMAGE_NAME            = split("/", var.image_name, )[2]
-    _CLOUD_RUN_NAME        = var.services.cloud_run.name
-    _CLOUD_RUN_ANTHOS_NAME = var.services.cloud_run_anthos.name
-    _FUNCTION_NAME         = var.services.cloud_function.name
-    _GCE_INSTANCE          = var.services.compute_engine.name
-    _GCE_DOMAIN            = var.services.compute_engine.domain
-    _GKE_CLUSTER           = var.kubernetes_cluster_name
-    _GKE_APP_NAME          = var.services.kubernetes_engine.name
-    _GKE_DOMAIN            = var.services.kubernetes_engine.domain
-  }
-
   github {
     owner = var.github_owner
     name  = var.github_repo
