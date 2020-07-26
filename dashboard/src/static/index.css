@@ -11,6 +11,9 @@ body {
 body {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2rem 0 2rem;
 }
 
 footer {
@@ -20,29 +23,13 @@ footer {
 }
 
 section {
-  padding: 2rem;
-  flex: 1;
+  width: 100%;
 }
 
 /* --------------------------------- Content -------------------------------- */
 
-.preface {
-  flex: 1 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 2rem;
-}
-
 .tabs {
   font-size: 0.8rem;
-}
-
-.content-container {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .content {
@@ -52,6 +39,15 @@ section {
 
 ol > li {
   padding-left: 0.4rem;
+}
+
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* -------------------------------- Timeline -------------------------------- */
@@ -97,8 +93,8 @@ iframe {
 
 .frame {
   flex: 1 0 100%;
-  min-height: 250px;
-  height: 250px;
+  min-height: 230px;
+  height: 230px;
   border: 2px solid white;
   padding: 0;
 }
@@ -271,32 +267,3 @@ iframe {
 }
 
 /* ---------------------------------- Misc ---------------------------------- */
-
-@media screen and (min-width: 1024px) {
-  .preface {
-    height: 75%;
-    max-height: 900px;
-    margin: 2rem 4rem;
-    flex: 0;
-    min-width: 400px;
-    align-self: center;
-    justify-content: center;
-  }
-  .frames {
-    max-width: 75%;
-    width: 50%;
-    height: 95%;
-    margin: 0 4rem;
-    align-self: center;
-    align-content: center;
-  }
-}
-
-.noselect {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}

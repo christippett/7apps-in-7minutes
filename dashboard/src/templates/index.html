@@ -25,9 +25,8 @@
   </head>
 
   <body>
-    <section class="is-flex-desktop">
-      <div class="container is-flex-desktop">
-        <div x-data="{ tab: 'timeline' }" class="preface has-text-grey is-relative mb-6">
+    <section class="columns is-desktop is-vcentered is-centered">
+        <div x-data="{ tab: 'timeline' }" class="column mx-5 preface has-text-grey is-relative mb-6">
           <div class="content">
             <p class="title is-4">7-Apps on Google Cloud</p>
             <p class="subtitle is-6">
@@ -57,14 +56,14 @@
             {% include "content/timeline.html" %}
           </div>
         </div>
-        <div class="content is-hidden-desktop">
-          <p class="title is-4">Application IFrames</p>
-          <p class="subtitle is-6">
-            Live previews of each app.
-          </p>
-        </div>
-        <div class="frames columns is-multiline">
-          <div class="column is-half is-flex is-relative">
+        <div class="column is-7-desktop is-offset-1-desktop frames columns is-multiline">
+          <div class="column content is-hidden-tablet">
+            <p class="title is-4">Application IFrames</p>
+            <p class="subtitle is-6">
+              Live previews of each app.
+            </p>
+          </div>
+          <div class="column is-half is-flex is-relative  is-hidden-mobile">
             {% include "content/logs.html" %}
           </div>
           {% for app in app_list %} <div id="{{ app.name }}" class="column is-half is-flex
@@ -95,7 +94,6 @@
           </div>
         </div>
         {% endfor %}
-      </div>
     </section>
     <footer>
       <div class="content has-text-centered has-text-grey">
