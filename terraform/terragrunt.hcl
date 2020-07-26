@@ -109,7 +109,7 @@ inputs = {
   image_name = "gcr.io/${local.project_id}/${local.image}"
 
   github_owner  = "servian"
-  github_repo   = "7apps7minutes"
+  github_repo   = "7apps-google-cloud"
   github_branch = "demo"
 
 
