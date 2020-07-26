@@ -9,19 +9,12 @@ from starlette.websockets import WebSocketDisconnect
 
 from common.constants import APP_LIST
 from common.models import AppConfig, DeployJob
-from common.utils import (
-    CloudBuildClient,
-    PubSubMessageBroker,
-    extract_app_name_from_url,
-)
+from common.utils import CloudBuildClient, WebSocketManager, extract_app_name_from_url
 
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
-
-pubsub_broker = PubSubMessageBroker()
+ws = WebSocketManager()
 
 
 @app.get("/")
@@ -36,7 +29,6 @@ def index(request: Request):
             "request": request,
             "app_list": app_list,
             "unix_timestamp": int(time.time()),
-            "log_collection": pubsub_broker.log_collection,
         },
     )
 
@@ -49,15 +41,13 @@ def deploy(config: AppConfig, background_tasks: BackgroundTasks):
     cb = CloudBuildClient()
     active_builds = cb.get_active_builds()
     if len(active_builds) > 0:
-        raise HTTPException(503, detail="Another deployment already in progress")
+        raise HTTPException(503, detail="Another deployment is already in progress")
     try:
         build_id = cb.trigger_build(config.get_build_substitutions())
     except requests.HTTPError:
         raise HTTPException(502, detail="Unable to trigger deployment")
 
-    background_tasks.add_task(
-        cb.get_logs, build_id, messenger=pubsub_broker.generator.asend
-    )
+    background_tasks.add_task(cb.get_logs, build_id, messenger=ws.generator.asend)
     return DeployJob(id=build_id)
 
 
@@ -70,18 +60,18 @@ def build(id: str):
 @app.on_event("startup")
 async def startup():
     # Prime the Pub/Sub log broker
-    await pubsub_broker.generator.asend(None)
+    await ws.generator.asend(None)
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await pubsub_broker.connect(websocket)
+    await ws.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
             await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
-        pubsub_broker.disconnect(websocket)
+        ws.disconnect(websocket)
 
 
 @app.get("/favicon.ico", include_in_schema=False)

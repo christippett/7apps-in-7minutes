@@ -9,29 +9,20 @@
       (location.port ? ":" + location.port : "") +
       "/ws";
 
-    // const createLogElement = (data) => {
-    //   let el = document.createElement("p");
-    //   el.setAttribute("data-id", data.id);
-    //   el.setAttribute("data-step", data.step_name);
-    //   el.setAttribute("data-source", data.source);
-    //   el.setAttribute("data-state", data.state);
-
-    //   let ts = new Date(data.timestamp);
-    //   let tsHour = ts.getHours().toString().padStart(2, "0");
-    //   let tsMin = ts.getMinutes().toString().padStart(2, "0");
-    //   let logHtml = [
-    //     `<span class="lg-ts">${tsHour}:${tsMin}</span>`,
-    //     `<span class="lg-step">Step ${data.step_id}</span>`,
-    //     `<span class="lg-text">${data.text}</span>`,
-    //   ];
-
-    //   el.innerHTML = logHtml.join("");
-    //   return el;
-    // };
-
     const createLogElement = (data) => {
       let el = document.createElement("p");
-      el.innerHTML = data.log;
+
+      el.setAttribute("data-step", data.step || "");
+      el.setAttribute("data-id", data.id || "");
+      el.setAttribute("data-status", (data.status || "").toLowerCase());
+
+      let message = data.status || data.message || data.text;
+      let html = [
+        `<span class="lg-step">${(data.step || "").padEnd(2)}</span> `,
+        `<span class="lg-id">${data.id || ""}</span>`,
+        `<span class="lg-text">${message}</span>`,
+      ];
+      el.innerHTML = html.join(" ");
       return el;
     };
 

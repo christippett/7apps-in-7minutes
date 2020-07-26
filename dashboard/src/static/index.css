@@ -92,7 +92,7 @@ svg .tick {
 
 .logs {
   flex: 1 0 0;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
   background: #292828;
   color: #f0f0f0;
@@ -102,6 +102,11 @@ svg .tick {
   min-height: 350px;
 }
 
+.logs::-webkit-scrollbar,
+.logs::-webkit-scrollbar-thumb {
+  display: none;
+}
+
 .logs > p {
   width: 100%;
   display: block;
@@ -109,15 +114,84 @@ svg .tick {
   text-overflow: clip;
   overflow: hidden;
   margin: 0 !important;
+  opacity: 0.95;
+  letter-spacing: -0.01rem;
 }
 
-.logs::-webkit-scrollbar,
-.logs::-webkit-scrollbar-thumb {
+.logs > p[data-status="fetchsource"],
+.logs > p[data-status="build"],
+.logs > p[data-status="push"],
+.logs > p[data-status="done"] {
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.logs > p .lg-step {
+  color: #eeeeee;
+  white-space: pre;
+}
+.logs > p .lg-text {
+  margin-left: 0.25rem;
+  white-space: pre;
+}
+.lg-step {
   display: none;
 }
+.lg-step:not([data-step=""])::before {
+  content: "Step #";
+}
+.logs > p[data-status="finished"] .lg-text::after {
+  content: " 🎉 -----";
+}
+.logs > p[data-status="finished"] .lg-text::before,
+.logs > p[data-status="starting"] .lg-text::before {
+  content: "----- ";
+}
+.logs > p[data-status="finished"] .lg-text {
+  color: #b3e8b3;
+}
+.logs > p[data-status="starting"] .lg-text::after {
+  content: " 🎬 -----";
+}
+.logs > p[data-status="starting"] .lg-text {
+  color: #f9d69c;
+}
 
-.lg-step {
-  min-width: 20px;
+.logs > p[data-id="app-engine-flexible"] .lg-id {
+  color: #f28779;
+}
+.logs > p[data-id="app-engine-standard"] .lg-id {
+  color: #73d0ff;
+}
+.logs > p[data-id="cloud-functions"] .lg-id {
+  color: #ffd580;
+}
+.logs > p[data-id="cloud-run-anthos"] .lg-id {
+  color: #ff657a;
+}
+.logs > p[data-id="cloud-run-managed"] .lg-id {
+  color: #6dde9d;
+}
+.logs > p[data-id="compute-engine"] .lg-id {
+  color: #ee9471;
+}
+.logs > p[data-id="docker-build"] .lg-id {
+  color: #3e91df;
+}
+.logs > p[data-id="docker-pull"] .lg-id {
+  color: #3e91df;
+}
+.logs > p[data-id="docker-push"] .lg-id {
+  color: #3e91df;
+}
+.logs > p[data-id="k8s-config"] .lg-id {
+  color: #6fd4d6;
+}
+.logs > p[data-id="kubernetes-engine"] .lg-id {
+  color: #da8de4;
+}
+.logs > p[data-id="requirements-txt"] .lg-id {
+  color: #83d1be;
 }
 
 /* --------------------------------- IFrames -------------------------------- */
