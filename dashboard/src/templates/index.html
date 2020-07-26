@@ -138,12 +138,8 @@
   ></script>
   <script>
     /* eslint-disable no-undef */
-    // Poll each app endpoint for liveliness and version changes
-    App.startMonitor({ interval: 4000 });
-
-    // Setup Cloud Build log sink
-    var logContainerElement = document.getElementById("logs");
-    LogStreamClient.connect(logContainerElement);
+    // Connect WebSocket
+    LogStreamClient.connect();
 
     // ---------------------------------------------------
     // Create dummy data

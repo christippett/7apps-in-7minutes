@@ -1,6 +1,7 @@
 import time
 
 import requests
+import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -18,7 +19,7 @@ ws = WebSocketManager()
 
 
 @app.get("/")
-def index(request: Request):
+async def index(request: Request):
     app_list = [
         {"name": extract_app_name_from_url(url), "title": title, "url": url}
         for title, url in APP_LIST.items()
@@ -36,9 +37,9 @@ def index(request: Request):
 @app.post("/deploy", response_model=DeployJob)
 def deploy(config: AppConfig, background_tasks: BackgroundTasks):
     """
-    Creates a new application deployment using Cloud Build.
+    Trigger a Cloud Build job to deploy a new app version.
     """
-    cb = CloudBuildClient()
+    cb = CloudBuildClient(notifier=ws)
     active_builds = cb.get_active_builds()
     if len(active_builds) > 0:
         raise HTTPException(503, detail="Another deployment is already in progress")
@@ -47,7 +48,7 @@ def deploy(config: AppConfig, background_tasks: BackgroundTasks):
     except requests.HTTPError:
         raise HTTPException(502, detail="Unable to trigger deployment")
 
-    background_tasks.add_task(cb.get_logs, build_id, messenger=ws.generator.asend)
+    background_tasks.add_task(cb.get_logs, build_id)
     return DeployJob(id=build_id)
 
 
@@ -77,3 +78,7 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse("static/favicon.ico")
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)

@@ -4,21 +4,24 @@ import logging
 import os
 import re
 import sys
-from collections import defaultdict, deque, namedtuple
+from collections import deque, namedtuple
 from typing import Any, Dict, List
 
-import aiofiles
 import dateutil.parser
 import google.auth
 from fastapi import WebSocket
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import pubsub_v1
 
-from .constants import (CLOUD_BUILD_API, CLOUD_BUILD_SUBSCRIPTION_ID,
-                        CLOUD_BUILD_TRIGGER_ID, CLOUDSDK_HOME, GITHUB_BRANCH,
-                        GITHUB_REPO)
+from .constants import (
+    CLOUD_BUILD_API,
+    CLOUD_BUILD_SUBSCRIPTION_ID,
+    CLOUD_BUILD_TRIGGER_ID,
+    CLOUDSDK_HOME,
+    GITHUB_BRANCH,
+    GITHUB_REPO,
+)
 
-logging.basicConfig(level=logging.INFO)
 loop = asyncio.get_event_loop()
 credentials, project = google.auth.default(
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
@@ -33,7 +36,8 @@ def extract_app_name_from_url(url):
 
 
 class CloudBuildClient:
-    def __init__(self):
+    def __init__(self, notifier=None):
+        self.notifier = notifier
         self.session = AuthorizedSession(credentials)
 
     def _googlesdk_cloudbuild(self):
@@ -82,14 +86,17 @@ class CloudBuildClient:
             for b in builds
         ]
 
-    def get_logs(self, id: str, messenger):
+    async def get_logs(self, id: str):
+        await self.notifier.send("build", status="starting")
         log_parser = self.parse_log_text
+        notifier = self.notifier
 
         class _LogWriter:
             def Print(self, text):
                 for t in text.split("\n"):
-                    data = json.dumps(log_parser(t))
-                    asyncio.run_coroutine_threadsafe(messenger(data), loop=loop)
+                    asyncio.run_coroutine_threadsafe(
+                        notifier.send("log", **log_parser(t)), loop=loop
+                    )
 
         cb = self._googlesdk_cloudbuild()
         BuildRef = namedtuple("BuildRef", ["projectId", "id"])
@@ -110,6 +117,7 @@ Starting Cloud Build job...
         """
         )
         cb.CloudBuildClient().Stream(build_ref, out=out)
+        await self.notifier.send("build", status="finished")
 
     def parse_log_text(self, text):
         metadata = {"text": text}
@@ -134,9 +142,9 @@ class WebSocketManager:
     async def _get_stream_generator(self):
         while True:
             data = yield
-            await self.send(data)
+            await self._send(data)
 
-    async def send(self, data: str):
+    async def _send(self, data: str):
         living_connections = []
         while len(self.connections) > 0:
             # Looping like this is necessary in case a disconnection is handled
@@ -145,6 +153,10 @@ class WebSocketManager:
             await websocket.send_text(data)
             living_connections.append(websocket)
         self.connections = living_connections
+
+    async def send(self, type_: str, **body):
+        message = json.dumps({"type": type_, "body": body})
+        await self.generator.asend(message)
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()

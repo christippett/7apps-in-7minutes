@@ -8,10 +8,43 @@
       window.location.hostname +
       (location.port ? ":" + location.port : "") +
       "/ws";
+    const logParentElement = document.getElementById("logs");
 
-    const createLogElement = (data) => {
+    const connect = () => {
+      const websocket = new WebSocket(webSocketUri);
+      websocket.onopen = () => console.log("🔌 Websocket connected");
+      websocket.onerror = (e) => console.log(`💥 Websocket error: ${e.message}`);
+      websocket.onclose = () => {
+        console.log("🔌 Websocket disconnected");
+        // Attempt to re-connect
+        setTimeout(connect, 10000);
+      };
+      websocket.onmessage = (event) => {
+        let message = JSON.parse(event.data);
+        if (message.type === "log") {
+          handleLogMessage(message.body);
+        } else if (message.type === "build") {
+          handleBuildMessage(message.body);
+        } else if (message.type === "echo") {
+          console.log(message.body);
+        }
+      };
+    };
+
+    const handleBuildMessage = (data) => {
+      let status = data.status;
+      if (status === "starting") {
+        // Reset log output
+        logParentElement.innerHTML = "";
+        // Start polling apps for update
+        App.startMonitor({ interval: 5000 });
+      } else if (status === "finished") {
+        setTimeout(App.stopMonitor, 45000);
+      }
+    };
+
+    const handleLogMessage = (data) => {
       let el = document.createElement("p");
-
       el.setAttribute("data-step", data.step || "");
       el.setAttribute("data-id", data.id || "");
       el.setAttribute("data-status", (data.status || "").toLowerCase());
@@ -23,34 +56,12 @@
         `<span class="lg-text">${message}</span>`,
       ];
       el.innerHTML = html.join(" ");
-      return el;
+      logParentElement.appendChild(el);
+      logParentElement.scrollTop = logParentElement.scrollHeight;
     };
-
-    const connect = (logContainerElement) => {
-      const websocket = new WebSocket(webSocketUri);
-      websocket.onopen = () => console.log("✏️ Log stream connected");
-      websocket.onerror = (e) => console.log(`💥 Error with log stream: ${e}`);
-      websocket.onclose = () => {
-        console.log("🔌 Log stream disconnected");
-        // Attempt to re-connect
-        setTimeout(() => connect(logContainerElement), 10000);
-      };
-      websocket.onmessage = (event) => {
-        if (logContainerElement === null) return;
-        let data = JSON.parse(event.data);
-        let logElement = createLogElement(data);
-        logContainerElement.appendChild(logElement);
-        logContainerElement.scrollTop = logContainerElement.scrollHeight;
-      };
-    };
-
-    var logContainerElement = null;
 
     return {
-      connect: (el) => {
-        logContainerElement = el;
-        connect(logContainerElement);
-      },
+      connect,
     };
   })();
 
@@ -59,6 +70,32 @@
   window.App = (() => {
     const appMap = new Map();
     const versionMap = new Map();
+    var monitoringEnabled = false;
+
+    // Start polling loop
+    const startMonitor = async ({ interval }) => {
+      if (monitoringEnabled) {
+        console.log("☝️ App monitor already running");
+        return;
+      } else {
+        monitoringEnabled = true;
+        var iframes = document.getElementsByTagName("iframe");
+      }
+      console.log("〽️ App monitor started");
+      (function () {
+        const checkLoop = () => {
+          if (!monitoringEnabled) {
+            console.log("🛑 App monitor stopped");
+            return;
+          }
+          for (var i = 0, max = iframes.length; i < max; i++) checkStatus(iframes[i]);
+          setTimeout(checkLoop, interval);
+        };
+        checkLoop();
+      })();
+    };
+
+    const stopMonitor = () => (monitoringEnabled = false);
 
     const checkStatus = async (iframeElement) => {
       const timestamp = new Date();
@@ -68,6 +105,8 @@
       const app = appMap.get(appName);
       const overlayElement = document.getElementById(`${appName}-overlay`);
       const appElement = document.getElementById(appName);
+
+      console.debug(`〽️ Checking app status: ${appName}`);
 
       var errorMessage = null;
       try {
@@ -130,25 +169,6 @@
         setTimeout(() => appElement.classList.remove("has-new-version"), 3000);
       }
     };
-
-    // Start polling loop
-    const monitorStatus = async ({ interval }) => {
-      if (monitoringEnabled) {
-        var iframes = document.getElementsByTagName("iframe");
-        for (var i = 0, max = iframes.length; i < max; i++) {
-          checkStatus(iframes[i]);
-        }
-      }
-      setTimeout(() => monitorStatus({ interval }), interval);
-    };
-
-    const stopMonitor = () => (monitoringEnabled = false);
-    const startMonitor = (payload) => {
-      monitoringEnabled = true;
-      monitorStatus(payload);
-    };
-
-    var monitoringEnabled = true;
 
     return {
       startMonitor,
