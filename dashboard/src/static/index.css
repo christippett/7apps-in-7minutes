@@ -56,6 +56,11 @@ ol > li {
 
 /* -------------------------------- Timeline -------------------------------- */
 
+svg {
+  overflow: visible;
+  margin: 0 auto;
+  padding-left: 20px;
+}
 .timeline {
   stroke-width: 2px;
   stroke: #dbdbdb;
@@ -78,126 +83,9 @@ ol > li {
 }
 svg .tick {
   font-size: 0.5rem;
-  font-style: italic;
+  /* font-style: italic; */
   fill: #b1b1b1;
   letter-spacing: 1px;
-}
-
-/* ---------------------------------- Logs ---------------------------------- */
-
-.logs::-webkit-scrollbar {
-  background: transparent;
-  height: 0.5rem;
-  width: 0.5rem;
-}
-
-.logs::-webkit-scrollbar-thumb {
-  background-color: #ffffff;
-  border-radius: 1px;
-  overflow: hidden;
-}
-.logs::-webkit-scrollbar-track {
-  overflow: hidden;
-}
-
-.logs {
-  flex: 1 0 0;
-  font-size: 0.6rem;
-  font-family: "Roboto Mono", "Courier New", Courier, monospace;
-  background: #292828;
-  color: #f0f0f0;
-  border-radius: 6px;
-  overflow: scroll;
-  padding: 0.75rem;
-  min-height: 350px;
-}
-
-.logs::-webkit-scrollbar,
-.logs::-webkit-scrollbar-thumb {
-  display: none;
-}
-
-.logs > p {
-  width: 100%;
-  display: block;
-  white-space: nowrap;
-  text-overflow: clip;
-  overflow: hidden;
-  margin: 0 !important;
-  opacity: 0.95;
-  letter-spacing: -0.01rem;
-}
-
-.logs > p[data-status="fetchsource"],
-.logs > p[data-status="build"],
-.logs > p[data-status="push"],
-.logs > p[data-status="done"] {
-  padding-top: 0.75rem;
-  padding-bottom: 0.25rem;
-}
-
-.logs > p .lg-step {
-  color: #eeeeee;
-  white-space: pre;
-}
-.logs > p .lg-text {
-  margin-left: 0.25rem;
-  white-space: pre;
-}
-.lg-step {
-  display: none;
-}
-.lg-step:not([data-step=""])::before {
-  content: "Step #";
-}
-.logs > p[data-status="finished"] .lg-text::after {
-  content: " 🎉";
-}
-.logs > p[data-status="finished"] .lg-text {
-  color: #b3e8b3;
-}
-.logs > p[data-status="starting"] .lg-text::before {
-  content: " 🎬";
-}
-.logs > p[data-status="starting"] .lg-text {
-  color: #f9d69c;
-}
-
-.logs > p[data-id="app-engine-flexible"] .lg-id {
-  color: #f28779;
-}
-.logs > p[data-id="app-engine-standard"] .lg-id {
-  color: #73d0ff;
-}
-.logs > p[data-id="cloud-functions"] .lg-id {
-  color: #ffd580;
-}
-.logs > p[data-id="cloud-run-anthos"] .lg-id {
-  color: #ff657a;
-}
-.logs > p[data-id="cloud-run-managed"] .lg-id {
-  color: #6dde9d;
-}
-.logs > p[data-id="compute-engine"] .lg-id {
-  color: #ee9471;
-}
-.logs > p[data-id="docker-build"] .lg-id {
-  color: #3e91df;
-}
-.logs > p[data-id="docker-pull"] .lg-id {
-  color: #3e91df;
-}
-.logs > p[data-id="docker-push"] .lg-id {
-  color: #3e91df;
-}
-.logs > p[data-id="k8s-config"] .lg-id {
-  color: #6fd4d6;
-}
-.logs > p[data-id="kubernetes-engine"] .lg-id {
-  color: #da8de4;
-}
-.logs > p[data-id="requirements-txt"] .lg-id {
-  color: #83d1be;
 }
 
 /* --------------------------------- IFrames -------------------------------- */
@@ -210,7 +98,9 @@ iframe {
 .frame {
   flex: 1 0 100%;
   min-height: 250px;
+  height: 250px;
   border: 2px solid white;
+  padding: 0;
 }
 
 .frame-label {
@@ -263,20 +153,145 @@ iframe {
   background-position: 0 0, 30px 30px;
 }
 
+/* ---------------------------------- Logs ---------------------------------- */
+
+.logs::-webkit-scrollbar {
+  background: transparent;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.logs::-webkit-scrollbar-thumb {
+  background-color: #ffffff;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.logs::-webkit-scrollbar-track {
+  overflow: hidden;
+}
+
+.logs {
+  flex: 1 0 0;
+  font-size: 0.6rem;
+  font-family: "Roboto Mono", "Courier New", Courier, monospace;
+  background: #292828;
+  color: #f0f0f0;
+  border-radius: 6px;
+  overflow: scroll;
+  padding: 0.75rem;
+  border: 0;
+}
+.logs .frame-label {
+  background: #3d3d3d;
+  color: #eeeeee;
+}
+
+.logs::-webkit-scrollbar,
+.logs::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+.logs > p {
+  width: 100%;
+  display: block;
+  white-space: nowrap;
+  text-overflow: clip;
+  overflow: hidden;
+  margin: 0 !important;
+  opacity: 0.95;
+  letter-spacing: -0.01rem;
+}
+
+.logs > p[data-status="fetchsource"],
+.logs > p[data-status="build"],
+.logs > p[data-status="push"],
+.logs > p[data-status="done"] {
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.logs > p.lg-header {
+  white-space: pre;
+  font-size: 0.5rem;
+}
+
+.logs > p .lg-step {
+  color: #eeeeee;
+  white-space: pre;
+}
+.logs > p .lg-text {
+  margin-left: 0.25rem;
+  white-space: pre;
+}
+.lg-step {
+  display: none;
+}
+.lg-step:not([data-step=""])::before {
+  content: "Step #";
+}
+.logs > p[data-status="finished"] .lg-text::after {
+  content: " 🎉";
+}
+.logs > p[data-status="starting"] .lg-text::before {
+  content: "🎬 ";
+}
+
+.logs > p[data-id="app-engine-flexible"] .lg-id {
+  color: #f28779;
+}
+.logs > p[data-id="app-engine-standard"] .lg-id {
+  color: #73d0ff;
+}
+.logs > p[data-id="cloud-functions"] .lg-id {
+  color: #ffd580;
+}
+.logs > p[data-id="cloud-run-anthos"] .lg-id {
+  color: #ff657a;
+}
+.logs > p[data-id="cloud-run-managed"] .lg-id {
+  color: #6dde9d;
+}
+.logs > p[data-id="compute-engine"] .lg-id {
+  color: #ee9471;
+}
+.logs > p[data-id="docker-build"] .lg-id {
+  color: #3e91df;
+}
+.logs > p[data-id="docker-pull"] .lg-id {
+  color: #3e91df;
+}
+.logs > p[data-id="docker-push"] .lg-id {
+  color: #3e91df;
+}
+.logs > p[data-id="k8s-config"] .lg-id {
+  color: #6fd4d6;
+}
+.logs > p[data-id="kubernetes-engine"] .lg-id {
+  color: #da8de4;
+}
+.logs > p[data-id="requirements-txt"] .lg-id {
+  color: #83d1be;
+}
+
 /* ---------------------------------- Misc ---------------------------------- */
 
 @media screen and (min-width: 1024px) {
   .preface {
     height: 75%;
-    margin: 2rem 8rem 2rem 0;
+    max-height: 900px;
+    margin: 2rem 4rem;
     flex: 0;
-    min-width: 35%;
+    min-width: 400px;
     align-self: center;
+    justify-content: center;
   }
   .frames {
     max-width: 75%;
+    width: 50%;
     height: 95%;
+    margin: 0 4rem;
     align-self: center;
+    align-content: center;
   }
 }
 

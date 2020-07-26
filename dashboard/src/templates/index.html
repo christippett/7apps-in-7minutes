@@ -27,7 +27,7 @@
   <body>
     <section class="is-flex-desktop">
       <div class="container is-flex-desktop">
-        <div x-data="{ tab: 'overview' }" class="preface has-text-grey is-relative mb-6">
+        <div x-data="{ tab: 'timeline' }" class="preface has-text-grey is-relative mb-6">
           <div class="content">
             <p class="title is-4">7-Apps on Google Cloud</p>
             <p class="subtitle is-6">
@@ -47,26 +47,14 @@
                     <span>Timeline</span>
                   </a>
                 </li>
-                <li :class="{ 'is-active': tab === 'logs' }">
-                  <a @click="tab = 'logs'">
-                    <span>Logs</span>
-                  </a>
-                </li>
               </ul>
             </div>
           </nav>
           <div x-show="tab === 'overview'" class="content-container">
-            {% include "content/overview.html" %} {% include "content/timeline.html" %}
+            {% include "content/overview.html" %}
           </div>
-          <div
-            x-show="tab === 'timeline'"
-            class="content-container"
-            style="display: none;"
-          >
-            {# include "content/timeline.html" #}
-          </div>
-          <div x-show="tab === 'logs'" class="content-container" style="display: none;">
-            {% include "content/logs.html" %}
+          <div x-show="tab === 'timeline'" class="content-container">
+            {% include "content/timeline.html" %}
           </div>
         </div>
         <div class="content is-hidden-desktop">
@@ -76,9 +64,12 @@
           </p>
         </div>
         <div class="frames columns is-multiline">
+          <div class="column is-half is-flex is-relative">
+            {% include "content/logs.html" %}
+          </div>
           {% for app in app_list %} <div id="{{ app.name }}" class="column is-half is-flex
           is-relative {% if app.name == "localhost" %}is-hidden{% endif %}">
-          <div class="frame box is-flex is-relative is-clipped px-0 py-0">
+          <div class="frame box is-flex is-relative is-clipped">
             <div class="frame-label">
               <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}"
                 >{{ app.url }}</a
@@ -149,13 +140,23 @@
     // Timeline
     // =======================
     var options = {
-      margin: { left: 50, right: 10, top: 15, bottom: 15 },
-      initialWidth: "100%",
-      initialHeight: 300,
+      margin: { left: 25, right: 0, top: 25, bottom: 0 },
+      initialWidth: 250,
+      initialHeight: 350,
       timelineLimit: 8 * 60, // max seconds
+      labella: {
+        renderer: {
+          layerGap: 50,
+          direction: "right",
+        },
+        force: {
+          minPos: -10,
+          nodeSpacing: 8,
+        },
+      },
     };
-
     var timeline = Timeline({ options });
+
     data.forEach((d) => timeline.add(d));
     timeline.create("#timeline");
   </script>

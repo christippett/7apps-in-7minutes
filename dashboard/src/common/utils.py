@@ -132,21 +132,6 @@ class CloudBuildService:
         build_ref = BuildRef(id=id, projectId=project)
         cb = self._googlesdk_cloudbuild_client()
         proxy_logger = _LogWriter()
-        proxy_logger.Print(
-            r"""
-   _______
-  |____  /\
-      / /  \   _ __  _ __  ___
-     / / /\ \ | '_ \| '_ \/ __|
-    / / ____ \| |_) | |_) \__ \
-   /_/_/    \_\ .__/| .__/|___/
-              | |   | |
-              |_|   |_|
-
-Starting Cloud Build job...
-        """
-        )
-
         await loop.run_in_executor(None, cb.Stream, build_ref, proxy_logger)
         await self.notifier.send("build", status="finished")
 

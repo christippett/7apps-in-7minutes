@@ -5,14 +5,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 APP_LIST = {
+    "Cloud Functions": os.getenv("CLOUD_FUNCTIONS_URL"),
     "App Engine: Standard": os.getenv("APPENGINE_STANDARD_URL"),
     "App Engine: Flexible": os.getenv("APPENGINE_FLEXIBLE_URL"),
     "Cloud Run": os.getenv("CLOUD_RUN_URL"),
     "Cloud Run: Anthos": os.getenv("CLOUD_RUN_ANTHOS_URL"),
     "Compute Engine": os.getenv("COMPUTE_ENGINE_URL"),
     "Google Kubernetes Engine": os.getenv("KUBERNETES_ENGINE_URL"),
-    "Cloud Functions": os.getenv("CLOUD_FUNCTIONS_URL"),
-    "Localhost": "http://localhost:8080/",
 }
 
 CLOUDSDK_HOME = os.getenv("CLOUDSDK_HOME", "/google-cloud-sdk")

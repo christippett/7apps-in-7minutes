@@ -10,6 +10,7 @@
 
     var svg = d3
       .create("svg")
+      .attr("viewBox", `0 0 ${options.initialWidth} ${options.initialHeight}`)
       .attr("width", options.initialWidth)
       .attr("height", options.initialHeight);
 
@@ -121,11 +122,10 @@
   };
 
   // Refresh/update SVG objects
-  const draw = ({ svg, nodes }) => {
+  const draw = ({ svg, nodes, options }) => {
     var renderer = new labella.Renderer({
-      layerGap: 60,
       nodeHeight: nodes[0].width,
-      direction: "right",
+      ...options.labella.renderer,
     });
 
     // Add x,y,dx,dy to node
@@ -188,14 +188,9 @@
 
     const refresh = () => {
       nodes = Array.from(nodeMap.values());
-      var force = new labella.Force({
-        minPos: -10,
-        nodeSpacing: 10,
-      })
-        .nodes(nodes)
-        .compute();
+      var force = new labella.Force(options.labella.force).nodes(nodes).compute();
 
-      draw({ svg, nodes: force.nodes() });
+      draw({ svg, nodes: force.nodes(), options });
     };
 
     return {
