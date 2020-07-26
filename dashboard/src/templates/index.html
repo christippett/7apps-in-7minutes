@@ -159,5 +159,16 @@
 
     data.forEach((d) => timeline.add(d));
     timeline.create("#timeline");
+
+    App.subscribe((payload) => {
+      let { app } = payload;
+      console.log(`Adding ${app.name} to timeline`);
+      timeline.add({
+        id: app.name,
+        name: app.title,
+        colors: app.config.colors,
+        duration: app.buildDuration,
+      });
+    });
   </script>
 </html>

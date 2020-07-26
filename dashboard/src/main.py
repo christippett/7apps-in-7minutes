@@ -44,6 +44,7 @@ def deploy(config: AppConfig, background_tasks: BackgroundTasks):
     if len(active_builds) > 0:
         raise HTTPException(503, detail="Another deployment is already in progress")
     try:
+        # build_id = "25860eba-691d-48d2-8186-bcd0c8c92a92"
         build_id = cb.trigger_build(config.get_build_substitutions())
     except requests.HTTPError:
         raise HTTPException(502, detail="Unable to trigger deployment")

@@ -2,19 +2,17 @@
   const initTimeline = ({ options }) => {
     var innerWidth = options.initialWidth - options.margin.left - options.margin.right;
     var innerHeight = options.initialHeight - options.margin.top - options.margin.bottom;
-
     var timelineScale = d3
       .scaleLinear()
       .domain([0, options.timelineLimit])
       .range([0, innerHeight]);
-
     var svg = d3
       .create("svg")
       .attr("viewBox", `0 0 ${options.initialWidth} ${options.initialHeight}`)
       .attr("width", options.initialWidth)
       .attr("height", options.initialHeight);
 
-    // Create box-shadow filter
+    // Box-shadow filter
     svg
       .append("defs")
       .append("filter")
@@ -34,7 +32,7 @@
       .append("g")
       .attr("transform", `translate(${options.margin.left}, ${options.margin.top})`);
 
-    // Create timeline axis
+    // Timeline axis
     timeline.append("line").classed("timeline", true).attr("y2", innerHeight);
     timeline
       .append("g")
@@ -47,12 +45,14 @@
       .attr("r", 3)
       .attr("cy", (d) => d);
 
-    // Create axis labels at minute intervals
+    // Axis range made up of minute intervals
     var axisTicks = Array.from(Array(options.timelineLimit / 30 + 1), (_, i) => {
       return { tick: i * 30, y: timelineScale(i * 30) };
     });
+
     timeline
       .append("g")
+      .attr("id", "ticks")
       .selectAll("text.tick")
       .data(axisTicks)
       .enter()
@@ -159,6 +159,7 @@
   /* ======================================================================== */
 
   window.Timeline = ({ options }) => {
+    var timelineElement = null;
     var nodeMap = new Map();
     var { svg, timelineScale } = initTimeline({ options });
 
@@ -193,16 +194,22 @@
       draw({ svg, nodes: force.nodes(), options });
     };
 
+    const create = (el) => {
+      timelineElement = el;
+      refresh();
+      d3.select(timelineElement).append(() => svg.node());
+    };
+
+    const remove = () => timelineElement.remove();
+
     return {
       add: (d) => {
         add(d);
         refresh();
       },
-      update: refresh,
-      create: (elementId) => {
-        refresh();
-        d3.select(elementId).append(() => svg.node());
-      },
+      remove,
+      refresh,
+      create,
     };
   };
 })();
