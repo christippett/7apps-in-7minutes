@@ -196,7 +196,6 @@
 
     const create = (el) => {
       timelineElement = el;
-      refresh();
       d3.select(timelineElement).append(() => svg.node());
     };
 

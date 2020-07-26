@@ -90,7 +90,6 @@
     var monitoringEnabled = false;
 
     const subscribe = (callback) => {
-      console.log(`new subscriber: ${callback}`);
       appSubscribers.push(callback);
     };
 
@@ -149,15 +148,11 @@
         overlayElement.getElementsByClassName("title")[0].innerHTML =
           errorMessage || "Unavailable";
         return;
-      } else if (
-        iframeElement.hasAttribute("data-error") ||
-        appElement.classList.contains("is-hidden")
-      ) {
+      } else if (iframeElement.hasAttribute("data-error")) {
         // Reveal app if it was previously mased by an error
         iframeElement.removeAttribute("data-error");
         iframeElement.src = `${appUrl}?ts=${timestamp}`; // refresh iframe
         overlayElement.classList.add("is-hidden");
-        appElement.classList.remove("is-hidden");
       }
 
       let appData = {
@@ -173,9 +168,7 @@
       if (app === undefined) {
         appMap.set(appName, appData);
         return;
-      }
-
-      if (data.version !== app.version && data.version !== app.previousVersion) {
+      } else if (data.version !== app.version && data.version !== app.previousVersion) {
         console.log(`💾 New version detected for ${appTitle} (${data.version})`);
         appData.previousVersion = app.previousVersion;
         appData.version = data.version;

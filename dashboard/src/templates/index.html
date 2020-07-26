@@ -68,7 +68,7 @@
             {% include "content/logs.html" %}
           </div>
           {% for app in app_list %} <div id="{{ app.name }}" class="column is-half is-flex
-          is-relative {% if app.name == "localhost" %}is-hidden{% endif %}">
+          is-relative">
           <div class="frame box is-flex is-relative is-clipped">
             <div class="frame-label">
               <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}"
@@ -127,7 +127,7 @@
     integrity="sha512-om3N51eLuxygBOt9NLKvGQAlFU/0w4z77iF6csfGevWBlBw02Xv9SLtVii85n160wQyHJboLPL2CvKbi0BJaYw=="
     crossorigin="anonymous"
   ></script>
-  <script src="/static/timeline.js"></script>
+  <script src="/static/timeline.js?ts={{ unix_timestamp }}"></script>
   <script>
     /* eslint-disable no-undef */
 
@@ -156,8 +156,6 @@
       },
     };
     var timeline = Timeline({ options });
-
-    data.forEach((d) => timeline.add(d));
     timeline.create("#timeline");
 
     App.subscribe((payload) => {

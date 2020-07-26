@@ -56,7 +56,7 @@ steps:
   #                              🕹️ CLOUD FUNCTIONS                              #
   # ============================================================================ #
 
-  - id: cloud-functions
+  - id: function
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -77,7 +77,7 @@ steps:
   #                           💪 APP ENGINE (STANDARD)                           #
   # ============================================================================ #
 
-  - id: app-engine-standard
+  - id: gae-standard
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: bash
     args:
@@ -91,7 +91,7 @@ steps:
   #                           🦾 APP ENGINE (FLEXIBLE)                           #
   # ============================================================================ #
 
-  - id: app-engine-flexible
+  - id: gae-flexible
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -108,7 +108,7 @@ steps:
   #                                 🏃‍♀️ CLOUD RUN                                 #
   # ============================================================================ #
 
-  - id: cloud-run-managed
+  - id: run-managed
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -125,7 +125,7 @@ steps:
   #                             🏃‍♂️ CLOUD RUN (ANTHOS)                            #
   # ============================================================================ #
 
-  - id: cloud-run-anthos
+  - id: run-anthos
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -143,7 +143,7 @@ steps:
   #                           ⚙️ GOOGLE COMPUTE ENGINE                           #
   # ============================================================================ #
 
-  - id: compute-engine
+  - id: gce
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: bash
     args:
@@ -166,7 +166,7 @@ steps:
   #                       🚂 GOOGLE KUBERENTES ENGINE (GKE)                      #
   # ============================================================================ #
 
-  - id: kubernetes-engine
+  - id: gke
     name: gcr.io/cloud-builders/kubectl
     args:
       [
