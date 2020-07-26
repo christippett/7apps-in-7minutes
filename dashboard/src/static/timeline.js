@@ -205,6 +205,7 @@
       add: (d) => {
         add(d);
         refresh();
+        refresh(); // sometimes the first time doesn't take
       },
       remove,
       refresh,
