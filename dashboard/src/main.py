@@ -10,12 +10,12 @@ from starlette.websockets import WebSocketDisconnect
 
 from common.constants import APP_LIST
 from common.models import AppConfig, DeployJob
-from common.utils import CloudBuildClient, WebSocketManager, extract_app_name_from_url
+from common.utils import CloudBuildService, Notifier, extract_app_name_from_url
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-ws = WebSocketManager()
+notifier = Notifier()
 
 
 @app.get("/")
@@ -39,7 +39,7 @@ def deploy(config: AppConfig, background_tasks: BackgroundTasks):
     """
     Trigger a Cloud Build job to deploy a new app version.
     """
-    cb = CloudBuildClient(notifier=ws)
+    cb = CloudBuildService(notifier=notifier)
     active_builds = cb.get_active_builds()
     if len(active_builds) > 0:
         raise HTTPException(503, detail="Another deployment is already in progress")
@@ -54,25 +54,25 @@ def deploy(config: AppConfig, background_tasks: BackgroundTasks):
 
 @app.get("/build/{id}")
 def build(id: str):
-    cb = CloudBuildClient()
+    cb = CloudBuildService()
     return cb.get_build(id)
 
 
 @app.on_event("startup")
 async def startup():
     # Prime the Pub/Sub log broker
-    await ws.generator.asend(None)
+    await notifier.generator.asend(None)
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await ws.connect(websocket)
+    await notifier.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
             await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
-        ws.disconnect(websocket)
+        notifier.disconnect(websocket)
 
 
 @app.get("/favicon.ico", include_in_schema=False)

@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 
 class AppConfig(BaseModel):
+    """ Application configuration that mostly impacts its visual style """
+
     gradient: Optional[str] = None
     ascii_font: Optional[str] = None
     font: Optional[str] = None
@@ -18,4 +20,13 @@ class AppConfig(BaseModel):
 
 
 class DeployJob(BaseModel):
+    """ Cloud Build Job ID """
+
+    id: str
+
+
+class BuildRef(BaseModel):
+    """ Cloud Build reference """
+
+    projectId: str
     id: str

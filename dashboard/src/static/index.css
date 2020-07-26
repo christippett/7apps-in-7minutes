@@ -141,17 +141,13 @@ svg .tick {
   content: "Step #";
 }
 .logs > p[data-status="finished"] .lg-text::after {
-  content: " 🎉 -----";
-}
-.logs > p[data-status="finished"] .lg-text::before,
-.logs > p[data-status="starting"] .lg-text::before {
-  content: "----- ";
+  content: " 🎉";
 }
 .logs > p[data-status="finished"] .lg-text {
   color: #b3e8b3;
 }
-.logs > p[data-status="starting"] .lg-text::after {
-  content: " 🎬 -----";
+.logs > p[data-status="starting"] .lg-text::before {
+  content: " 🎬";
 }
 .logs > p[data-status="starting"] .lg-text {
   color: #f9d69c;

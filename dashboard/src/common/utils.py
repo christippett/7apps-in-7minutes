@@ -1,26 +1,24 @@
 import asyncio
 import json
-import logging
 import os
 import re
 import sys
-from collections import deque, namedtuple
+from collections import namedtuple
 from typing import Any, Dict, List
 
 import dateutil.parser
 import google.auth
 from fastapi import WebSocket
 from google.auth.transport.requests import AuthorizedSession
-from google.cloud import pubsub_v1
 
 from .constants import (
     CLOUD_BUILD_API,
-    CLOUD_BUILD_SUBSCRIPTION_ID,
     CLOUD_BUILD_TRIGGER_ID,
     CLOUDSDK_HOME,
     GITHUB_BRANCH,
     GITHUB_REPO,
 )
+from .models import BuildRef
 
 loop = asyncio.get_event_loop()
 credentials, project = google.auth.default(
@@ -35,18 +33,51 @@ def extract_app_name_from_url(url):
     raise ValueError("Invalid application URL")
 
 
-class CloudBuildClient:
+class Notifier:
+    def __init__(self):
+        self.connections: List[WebSocket] = list()
+        self.generator = self.get_notification_generator()
+
+    async def get_notification_generator(self):
+        while True:
+            message = yield
+            await self._notify(message)
+
+    async def _notify(self, message: str):
+        # https://github.com/tiangolo/fastapi/issues/258
+        living_connections = []
+        while len(self.connections) > 0:
+            # Looping like this is necessary in case a disconnection is handled
+            # during await websocket.send_text(message)
+            websocket = self.connections.pop()
+            await websocket.send_text(message)
+            living_connections.append(websocket)
+        self.connections = living_connections
+
+    async def send(self, type_: str, **body):
+        message = json.dumps({"type": type_, "body": body})
+        await self.generator.asend(message)
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.connections.remove(websocket)
+
+
+class CloudBuildService:
     def __init__(self, notifier=None):
         self.notifier = notifier
         self.session = AuthorizedSession(credentials)
 
-    def _googlesdk_cloudbuild(self):
+    def _googlesdk_cloudbuild_client(self):
         third_party_dir = os.path.join(CLOUDSDK_HOME, "lib", "third_party")
         if os.path.isdir(third_party_dir) and third_party_dir not in sys.path:
             sys.path.insert(0, third_party_dir)
         from googlecloudsdk.api_lib.cloudbuild import logs
 
-        return logs
+        return logs.CloudBuildClient()
 
     def trigger_build(self, substitutions: Dict[str, str]) -> str:
         source = {
@@ -98,11 +129,10 @@ class CloudBuildClient:
                         notifier.send("log", **log_parser(t)), loop=loop
                     )
 
-        cb = self._googlesdk_cloudbuild()
-        BuildRef = namedtuple("BuildRef", ["projectId", "id"])
         build_ref = BuildRef(id=id, projectId=project)
-        out = _LogWriter()
-        out.Print(
+        cb = self._googlesdk_cloudbuild_client()
+        proxy_logger = _LogWriter()
+        proxy_logger.Print(
             r"""
    _______
   |____  /\
@@ -116,7 +146,8 @@ class CloudBuildClient:
 Starting Cloud Build job...
         """
         )
-        cb.CloudBuildClient().Stream(build_ref, out=out)
+
+        await loop.run_in_executor(None, cb.Stream, build_ref, proxy_logger)
         await self.notifier.send("build", status="finished")
 
     def parse_log_text(self, text):
@@ -130,59 +161,3 @@ Starting Cloud Build job...
         if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
             metadata["status"] = text
         return metadata
-
-
-class WebSocketManager:
-    def __init__(self):
-        self.connections: List[WebSocket] = list()
-        self.pubsub = pubsub_v1.SubscriberClient()
-        self.generator = self._get_stream_generator()
-        # self.subscribe()
-
-    async def _get_stream_generator(self):
-        while True:
-            data = yield
-            await self._send(data)
-
-    async def _send(self, data: str):
-        living_connections = []
-        while len(self.connections) > 0:
-            # Looping like this is necessary in case a disconnection is handled
-            # during await websocket.send_text(message)
-            websocket = self.connections.pop()
-            await websocket.send_text(data)
-            living_connections.append(websocket)
-        self.connections = living_connections
-
-    async def send(self, type_: str, **body):
-        message = json.dumps({"type": type_, "body": body})
-        await self.generator.asend(message)
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.connections.remove(websocket)
-
-    def subscribe(self):
-        """Listens for new Pub/Sub messages."""
-        logging.info("subscribing to pubsub")
-        future = self.pubsub.subscribe(
-            CLOUD_BUILD_SUBSCRIPTION_ID, self._handle_message()
-        )
-        return future
-
-    async def handle_message(self, message):
-        data = json.loads(message.data, encoding="utf-8")
-        return data
-
-    def _handle_message(self):
-        def callback(message):
-            future = asyncio.run_coroutine_threadsafe(
-                self.handle_message(message), loop
-            )
-            future.result()
-            message.ack()
-
-        return callback

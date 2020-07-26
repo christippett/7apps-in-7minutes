@@ -39,7 +39,7 @@
         // Start polling apps for update
         App.startMonitor({ interval: 5000 });
       } else if (status === "finished") {
-        setTimeout(App.stopMonitor, 45000);
+        App.stopMonitor();
       }
     };
 
