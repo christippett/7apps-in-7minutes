@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pydantic.fields import Field
 
 
-class AppConfig(BaseModel):
+class AppTheme(BaseModel):
     """ Application configuration that mostly impacts its visual style """
 
     gradient: Optional[str]
@@ -27,18 +27,5 @@ class App(BaseModel):
     title: str
     url: str
     version: Optional[str]
-    config: Optional[AppConfig]
+    config: Optional[AppTheme]
     updated: datetime = Field(default_factory=datetime.utcnow)
-
-
-class DeployJob(BaseModel):
-    """ Cloud Build Job ID """
-
-    id: str
-
-
-class BuildRef(BaseModel):
-    """ Cloud Build reference """
-
-    projectId: str
-    id: str

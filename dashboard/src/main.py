@@ -8,8 +8,9 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
-from common.models import AppConfig, DeployJob
 from common.utils import AppService, CloudBuildService, Notifier
+from models.app import AppTheme
+from models.cloud_build import BuildRef
 
 templates = Jinja2Templates(directory="templates")
 
@@ -32,23 +33,27 @@ async def index(request: Request):
     )
 
 
-@app.post("/deploy", response_model=DeployJob)
-def deploy(config: AppConfig, background_tasks: BackgroundTasks):
+@app.post("/deploy", response_model=BuildRef)
+def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     """
     Trigger a Cloud Build job to deploy a new app version.
     """
     cb = CloudBuildService(notifier=notifier, app_service=appsvc)
     active_builds = cb.get_active_builds()
     if len(active_builds) > 0:
-        raise HTTPException(503, detail="Another deployment is already in progress")
-    try:
-        build_id = cb.trigger_build(config.get_build_substitutions())
-    except requests.HTTPError as e:
-        raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
+        if app.debug:
+            build_ref = active_builds[0]
+        else:
+            raise HTTPException(503, detail="Another deployment is already in progress")
+    else:
+        try:
+            build_ref = cb.trigger_build(theme.get_build_substitutions())
+        except requests.HTTPError as e:
+            raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
 
-    background_tasks.add_task(cb.get_logs, build_id)
+    background_tasks.add_task(cb.get_logs, build_ref)
     background_tasks.add_task(appsvc.start_status_monitor)
-    return DeployJob(id=build_id)
+    return build_ref
 
 
 @app.get("/build/{id}")

@@ -16,6 +16,9 @@ from aiohttp.client import ClientSession
 from fastapi import WebSocket
 from google.auth.transport.requests import AuthorizedSession
 
+from models.app import App, AppTheme
+from models.cloud_build import BuildRef
+
 from .constants import (
     CLOUD_BUILD_API,
     CLOUD_BUILD_TRIGGER_ID,
@@ -23,7 +26,6 @@ from .constants import (
     GITHUB_BRANCH,
     GITHUB_REPO,
 )
-from .models import App, AppConfig, BuildRef
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -72,6 +74,7 @@ class CloudBuildService:
     def __init__(self, notifier=None, app_service=None):
         self.notifier = notifier
         self.session = AuthorizedSession(credentials)
+        self._logging = False
 
     def _googlesdk_cloudbuild_client(self):
         third_party_dir = os.path.join(CLOUDSDK_HOME, "lib", "third_party")
@@ -93,33 +96,28 @@ class CloudBuildService:
         resp.raise_for_status()
 
         operation = resp.json()
-        return operation["metadata"]["build"]["id"]
+        return operation["metadata"]["build"]
 
-    def get_build(self, id: str) -> Dict[str, Any]:
+    def get_build(self, id: str) -> BuildRef:
         resp = self.session.get(f"{CLOUD_BUILD_API}/projects/{project}/builds/{id}")
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        return BuildRef.parse_obj(data)
 
-    def get_active_builds(self) -> List[Dict[str, Any]]:
+    def get_active_builds(self) -> List[BuildRef]:
         builds_query = {"filter": 'status="QUEUED" OR status="WORKING"'}
         project = "servian-labs-7apps"
         resp = self.session.get(
             f"{CLOUD_BUILD_API}/projects/{project}/builds", params=builds_query,
         )
         resp.raise_for_status()
-        builds: List[Dict[str, str]] = resp.json().get("builds", [])
-        return [
-            {
-                "id": b["id"],
-                "start_time": dateutil.parser.parse(b["startTime"]),
-                "finish_time": dateutil.parser.parse(b["finishTime"])
-                if b.get("finishTime") is not None
-                else None,
-            }
-            for b in builds
-        ]
+        data = resp.json()
+        return [BuildRef.parse_obj(b) for b in data.get("builds", [])]
 
-    async def get_logs(self, id: str):
+    async def get_logs(self, build_ref: BuildRef):
+        if self._logging:
+            return
+        self._logging = True
         await self.notifier.send("build", status="starting")
         log_parser = self.parse_log_text
         notifier = self.notifier
@@ -131,11 +129,11 @@ class CloudBuildService:
                         notifier.send("log", **log_parser(t)), loop=loop
                     )
 
-        build_ref = BuildRef(id=id, projectId=project)
         cb = self._googlesdk_cloudbuild_client()
         proxy_logger = _LogWriter()
-        await loop.run_in_executor(None, cb.Stream, build_ref, proxy_logger)
+        await loop.run_in_executor(None, cb.Stream, build_ref.dict(), proxy_logger)
         await self.notifier.send("build", status="finished")
+        self._logging = False
 
     def parse_log_text(self, text):
         metadata = {"text": text}
@@ -154,22 +152,23 @@ class AppService:
     def __init__(self, apps: List[App]):
         self.apps = apps
         self._history = defaultdict(lambda: deque(maxlen=2))
+        self._monitor_future = None
 
     @classmethod
     def load_from_config(cls, path):
         with open(path) as fp:
             a = yaml.safe_load(fp)
-        apps = [App(**appinfo) for appinfo in a["apps"]]
+        apps = [App.construct(**appinfo) for appinfo in a["apps"]]
         return cls(apps)
 
     def get_apps(self):
         return self.apps
 
     def get_app(self, name: str) -> Optional[App]:
-        f_apps = list(filter(lambda app: app.name == name, self.apps))
-        if not f_apps:
+        filtered_apps = list(filter(lambda app: app.name == name, self.apps))
+        if not filtered_apps:
             return None
-        app = f_apps[0]
+        app = filtered_apps[0]
         return app
 
     def patch_app(self, app: App) -> App:
@@ -179,34 +178,39 @@ class AppService:
             return app
         appdata = data_hist[0]  # latest
         app.version = appdata.get("version")
-        app.config = AppConfig.parse_obj(appdata.get("config"))
+        app.config = AppTheme.parse_obj(appdata.get("config"))
         app.updated = datetime.utcnow()
         return app
 
-    async def request_app(self, app: App, session: ClientSession):
+    async def get_app_config(self, app: App, session: ClientSession) -> App:
         logger.debug("Getting data for app: %s", app.name)
         async with session.get(app.url) as response:
             data = await response.json()
-            data["updated"] = datetime.utcnow()
-            self._history[app.name].appendleft(data)
-            return data
+            return app.parse_obj(data)
 
-    async def create_request_poll(self, interval=5):
+    async def poll_apps(self, interval=5):
         headers = {"Accept": "application/json"}
         async with aiohttp.ClientSession(headers=headers) as session:
             while True:
                 for app in self.apps:
                     try:
-                        yield await self.request_app(app, session)
-                    except aiohttp.ClientError:
-                        logger.exception("Error polling app: %s", app.url)
-
+                        latest_app = app.copy(exclude=set(["updated", "version"]))
+                        await self.get_app_config(latest_app, session)
+                        if app.version != latest_app.version:
+                            self._history[app.name].appendleft(app)
+                            app = latest_app
+                    except aiohttp.ClientError as e:
+                        logger.exception("Error polling app %s: %s", app, e)
+                    except Exception as e:
+                        logger.exception("Error polling app %s: %s", app, e)
                     await asyncio.sleep(interval)
 
     async def start_status_monitor(self, interval=5):
-        async for appdata in self.create_request_poll():
-            pass
+        if self._monitor_future is None:
+            self._monitor_future = asyncio.ensure_future(self.poll_apps())
 
     def stop_status_monitor(self):
-        monitor_task = asyncio.ensure_future(self.start_status_monitor())
-        monitor_task.cancel()
+        if self._monitor_future is not None:
+            self._monitor_future.cancel()
+        else:
+            logging.debug("Monitoring not enabled, nothing to stop")

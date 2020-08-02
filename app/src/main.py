@@ -18,12 +18,11 @@ GRADIENT = os.getenv("GRADIENT")
 
 
 @dataclass
-class AppConfig:
-    title: str
-    colors: List[str] = field(init=False)
+class AppTheme:
     font: Optional[str] = None
     ascii_font: Optional[str] = None
     gradient: Optional[str] = None
+    colors: List[str] = field(init=False)
 
     def __post_init__(self):
         with open("theme.json", "r") as f:
@@ -37,9 +36,16 @@ class AppConfig:
             self.ascii_font = random.choice(theme["ascii_fonts"])
         self.colors = self.gradients[self.gradient]
 
+
+@dataclass
+class App:
+    title: str
+    version: Optional[str]
+    theme: AppTheme
+
     @property
     def header(self) -> str:
-        return Figlet(font=self.ascii_font).renderText("7Apps")
+        return Figlet(font=self.theme.ascii_font).renderText("7Apps")
 
 
 # Infer runtime environment from available environment variables + set title
@@ -61,16 +67,20 @@ else:
     title = "7-Apps Demo"
 
 app = Flask("7apps")
-config = AppConfig(title=title, font=FONT, ascii_font=ASCII_FONT, gradient=GRADIENT)
+app_data = App(
+    title=title,
+    version=VERSION,
+    theme=AppTheme(font=FONT, ascii_font=ASCII_FONT, gradient=GRADIENT),
+)
 
 
 @app.route("/")
 @cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
     if request.headers.get("Accept") == "application/json":
-        return jsonify(version=VERSION, config=asdict(config))
+        return jsonify(asdict(app_data))
 
-    return render_template("index.html", version=VERSION, app=config)
+    return render_template("index.html", app=app_data)
 
 
 if __name__ == "__main__":
