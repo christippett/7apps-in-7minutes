@@ -5,19 +5,10 @@
   </p>
 </div>
 <div class="column is-half is-hidden-mobile">
-  <div class="box px-0 py-0 is-relative" style="height: 100%;">
+  <div class="box px-0 py-0 is-relative">
     <div id="logs" class="logs is-overlay">
-      <p style="white-space: break-spaces; height: 20%;">
-        Logs from Cloud Build will show up here.
-      </p>
-      <p style="white-space: break-spaces; height: 20%;">
-        Logs from Cloud Build will show up here.
-      </p>
-      <p style="white-space: break-spaces; height: 25%;">
-        Logs from Cloud Build will show up here.
-      </p>
-      <p style="white-space: break-spaces; height: 50%;">
-        Logs from Cloud Build will show up here.
+      <p style="height: 50%;">
+        Logs from Cloud Build will show here.
       </p>
     </div>
   </div>
@@ -30,22 +21,13 @@
     <div class="frame-label">
       <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
     </div>
-    <div
-      id="{{ app.name }}-overlay"
-      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
-    >
+    <div id="{{ app.name }}-overlay"
+      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden">
       <p class="heading">🛑 {{ app.title }}</p>
       <p class="title is-size-5 mt-4"></p>
     </div>
-    <iframe
-      name="{{ unix_timestamp }}-{{ loop.index }}"
-      src="{{ app.url }}?ts={{ unix_timestamp }}"
-      class="noselect"
-      data-id="{{ loop.index }}"
-      data-url="{{ app.url }}"
-      data-name="{{ app.name }}"
-      data-title="{{ app.title }}"
-    >
+    <iframe name="{{ unix_timestamp }}-{{ loop.index }}" src="{{ app.url }}?ts={{ unix_timestamp }}" class="noselect"
+      data-id="{{ loop.index }}" data-url="{{ app.url }}" data-name="{{ app.name }}" data-title="{{ app.title }}">
     </iframe>
   </div>
 </div>
