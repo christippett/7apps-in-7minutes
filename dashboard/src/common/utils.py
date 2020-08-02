@@ -1,13 +1,18 @@
 import asyncio
 import json
+import logging
 import os
 import re
 import sys
-from collections import namedtuple
-from typing import Any, Dict, List
+from collections import defaultdict, deque
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
+import aiohttp
 import dateutil.parser
 import google.auth
+import yaml
+from aiohttp.client import ClientSession
 from fastapi import WebSocket
 from google.auth.transport.requests import AuthorizedSession
 
@@ -18,19 +23,16 @@ from .constants import (
     GITHUB_BRANCH,
     GITHUB_REPO,
 )
-from .models import BuildRef
+from .models import App, AppConfig, BuildRef
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 loop = asyncio.get_event_loop()
+
 credentials, project = google.auth.default(
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
 )
-
-
-def extract_app_name_from_url(url):
-    m = re.search(r"^https?://(?P<name>.*?)[\.|:|/]", url, re.IGNORECASE)
-    if m:
-        return m.group("name").replace("_", "-").lower()
-    raise ValueError("Invalid application URL")
 
 
 class Notifier:
@@ -67,7 +69,7 @@ class Notifier:
 
 
 class CloudBuildService:
-    def __init__(self, notifier=None):
+    def __init__(self, notifier=None, app_service=None):
         self.notifier = notifier
         self.session = AuthorizedSession(credentials)
 
@@ -146,3 +148,65 @@ class CloudBuildService:
         if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
             metadata["status"] = text
         return metadata
+
+
+class AppService:
+    def __init__(self, apps: List[App]):
+        self.apps = apps
+        self._history = defaultdict(lambda: deque(maxlen=2))
+
+    @classmethod
+    def load_from_config(cls, path):
+        with open(path) as fp:
+            a = yaml.safe_load(fp)
+        apps = [App(**appinfo) for appinfo in a["apps"]]
+        return cls(apps)
+
+    def get_apps(self):
+        return self.apps
+
+    def get_app(self, name: str) -> Optional[App]:
+        f_apps = list(filter(lambda app: app.name == name, self.apps))
+        if not f_apps:
+            return None
+        app = f_apps[0]
+        return app
+
+    def patch_app(self, app: App) -> App:
+        """ Patch app with the latest poll data """
+        data_hist = self._history.get(app.name)
+        if data_hist.count == 0:
+            return app
+        appdata = data_hist[0]  # latest
+        app.version = appdata.get("version")
+        app.config = AppConfig.parse_obj(appdata.get("config"))
+        app.updated = datetime.utcnow()
+        return app
+
+    async def request_app(self, app: App, session: ClientSession):
+        logger.debug("Getting data for app: %s", app.name)
+        async with session.get(app.url) as response:
+            data = await response.json()
+            data["updated"] = datetime.utcnow()
+            self._history[app.name].appendleft(data)
+            return data
+
+    async def create_request_poll(self, interval=5):
+        headers = {"Accept": "application/json"}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            while True:
+                for app in self.apps:
+                    try:
+                        yield await self.request_app(app, session)
+                    except aiohttp.ClientError:
+                        logger.exception("Error polling app: %s", app.url)
+
+                    await asyncio.sleep(interval)
+
+    async def start_status_monitor(self, interval=5):
+        async for appdata in self.create_request_poll():
+            pass
+
+    def stop_status_monitor(self):
+        monitor_task = asyncio.ensure_future(self.start_status_monitor())
+        monitor_task.cancel()

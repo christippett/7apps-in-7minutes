@@ -1,0 +1,53 @@
+<div class="column is-hidden-tablet">
+  <p class="title is-4">Application IFrames</p>
+  <p class="subtitle is-6">
+    Live previews of each app.
+  </p>
+</div>
+<div class="column is-half is-hidden-mobile">
+  <div class="box px-0 py-0 is-relative" style="height: 100%;">
+    <div id="logs" class="logs is-overlay">
+      <p style="white-space: break-spaces; height: 20%;">
+        Logs from Cloud Build will show up here.
+      </p>
+      <p style="white-space: break-spaces; height: 20%;">
+        Logs from Cloud Build will show up here.
+      </p>
+      <p style="white-space: break-spaces; height: 25%;">
+        Logs from Cloud Build will show up here.
+      </p>
+      <p style="white-space: break-spaces; height: 50%;">
+        Logs from Cloud Build will show up here.
+      </p>
+    </div>
+  </div>
+</div>
+
+{% for app in apps %}
+
+<div id="{{ app.name }}" class="column is-half">
+  <div class="box is-relative is-clipped px-0 py-0">
+    <div class="frame-label">
+      <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
+    </div>
+    <div
+      id="{{ app.name }}-overlay"
+      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
+    >
+      <p class="heading">🛑 {{ app.title }}</p>
+      <p class="title is-size-5 mt-4"></p>
+    </div>
+    <iframe
+      name="{{ unix_timestamp }}-{{ loop.index }}"
+      src="{{ app.url }}?ts={{ unix_timestamp }}"
+      class="noselect"
+      data-id="{{ loop.index }}"
+      data-url="{{ app.url }}"
+      data-name="{{ app.name }}"
+      data-title="{{ app.title }}"
+    >
+    </iframe>
+  </div>
+</div>
+
+{% endfor %}

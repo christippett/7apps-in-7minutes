@@ -22,11 +22,6 @@ footer {
   font-size: 0.8rem;
 }
 
-section {
-  width: 100%;
-  max-width: 1400px;
-}
-
 /* --------------------------------- Content -------------------------------- */
 
 .tabs {
@@ -89,15 +84,12 @@ svg .tick {
 
 iframe {
   border-radius: 6px;
+  width: auto;
+  height: auto;
+  display: block;
+  height: 100%;
   width: 100%;
-}
-
-.frame {
-  flex: 1 0 100%;
-  min-height: 230px;
-  height: 230px;
-  border: 2px solid white;
-  padding: 0;
+  overflow: hidden;
 }
 
 .frame-label {
@@ -168,7 +160,6 @@ iframe {
 }
 
 .logs {
-  flex: 1 0 0;
   font-size: 0.6rem;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
   background: #292828;
@@ -189,8 +180,8 @@ iframe {
 }
 
 .logs > p {
-  width: 100%;
-  display: block;
+  /* width: 100%; */
+  /* display: block; */
   white-space: nowrap;
   text-overflow: clip;
   overflow: hidden;

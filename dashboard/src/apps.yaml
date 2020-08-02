@@ -1,0 +1,22 @@
+apps:
+  - name: flex
+    title: "App Engine: Flexible"
+    url: https://flex.7apps.cloud
+  - name: standard
+    title: "App Engine: Standard"
+    url: https://standard.7apps.cloud
+  - name: function
+    title: "Cloud Function"
+    url: https://function.7apps.cloud
+  - name: run-anthos
+    title: "Cloud Run:Anthos"
+    url: https://run-anthos.7apps.cloud
+  - name: run
+    title: "Cloud Run: Managed"
+    url: https://run.7apps.cloud
+  - name: compute
+    title: "Compute Engine"
+    url: https://compute.7apps.cloud
+  - name: gke
+    title: "Kubernetes Engine"
+    url: https://gke.7apps.cloud

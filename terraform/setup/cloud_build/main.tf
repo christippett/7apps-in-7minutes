@@ -32,7 +32,7 @@ resource "google_cloudbuild_trigger" "deploy" {
 
 /* IAM ---------------------------------------------------------------------- */
 
-# Give Cloud Build perimssion to deploy and do anything 🤪
+# Give Cloud Build perimssion to deploy... and pretty much anything else 🤪
 
 resource "google_project_iam_member" "project" {
   for_each = toset(["roles/editor", "roles/iap.tunnelResourceAccessor"])
@@ -40,32 +40,4 @@ resource "google_project_iam_member" "project" {
   project = var.project_id
   role    = each.value
   member  = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
-}
-
-/* Logging ------------------------------------------------------------------ */
-
-# Export all Cloud Build logs from Stackdriver to Pub/Sub
-
-resource "google_pubsub_topic" "logs" {
-  project = var.project_id
-  name    = "cloud-build-logs"
-}
-
-resource "google_logging_project_sink" "logs" {
-  project = var.project_id
-  name    = "cloud-build-log-sink"
-
-  destination = "pubsub.googleapis.com/${google_pubsub_topic.logs.id}"
-  filter      = "resource.type=\"build\" logName=\"projects/${var.project_id}/logs/cloudbuild\""
-
-  unique_writer_identity = true
-}
-
-resource "google_pubsub_topic_iam_binding" "logs" {
-  project = google_pubsub_topic.logs.project
-  topic   = google_pubsub_topic.logs.name
-  role    = "roles/editor"
-  members = [
-    google_logging_project_sink.logs.writer_identity
-  ]
 }

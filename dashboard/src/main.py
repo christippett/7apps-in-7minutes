@@ -8,27 +8,25 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
-from common.constants import APP_LIST
 from common.models import AppConfig, DeployJob
-from common.utils import CloudBuildService, Notifier, extract_app_name_from_url
+from common.utils import AppService, CloudBuildService, Notifier
+
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+
 notifier = Notifier()
+appsvc = AppService.load_from_config("apps.yaml")
 
 
 @app.get("/")
 async def index(request: Request):
-    app_list = [
-        {"name": extract_app_name_from_url(url), "title": title, "url": url}
-        for title, url in APP_LIST.items()
-    ]
     return templates.TemplateResponse(
         name="index.html",
         context={
             "request": request,
-            "app_list": app_list,
+            "apps": appsvc.get_apps(),
             "unix_timestamp": int(time.time()),
         },
     )
@@ -39,17 +37,17 @@ def deploy(config: AppConfig, background_tasks: BackgroundTasks):
     """
     Trigger a Cloud Build job to deploy a new app version.
     """
-    cb = CloudBuildService(notifier=notifier)
+    cb = CloudBuildService(notifier=notifier, app_service=appsvc)
     active_builds = cb.get_active_builds()
     if len(active_builds) > 0:
         raise HTTPException(503, detail="Another deployment is already in progress")
     try:
-        # build_id = "d27f69b1-7933-4364-98f4-5fa37c6ddb36"
         build_id = cb.trigger_build(config.get_build_substitutions())
-    except requests.HTTPError:
-        raise HTTPException(502, detail="Unable to trigger deployment")
+    except requests.HTTPError as e:
+        raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
 
     background_tasks.add_task(cb.get_logs, build_id)
+    background_tasks.add_task(appsvc.start_status_monitor)
     return DeployJob(id=build_id)
 
 

@@ -25,8 +25,12 @@
   </head>
 
   <body>
-    <section class="columns is-desktop is-vcentered is-centered">
-        <div x-data="{ tab: 'timeline' }" class="column mx-5 preface has-text-grey is-relative mb-6">
+    <section class="container">
+      <div class="columns is-vcentered is-centered">
+        <div
+          x-data="{ tab: 'timeline' }"
+          class="column has-text-grey is-relative mx-5 my-5"
+        >
           <div class="content">
             <p class="title is-4">7-Apps on Google Cloud</p>
             <p class="subtitle is-6">
@@ -49,51 +53,17 @@
               </ul>
             </div>
           </nav>
-          <div x-show="tab === 'overview'" class="content-container">
+          <div x-show="tab === 'overview'" class="container">
             {% include "content/overview.html" %}
           </div>
-          <div x-show="tab === 'timeline'" class="content-container">
+          <div x-show="tab === 'timeline'" class="container">
             {% include "content/timeline.html" %}
           </div>
         </div>
-        <div class="column is-7-desktop is-offset-1-desktop frames columns is-multiline">
-          <div class="column content is-hidden-tablet">
-            <p class="title is-4">Application IFrames</p>
-            <p class="subtitle is-6">
-              Live previews of each app.
-            </p>
-          </div>
-          <div class="column is-half is-flex is-relative  is-hidden-mobile">
-            {% include "content/logs.html" %}
-          </div>
-          {% for app in app_list %} <div id="{{ app.name }}" class="column is-half is-flex
-          is-relative">
-          <div class="frame box is-flex is-relative is-clipped">
-            <div class="frame-label">
-              <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}"
-                >{{ app.url }}</a
-              >
-            </div>
-            <div
-              id="{{ app.name }}-overlay"
-              class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
-            >
-              <p class="heading">🛑 {{ app.title }}</p>
-              <p class="title is-size-5 mt-4"></p>
-            </div>
-            <iframe
-              name="{{ unix_timestamp }}-{{ loop.index }}"
-              class="is-clipped"
-              src="{{ app.url }}?ts={{ unix_timestamp }}"
-              data-id="{{ loop.index }}"
-              data-url="{{ app.url }}"
-              data-name="{{ app.name }}"
-              data-title="{{ app.title }}"
-            >
-            </iframe>
-          </div>
+        <div class="column is-7-desktop is-offset-1-desktop columns is-multiline">
+          {% include "content/iframes.html" %}
         </div>
-        {% endfor %}
+      </div>
     </section>
     <footer>
       <div class="content has-text-centered has-text-grey">
