@@ -172,7 +172,9 @@ class AppService:
         logger.debug("Getting data for app: %s", app.name)
         async with session.get(app.url) as response:
             data = await response.json()
-            return app.copy(update=data)
+            app_copy = app.copy(update=data)
+            app_copy.updated = datetime.utcnow()
+            return app_copy
 
     async def get_latest_app_data(self) -> Dict[str, App]:
         headers = {"Accept": "application/json"}

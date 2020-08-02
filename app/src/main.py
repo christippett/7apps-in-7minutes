@@ -43,7 +43,6 @@ class App:
     title: str
     version: Optional[str]
     theme: AppTheme
-    updated: datetime = field(default_factory=datetime.utcnow)
 
     @property
     def header(self) -> str:

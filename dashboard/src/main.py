@@ -64,6 +64,7 @@ def build(id: str):
 
 @app.on_event("startup")
 async def startup():
+    await appsvc.refresh_app_data()
     # Prime the Pub/Sub log broker
     await notifier.generator.asend(None)
 
