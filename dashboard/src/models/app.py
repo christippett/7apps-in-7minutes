@@ -27,5 +27,5 @@ class App(BaseModel):
     title: str
     url: str
     version: Optional[str]
-    config: Optional[AppTheme]
+    theme: Optional[AppTheme]
     updated: datetime = Field(default_factory=datetime.utcnow)

@@ -2,6 +2,7 @@ import json
 import os
 import random
 from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -42,6 +43,7 @@ class App:
     title: str
     version: Optional[str]
     theme: AppTheme
+    updated: datetime = field(default_factory=datetime.utcnow)
 
     @property
     def header(self) -> str:

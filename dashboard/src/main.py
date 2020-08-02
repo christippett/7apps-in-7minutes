@@ -51,8 +51,8 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
         except requests.HTTPError as e:
             raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
 
-    background_tasks.add_task(cb.get_logs, build_ref)
     background_tasks.add_task(appsvc.start_status_monitor)
+    background_tasks.add_task(cb.get_logs, build_ref)
     return build_ref
 
 
@@ -85,4 +85,5 @@ async def favicon():
 
 
 if __name__ == "__main__":
+    app.debug = True
     uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)
