@@ -1,0 +1,18 @@
+service: default
+runtime: python38
+
+entrypoint: gunicorn -b :8080 main:app
+
+instance_class: B2
+
+manual_scaling:
+  instances: 1
+
+env_variables:
+
+
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto

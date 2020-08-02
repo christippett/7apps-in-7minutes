@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ env.Getenv "APP" }}
+  name: gke-app
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ env.Getenv "APP" }}
+      app: gke-app
   strategy:
     rollingUpdate:
       maxSurge: 100%
@@ -16,11 +16,11 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ env.Getenv "APP" }}
+        app: gke-app
     spec:
       containers:
         - image: {{env.Getenv "IMAGE" }}
-          name: {{ env.Getenv "APP" }}
+          name: gke-app
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -35,25 +35,25 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ env.Getenv "APP" }}-service
+  name: gke-app-service
   namespace: default
   labels:
-    app: {{ env.Getenv "APP" }}
+    app: gke-app
 spec:
   ports:
-    - name: {{ env.Getenv "APP" }}-port
+    - name: gke-app-port
       port: 8080
       protocol: TCP
       targetPort: 8080
   selector:
-    app: {{ env.Getenv "APP" }}
+    app: gke-app
   type: ClusterIP
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ env.Getenv "APP" }}-https
+  name: gke-app-https
   namespace: default
 spec:
   entryPoints:
@@ -62,7 +62,7 @@ spec:
     - kind: Rule
       match: Host(`{{ env.Getenv "DOMAIN" }}`)
       services:
-        - name: {{ env.Getenv "APP" }}-service
+        - name: gke-app-service
           port: 8080
   tls:
     certResolver: le

@@ -1,0 +1,16 @@
+service: flexible
+runtime: custom
+env: flex
+
+manual_scaling:
+  instances: 1
+
+network:
+  name: demo-vpc
+  subnetwork_name: demo-vpc-subnet-au-se1
+
+liveness_check:
+  path: "/"
+
+readiness_check:
+  path: "/"
