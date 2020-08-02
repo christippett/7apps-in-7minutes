@@ -146,7 +146,7 @@ class CloudBuildService:
 
 
 class AppService:
-    def __init__(self, **apps):
+    def __init__(self, **apps: App):
         self.apps = apps
         self._history = defaultdict(lambda: deque(maxlen=5))
         self._current_version = None
@@ -158,6 +158,9 @@ class AppService:
             config = yaml.safe_load(fp)
         apps = {app["name"]: App.construct(**app) for app in config["apps"]}
         return cls(**apps)
+
+    def get_apps(self) -> List[App]:
+        return list(self.apps.values())
 
     def get_app(self, name: str) -> Optional[App]:
         return self.apps.get(name)
