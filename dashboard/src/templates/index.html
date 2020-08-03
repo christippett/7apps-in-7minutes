@@ -105,6 +105,7 @@
       return {
         id: null,
         isActive: false,
+        isLoading: false,
         async deploy() {
           this.isLoading = true;
           this.id = await _.appService.deployUpdate({
