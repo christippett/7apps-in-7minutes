@@ -8,9 +8,9 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
-from common.utils import AppService, CloudBuildService, Notifier
 from models.app import AppTheme
-from models.cloud_build import BuildRef
+from models.build import BuildRef
+from services import AppService, CloudBuildService, Notifier
 
 templates = Jinja2Templates(directory="templates")
 
@@ -19,6 +19,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 notifier = Notifier()
 appsvc = AppService.load_from_config("apps.yaml")
+appsvc.notifier = notifier
 
 
 @app.get("/")
@@ -28,32 +29,22 @@ async def index(request: Request):
         context={
             "request": request,
             "apps": appsvc.get_apps(),
+            "debug": app.debug,
             "unix_timestamp": int(time.time()),
         },
     )
 
 
-@app.post("/deploy", response_model=BuildRef)
+@app.post("/deploy")
 def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     """
     Trigger a Cloud Build job to deploy a new app version.
     """
-    cb = CloudBuildService(notifier=notifier, app_service=appsvc)
-    active_builds = cb.get_active_builds()
-    if len(active_builds) > 0:
-        if app.debug:
-            build_ref = active_builds[0]
-        else:
-            raise HTTPException(503, detail="Another deployment is already in progress")
-    else:
-        try:
-            build_ref = cb.trigger_build(theme.get_build_substitutions())
-        except requests.HTTPError as e:
-            raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
-
-    background_tasks.add_task(appsvc.start_status_monitor)
-    background_tasks.add_task(cb.get_logs, build_ref)
-    return build_ref
+    try:
+        build_ref = appsvc.deploy_update(theme, monitor=True)
+    except Exception as e:
+        raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
+    return build_ref.id
 
 
 @app.get("/build/{id}")

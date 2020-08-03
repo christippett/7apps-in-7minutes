@@ -5,9 +5,25 @@
   </p>
 </div>
 <div class="column is-half is-hidden-mobile">
-  <div class="box px-0 py-0 is-relative">
-    <div id="logs" class="logs is-overlay">
-      <p style="height: 50%;">
+  <div
+    x-data="appDeploy"
+    :class="{ 'is-active': isActive }"
+    class="log-container box px-0 py-0 is-relative is-clipped"
+  >
+    <div class="mask is-overlay px-4 py-4 is-flex">
+      <button
+        @click="deploy()"
+        :class="{ 'is-loading': isLoading }"
+        class="button is-black is-fullwidth"
+      >
+        <span class="icon is-small pr-3">
+          <i class="mdi mdi-cloud-upload mdi-24px"></i>
+        </span>
+        <span>Deploy update</span>
+      </button>
+    </div>
+    <div id="logs" class="logs is-overlay is-hidden">
+      <p style="height: 50%; display: none;">
         Logs from Cloud Build will show here.
       </p>
     </div>
@@ -21,13 +37,25 @@
     <div class="frame-label">
       <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
     </div>
-    <div id="{{ app.name }}-overlay"
-      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden">
+    <div
+      id="{{ app.name }}-overlay"
+      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
+    >
       <p class="heading">🛑 {{ app.title }}</p>
       <p class="title is-size-5 mt-4"></p>
     </div>
-    <iframe name="{{ unix_timestamp }}-{{ loop.index }}" src="{{ app.url }}?ts={{ unix_timestamp }}" class="noselect"
-      data-id="{{ loop.index }}" data-url="{{ app.url }}" data-name="{{ app.name }}" data-title="{{ app.title }}">
+    <iframe
+      name="{{ unix_timestamp }}-{{ loop.index }}"
+      src="{{ app.url }}?ts={{ unix_timestamp }}"
+      width="100%"
+      height="100%"
+      class="noselect"
+      data-id="{{ loop.index }}"
+      data-url="{{ app.url }}"
+      data-name="{{ app.name }}"
+      data-title="{{ app.title }}"
+      data-version="{{ app.version }}"
+    >
     </iframe>
   </div>
 </div>

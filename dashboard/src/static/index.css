@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fugaz One&family=Inter:wght@400;500;600&family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
+/* @import url('https://fonts.googleapis.com/css2?family=Fugaz One&display=swap'); */
 
 html,
 body {
@@ -133,7 +134,7 @@ iframe {
 
 .is-unavailable {
   z-index: 25;
-  background-color: white;
+  background-color: #292828;
   background-image: linear-gradient(
       45deg,
       rgba(248, 248, 248, 0.5) 25%,
@@ -156,6 +157,46 @@ iframe {
 
 /* ---------------------------------- Logs ---------------------------------- */
 
+.log-container {
+  background: #292828;
+  background: linear-gradient(212deg, #292828, #3b3936, #1a1411) 0% 0% / 400% 400%;
+  -webkit-animation: 30s ease 0s infinite normal none running gradient-slider;
+  animation: 30s ease 0s infinite normal none running gradient-slider;
+}
+
+.log-container.is-active .mask {
+  opacity: 0;
+  transition: opacity 4s ease-in 1s;
+}
+.log-container .mask {
+  z-index: 25;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 1;
+  background: rgba(26, 26, 26, 0.6);
+}
+.log-container .mask .button {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  font-weight: 400;
+  background: #46464688;
+  border-radius: 6px;
+  opacity: 0.5;
+  box-shadow: 0 0 10px 5px rgba(45, 45, 45, 0.1);
+  transition: all 0.2s ease-in;
+  font-family: "Fugaz One", sans-serif;
+  text-transform: uppercase;
+}
+.log-container .mask .button:hover {
+  background: #3850cacf;
+  opacity: 1;
+}
+.button.is-loading .icon,
+.log-container.is-active .button .icon {
+  display: none;
+}
+
 .logs::-webkit-scrollbar {
   background: transparent;
   height: 0.5rem;
@@ -174,7 +215,6 @@ iframe {
 .logs {
   font-size: 0.6rem;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
-  background: #292828;
   color: #f0f0f0;
   border-radius: 6px;
   overflow: scroll;
@@ -271,3 +311,31 @@ iframe {
 }
 
 /* ---------------------------------- Misc ---------------------------------- */
+
+@-webkit-keyframes gradient-slider {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradient-slider {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
