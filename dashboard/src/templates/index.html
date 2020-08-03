@@ -140,13 +140,13 @@
       var timeline = Timeline({ options });
       timeline.create("#timeline");
 
-      _.appService.subscribe(({ app, updateMs }) => {
+      _.appService.subscribe(({ app, duration }) => {
         console.log(`Adding ${app.name} to timeline`);
         timeline.add({
           id: app.name,
           name: app.title,
           colors: app.theme.colors,
-          duration: updateMs / 1000,
+          duration,
         });
       });
   </script>

@@ -74,6 +74,7 @@ class AppService:
         self._current_version = self.latest_version()
 
     async def poll_apps(self, interval=5):
+        start_time = datetime.utcnow()
         while True:
             latest = await self.get_latest_app_data()
             for name, app in self.apps.items():
@@ -82,10 +83,13 @@ class AppService:
                     app.version != latest_app.version
                     and latest_app.version != self._current_version
                 ):
+                    duration = start_time - datetime.utcnow()
                     self.apps[name] = latest_app
                     self._history[name].appendleft(app)
                     await self.notifier.send(
-                        "refresh-app", app=jsonable_encoder(latest_app)
+                        "refresh-app",
+                        app=jsonable_encoder(latest_app),
+                        duration=duration.total_seconds(),
                     )
             versions = list(set([app.version for app in latest.values()]))
             if len(versions) == 1 and versions[0] != self._current_version:

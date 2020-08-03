@@ -76,7 +76,7 @@
       return returnVal;
     }
 
-    async refreshApp({ app, updateMs }) {
+    async refreshApp({ app, duration }) {
       if (this._activePolls.get(app.name)) {
         console.debug(`☝️ Refresh already in progress for ${app.name}`);
         return;
@@ -111,7 +111,7 @@
           iframe.name = `${iframe.name.split("-")[0]}-${timestamp}`;
           iframe.src = `${app.url}?ts=${timestamp}`;
           // Notify subscribers of updated app
-          this.subscriptions.forEach((callback) => callback({ app, updateMs }));
+          this.subscriptions.forEach((callback) => callback({ app, duration }));
           // Animate new version
           el.classList.add("has-new-version");
           setTimeout(() => el.classList.remove("has-new-version"), 3000);
