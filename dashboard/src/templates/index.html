@@ -108,12 +108,14 @@
         isLoading: false,
         async deploy() {
           this.isLoading = true;
+          console.debug("deploying app")
           this.id = await _.appService.deployUpdate({
             gradient: this.gradient,
             asciiFont: this.asciiFont,
             font: this.font
           });
-          this.isLoading = false;
+          console.debug(`deployment request sent: ${this.id}`)
+          setTimeout(() => this.isLoading = false, 10000)
           this.isActive = true;
         }
       }
@@ -146,7 +148,7 @@
         timeline.add({
           id: app.name,
           name: app.title,
-          colors: app.theme.colors,
+          theme: app.theme,
           duration,
         });
       });

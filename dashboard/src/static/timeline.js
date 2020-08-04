@@ -85,7 +85,7 @@
       context = canvas.getContext("2d");
 
     const getWidth = (text, fontSize, fontFace) => {
-      context.font = fontSize + "px " + fontFace;
+      context.font = `${fontSize} '${fontFace}'`;
       return context.measureText(text).width;
     };
 
@@ -105,9 +105,12 @@
       .attr("y1", -2)
       .attr("y2", 2)
       .attr("gradientTransform", "rotate(-15)");
-    var offsetScale = d3.scaleLinear().domain([0, data.colors.length]).range([0, 100]);
-    data.colors.forEach((c) => {
-      let idx = data.colors.indexOf(c);
+    var offsetScale = d3
+      .scaleLinear()
+      .domain([0, data.theme.colors.length])
+      .range([0, 100]);
+    data.theme.colors.forEach((c) => {
+      let idx = data.theme.colors.indexOf(c);
       gradient.append("stop").attr("stop-color", c).attr("offset", offsetScale(idx));
     });
   };
@@ -135,23 +138,29 @@
     update({ svg, id: "#labels", shape: "rect", data: nodes })
       .attr("x", (d) => d.x)
       .attr("y", (d) => d.y - d.dy / 2)
-      .attr("width", (d) => d.data.width + d.dx)
+      .attr("width", (d) => d.data.width)
       .attr("height", (d) => d.data.height)
       .attr("rx", 4)
       .attr("ry", 4)
-      .attr("fill", (d) => `url(#${d.data.id})`);
+      .attr("fill", (d) => `url(#${d.data.id})`)
+      .attr("fill-opacity", 0);
 
     // Text labels
     update({ svg, id: "#labels", shape: "text", data: nodes })
+      .attr("fill", (d) => `url(#${d.data.id})`)
+      .attr("style", (d) => `font-family: '${d.data.theme.font}', Inter, sans-serif`)
       .attr("x", (d) => d.x)
       .attr("y", (d) => d.y)
+      .attr("data-width", (d) => d.data.width)
+      .attr("data-dy", (d) => d.dy)
+      .attr("data-dx", (d) => d.dx)
       .attr("transform", (d) => `translate(${d.dx / 2 - 2}, 5)`)
       .text((d) => d.data.name);
 
     // Label link to axis
     update({ svg, id: "#links", shape: "path", data: nodes })
       .attr("d", (d) => renderer.generatePath(d))
-      .style("stroke", (d, _) => d.data.colors[0]);
+      .attr("stroke", (d) => `url(#${d.data.id})`);
   };
 
   /* ======================================================================== */
@@ -163,12 +172,25 @@
     var nodeMap = new Map();
     var { svg, timelineScale } = initTimeline({ options });
 
+    const getWidth = ({ text, font }) => {
+      var dummyText = svg
+        .append("text")
+        .attr("fill-opacity", 0)
+        .classed("labels", true)
+        .attr("style", `font-family: '${font}', Inter, sans-serif`);
+      var bbox = dummyText.text(text).node().getBBox();
+      dummyText.remove();
+      return { width: bbox.width - bbox.y, height: bbox.height };
+    };
+
     /* ------------------------------ Add data ------------------------------ */
 
-    const add = (d = { id, name, duration, colors }) => {
+    const add = (d = { id, name, duration, theme }) => {
       if (nodeMap.has(d.id)) return;
 
-      d.width = BrowserText.getWidth(d.name, "12.8", "Inter");
+      d.width = BrowserText.getWidth(d.name, "0.8rem", d.theme.font);
+      let { height, width } = getWidth({ text: d.name, font: d.theme.font });
+      d.width = width;
       d.height = 28;
 
       let node = new labella.Node(timelineScale(d.duration), d.height, d);
@@ -180,7 +202,7 @@
         .select("#markers")
         .append("circle")
         .classed("dot", true)
-        .style("fill", d.colors[0])
+        .style("fill", d.theme.colors[0])
         .attr("r", 3)
         .attr("cy", node.getRoot().idealPos);
     };
@@ -213,48 +235,3 @@
     };
   };
 })();
-
-var data = [
-  {
-    id: "gke",
-    duration: 5,
-    colors: ["#1D4350", "#A43931"],
-    name: "Kubernetes Engine",
-  },
-  {
-    id: "compute",
-    duration: 120,
-    colors: ["#73C8A9", "#373B44"],
-    name: "Compute Engine",
-  },
-  {
-    id: "run",
-    duration: 128,
-    colors: ["#f2709c", "#ff9472"],
-    name: "Cloud Run: Managed",
-  },
-  {
-    id: "run-anthos",
-    duration: 190,
-    colors: ["#FF4E50", "#F9D423"],
-    name: "Cloud Run: Anthos",
-  },
-  {
-    id: "standard",
-    duration: 202,
-    colors: ["#20002c", "#cbb4d4"],
-    name: "App Engine: Standard",
-  },
-  {
-    id: "functions",
-    duration: 240,
-    colors: ["#00C9FF", "#92FE9D"],
-    name: "Cloud Functions",
-  },
-  {
-    id: "flexible",
-    duration: 320,
-    colors: ["#457fca", "#5691c8"],
-    name: "App Engine: Flexible",
-  },
-];

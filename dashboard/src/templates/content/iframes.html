@@ -14,19 +14,15 @@
       <button
         @click="deploy()"
         :class="{ 'is-loading': isLoading }"
-        class="button is-black is-fullwidth"
+        class="button is-black is-fullwidth is-size-7 is-size-6-desktop"
       >
-        <span class="icon is-small pr-3">
+        <span class="icon is-hidden-mobile is-small pr-3">
           <i class="mdi mdi-cloud-upload mdi-24px"></i>
         </span>
-        <span>Deploy update</span>
+        <span>Deploy!</span>
       </button>
     </div>
-    <div id="logs" class="logs is-overlay is-hidden">
-      <p style="height: 50%; display: none;">
-        Logs from Cloud Build will show here.
-      </p>
-    </div>
+    <div id="logs" class="logs is-overlay"></div>
   </div>
 </div>
 
@@ -54,7 +50,7 @@
       data-url="{{ app.url }}"
       data-name="{{ app.name }}"
       data-title="{{ app.title }}"
-      data-version="{{ app.version }}"
+      data-version="{{ app.version }}123"
     >
     </iframe>
   </div>

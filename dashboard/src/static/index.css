@@ -1,5 +1,4 @@
 @import url("https://fonts.googleapis.com/css2?family=Fugaz One&family=Inter:wght@400;500;600&family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
-/* @import url('https://fonts.googleapis.com/css2?family=Fugaz One&display=swap'); */
 
 html,
 body {
@@ -71,16 +70,16 @@ svg {
   stroke: #dbdbdb;
 }
 .labels text {
-  text-shadow: 1px 1px 2px rgb(75 75 75 / 60%);
-  fill: #ffffff;
-  font-size: 0.8rem;
+  /* text-shadow: 1px 1px 2px rgb(75 75 75 / 60%); */
+  /* fill: #ffffff; */
+  font-size: 1.2rem;
   font-weight: 500;
 }
-.labels rect {
+/* .labels rect {
   stroke: #ffffff;
   stroke-width: 1.5;
   filter: url(#shadow);
-}
+} */
 .links path {
   stroke-width: 2;
   opacity: 0.6;
@@ -159,28 +158,29 @@ iframe {
 
 .log-container {
   background: #292828;
-  background: linear-gradient(212deg, #292828, #3b3936, #1a1411) 0% 0% / 400% 400%;
-  -webkit-animation: 30s ease 0s infinite normal none running gradient-slider;
-  animation: 30s ease 0s infinite normal none running gradient-slider;
+  background: linear-gradient(70deg, #112023, #191b1f) 0% 0% / 150% 150%;
+  -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
+  animation: 10s ease 0s infinite normal none running gradient-slider;
 }
 
-.log-container.is-active .mask {
+.log-container.is-active .mask,
+.log-container:not(.is-active) .logs {
   opacity: 0;
-  transition: opacity 4s ease-in 1s;
+  z-index: 1;
 }
 .log-container .mask {
-  z-index: 25;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
   opacity: 1;
   background: rgba(26, 26, 26, 0.6);
+  z-index: 10;
+  transition: opacity 2s ease-in;
 }
 .log-container .mask .button {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
   font-weight: 400;
-  background: #46464688;
   border-radius: 6px;
   opacity: 0.5;
   box-shadow: 0 0 10px 5px rgba(45, 45, 45, 0.1);
@@ -196,22 +196,6 @@ iframe {
 .log-container.is-active .button .icon {
   display: none;
 }
-
-.logs::-webkit-scrollbar {
-  background: transparent;
-  height: 0.5rem;
-  width: 0.5rem;
-}
-
-.logs::-webkit-scrollbar-thumb {
-  background-color: #ffffff;
-  border-radius: 1px;
-  overflow: hidden;
-}
-.logs::-webkit-scrollbar-track {
-  overflow: hidden;
-}
-
 .logs {
   font-size: 0.6rem;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
@@ -220,6 +204,9 @@ iframe {
   overflow: scroll;
   padding: 0.75rem;
   border: 0;
+  opacity: 1;
+  z-index: 10;
+  transition: opacity 2s ease-in;
 }
 .logs .frame-label {
   background: #3d3d3d;
@@ -309,7 +296,20 @@ iframe {
 .logs > p[data-id="requirements-txt"] .lg-id {
   color: #83d1be;
 }
+.logs::-webkit-scrollbar {
+  background: transparent;
+  height: 0.5rem;
+  width: 0.5rem;
+}
 
+.logs::-webkit-scrollbar-thumb {
+  background-color: #ffffff;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.logs::-webkit-scrollbar-track {
+  overflow: hidden;
+}
 /* ---------------------------------- Misc ---------------------------------- */
 
 @-webkit-keyframes gradient-slider {

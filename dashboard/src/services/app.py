@@ -6,11 +6,11 @@ from typing import Dict, List, Optional
 
 import aiohttp
 import yaml
-from aiohttp import http_exceptions
 from aiohttp.client import ClientSession
 from fastapi.encoders import jsonable_encoder
 
 from models.app import App, AppTheme
+from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
 
@@ -21,16 +21,17 @@ class AppService:
     def __init__(self, notifier: Notifier = None, **apps: App):
         self.apps = apps
         self.notifier = notifier
+        self.build = CloudBuildService(notifier=notifier)
         self._history = defaultdict(lambda: deque(maxlen=5))
         self._current_version = None
         self._monitor_future = None
 
     @classmethod
-    def load_from_config(cls, path):
+    def load_from_config(cls, path, notifier: Notifier = None):
         with open(path) as fp:
             config = yaml.safe_load(fp)
         apps = {app["name"]: App.construct(**app) for app in config["apps"]}
-        return cls(**apps)
+        return cls(notifier=notifier, **apps)
 
     def get_apps(self) -> List[App]:
         return list(self.apps.values())
@@ -42,13 +43,11 @@ class AppService:
         return list(sorted(self.apps.values(), key=lambda app: app.updated))[0].version
 
     def deploy_update(self, theme: AppTheme, monitor=True):
-        cb = CloudBuildService(notifier=self.notifier)
-        active_builds = cb.get_active_builds()
+        active_builds = self.build.get_active_builds()
         if len(active_builds) > 0:
             build_ref = active_builds[0]
         else:
-            build_ref = cb.trigger_build(theme.get_build_substitutions())
-        self.start_status_monitor()
+            build_ref = self.build.trigger_build(theme.get_build_substitutions())
         return build_ref
 
     async def request_app(self, app: App, session: ClientSession) -> App:
@@ -83,7 +82,7 @@ class AppService:
                     app.version != latest_app.version
                     and latest_app.version != self._current_version
                 ):
-                    duration = start_time - datetime.utcnow()
+                    duration = datetime.utcnow() - start_time
                     self.apps[name] = latest_app
                     self._history[name].appendleft(app)
                     await self.notifier.send(
@@ -93,14 +92,16 @@ class AppService:
                     )
             versions = list(set([app.version for app in latest.values()]))
             if len(versions) == 1 and versions[0] != self._current_version:
-                logger.info("All apps updated to the same version")
-                self._current_version = versions[0]
+                new_version = versions[0]
+                logger.info("All apps updated to the same version (%s)", new_version)
+                self._current_version = new_version
                 await self.stop_status_monitor()
                 break
             await asyncio.sleep(interval)
 
-    async def start_status_monitor(self, interval=5):
+    async def start_status_monitor(self, build_ref: BuildRef, interval=5):
         if self._monitor_future is None:
+            self._log_future = asyncio.ensure_future(self.build.get_logs(build_ref))
             self._monitor_future = asyncio.ensure_future(self.poll_apps())
 
     async def stop_status_monitor(self):

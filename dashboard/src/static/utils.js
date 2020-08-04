@@ -1,4 +1,5 @@
 (function () {
+  "use strict";
   const utils = (() => {
     return {
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
@@ -52,11 +53,24 @@
     constructor() {
       this.apps = new Map();
       this.subscriptions = new Array();
+      this._stylesheets = new Map();
       this._activePolls = new Map();
     }
 
     subscribe(callback) {
       this.subscriptions.push(callback);
+    }
+
+    async replaceStylesheet(app) {
+      var stylesheet = this._stylesheets.get(app.name);
+      if (!stylesheet) {
+        stylesheet = document.createElement("link");
+        stylesheet.dataset.app = app.name;
+        document.head.appendChild(stylesheet);
+      }
+      stylesheet.href = `https://fonts.googleapis.com/css2?family=${app.theme.font}&display=swap`;
+      stylesheet.rel = "stylesheet";
+      await utils.sleep(2000);
     }
 
     async fetchApp(url) {
@@ -110,6 +124,8 @@
           iframe.dataset.title = app.title;
           iframe.name = `${iframe.name.split("-")[0]}-${timestamp}`;
           iframe.src = `${app.url}?ts=${timestamp}`;
+          // Load application font
+          await this.replaceStylesheet(app);
           // Notify subscribers of updated app
           this.subscriptions.forEach((callback) => callback({ app, duration }));
           // Animate new version

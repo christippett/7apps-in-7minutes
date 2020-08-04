@@ -1,6 +1,6 @@
+import logging.config
 import time
 
-import requests
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
@@ -8,9 +8,11 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
+from common.logging import LOGGING_CONFIG
 from models.app import AppTheme
-from models.build import BuildRef
 from services import AppService, CloudBuildService, Notifier
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 templates = Jinja2Templates(directory="templates")
 
@@ -18,8 +20,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 notifier = Notifier()
-appsvc = AppService.load_from_config("apps.yaml")
-appsvc.notifier = notifier
+appsvc = AppService.load_from_config("apps.yaml", notifier=notifier)
 
 
 @app.get("/")
@@ -42,9 +43,10 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     """
     try:
         build_ref = appsvc.deploy_update(theme, monitor=True)
+        background_tasks.add_task(appsvc.start_status_monitor, build_ref)
     except Exception as e:
         raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
-    return build_ref.id
+    return {"id": build_ref.id}
 
 
 @app.get("/build/{id}")
@@ -55,7 +57,7 @@ def build(id: str):
 
 @app.on_event("startup")
 async def startup():
-    await appsvc.refresh_app_data()
+    # await appsvc.refresh_app_data()
     # Prime the Pub/Sub log broker
     await notifier.generator.asend(None)
 
