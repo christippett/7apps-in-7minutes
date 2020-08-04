@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
+from pydantic.color import Color
 from pydantic.fields import Field
 
 
@@ -11,7 +12,7 @@ class AppTheme(BaseModel):
     gradient: Optional[str]
     ascii_font: Optional[str]
     font: Optional[str]
-    colors: Optional[List[str]]
+    colors: Optional[List[Color]]
 
     def get_build_substitutions(self):
         substitutions = {
@@ -29,3 +30,24 @@ class App(BaseModel):
     version: Optional[str]
     theme: Optional[AppTheme]
     updated: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Message(BaseModel):
+    topic: str
+    data: Dict[str, Any]
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+    class Config:
+        extra = "allow"
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        self.metadata.update({"timestamp": datetime.utcnow()})
+
+    @property
+    def historical(self) -> bool:
+        return self.metadata.get("historical", False)
+
+    @historical.setter
+    def historical(self, v: bool):
+        self.metadata["historical"] = v

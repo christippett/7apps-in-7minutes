@@ -8,13 +8,7 @@ from typing import Dict, List
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
-from common.constants import (
-    CLOUD_BUILD_API,
-    CLOUD_BUILD_TRIGGER_ID,
-    CLOUDSDK_HOME,
-    GITHUB_BRANCH,
-    GITHUB_REPO,
-)
+from config import settings
 from models.build import BuildRef
 
 logger = logging.getLogger(__name__)
@@ -31,7 +25,7 @@ class CloudBuildService:
         self._logging = False
 
     def _googlesdk_cloudbuild_client(self):
-        third_party_dir = os.path.join(CLOUDSDK_HOME, "lib", "third_party")
+        third_party_dir = os.path.join(settings.gcloud_dir, "lib", "third_party")
         if os.path.isdir(third_party_dir) and third_party_dir not in sys.path:
             sys.path.insert(0, third_party_dir)
         from googlecloudsdk.api_lib.cloudbuild import logs
@@ -40,19 +34,22 @@ class CloudBuildService:
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
         source = {
-            "repoName": GITHUB_REPO,
-            "branchName": GITHUB_BRANCH,
+            "repoName": settings.github_repo,
+            "branchName": settings.github_branch,
             "substitutions": substitutions,
         }
         resp = self.session.post(
-            f"{CLOUD_BUILD_API}/{CLOUD_BUILD_TRIGGER_ID}:run", json=source,
+            f"{settings.cloud_build_api_url}/{settings.cloud_build_trigger_id}:run",
+            json=source,
         )
         resp.raise_for_status()
         data = resp.json()
         return BuildRef.parse_obj(data["metadata"]["build"])
 
     def get_build(self, id: str) -> BuildRef:
-        resp = self.session.get(f"{CLOUD_BUILD_API}/projects/{project}/builds/{id}")
+        resp = self.session.get(
+            f"{settings.cloud_build_api_url}/projects/{project}/builds/{id}"
+        )
         resp.raise_for_status()
         data = resp.json()
         return BuildRef.parse_obj(data)
@@ -61,7 +58,8 @@ class CloudBuildService:
         builds_query = {"filter": 'status="QUEUED" OR status="WORKING"'}
         project = "servian-labs-7apps"
         resp = self.session.get(
-            f"{CLOUD_BUILD_API}/projects/{project}/builds", params=builds_query,
+            f"{settings.cloud_build_api_url}/projects/{project}/builds",
+            params=builds_query,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -78,7 +76,7 @@ class CloudBuildService:
             def Print(self, text):
                 for t in text.split("\n"):
                     asyncio.run_coroutine_threadsafe(
-                        notifier.send("log", **log_parser(t)), loop=loop
+                        notifier.send(topic="log", data=log_parser(t)), loop=loop
                     )
 
         cb = self._googlesdk_cloudbuild_client()

@@ -8,15 +8,15 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
-from common.logging import LOGGING_CONFIG
-from models.app import AppTheme
+from config import settings
+from models import AppTheme
 from services import AppService, CloudBuildService, Notifier
 
-logging.config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(settings.logging_config)
 
 templates = Jinja2Templates(directory="templates")
 
-app = FastAPI()
+app = FastAPI(debug=settings.debug)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 notifier = Notifier()
@@ -42,7 +42,7 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     Trigger a Cloud Build job to deploy a new app version.
     """
     try:
-        build_ref = appsvc.deploy_update(theme, monitor=True)
+        build_ref = appsvc.deploy_update(theme)
         background_tasks.add_task(appsvc.start_status_monitor, build_ref)
     except Exception as e:
         raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
@@ -58,8 +58,10 @@ def build(id: str):
 @app.on_event("startup")
 async def startup():
     # await appsvc.refresh_app_data()
-    # Prime the Pub/Sub log broker
-    await notifier.generator.asend(None)
+
+    # prime generators (https://stackoverflow.com/a/19892334)
+    notifier.save_file_generator.send(None)
+    await notifier.notification_generator.asend(None)
 
 
 @app.websocket("/ws")
@@ -79,5 +81,4 @@ async def favicon():
 
 
 if __name__ == "__main__":
-    app.debug = True
-    uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000, debug=settings.debug)

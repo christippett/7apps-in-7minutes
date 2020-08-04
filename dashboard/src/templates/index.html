@@ -1,7 +1,5 @@
-{% with %}
-  {% if not debug %}
-    {% set asset_suffix = "?ts=" + unix_timestamp|string %}
-  {% endif %}
+{% with %} {% if not debug %} {% set asset_suffix = "?ts=" + unix_timestamp|string %} {%
+endif %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -12,14 +10,6 @@
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.materialdesignicons.com/5.3.45/css/materialdesignicons.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css"
     />
     <link href="/static/index.css{{ asset_suffix }}" rel="stylesheet" />
     <script
@@ -33,7 +23,7 @@
       <div class="columns is-centered">
         <div x-data="{ tab: 'timeline' }" class="column has-text-grey is-relative my-6">
           <div class="content">
-            <p class="title is-4">7-Apps on Google Cloud</p>
+            <p class="title is-4">7-Apps in 7-minutes</p>
             <p class="subtitle is-6">
               One codebase. Seven services.
             </p>
@@ -90,16 +80,11 @@
     integrity="sha512-FHsFVKQ/T1KWJDGSbrUhTJyS1ph3eRrxI228ND0EGaEp6v4a/vGwPWd3Dtd/+9cI7ccofZvl/wulICEurHN1pg=="
     crossorigin="anonymous"
   ></script>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/humanize-duration/3.23.1/humanize-duration.min.js"
-    integrity="sha512-om3N51eLuxygBOt9NLKvGQAlFU/0w4z77iF6csfGevWBlBw02Xv9SLtVii85n160wQyHJboLPL2CvKbi0BJaYw=="
-    crossorigin="anonymous"
-  ></script>
 
   <script src="/static/utils.js{{ asset_suffix }}"></script>
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
-      /* eslint-disable no-undef */
+    /* eslint-disable no-undef */
 
     function appDeploy() {
       return {
@@ -108,50 +93,29 @@
         isLoading: false,
         async deploy() {
           this.isLoading = true;
-          console.debug("deploying app")
+          console.debug("deploying app");
           this.id = await _.appService.deployUpdate({
             gradient: this.gradient,
             asciiFont: this.asciiFont,
-            font: this.font
+            font: this.font,
           });
-          console.debug(`deployment request sent: ${this.id}`)
-          setTimeout(() => this.isLoading = false, 10000)
+          console.debug(`deployment request sent: ${this.id}`);
+          setTimeout(() => (this.isLoading = false), 15000);
           this.isActive = true;
-        }
-      }
-    }
-
-      // =======================
-      // Timeline
-      // =======================
-      var options = {
-        margin: { left: 25, right: 0, top: 25, bottom: 0 },
-        initialWidth: 250,
-        initialHeight: 450,
-        timelineLimit: 10 * 60, // max seconds
-        labella: {
-          renderer: {
-            layerGap: 50,
-            direction: "right",
-          },
-          force: {
-            minPos: -10,
-            nodeSpacing: 8,
-          },
         },
       };
-      var timeline = Timeline({ options });
-      timeline.create("#timeline");
+    }
 
-      _.appService.subscribe(({ app, duration }) => {
-        console.log(`Adding ${app.name} to timeline`);
-        timeline.add({
-          id: app.name,
-          name: app.title,
-          theme: app.theme,
-          duration,
-        });
+    // Add callback to update timeline during app deployments
+    _.appService.addSubscription(({ app, duration }) => {
+      console.log(`Adding ${app.name} to timeline`);
+      _.timeline.push({
+        id: app.name,
+        label: app.title,
+        theme: app.theme,
+        value: duration,
       });
+    });
   </script>
 </html>
 {% endwith %}

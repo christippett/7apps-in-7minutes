@@ -8,16 +8,16 @@
   <div
     x-data="appDeploy()"
     :class="{ 'is-active': isActive }"
-    class="log-container box px-0 py-0 is-relative is-clipped"
+    class="log-container box px-0 py-0 is-relative is-shadowless is-clipped"
   >
     <div class="mask is-overlay px-4 py-4 is-flex">
       <button
         @click="deploy()"
         :class="{ 'is-loading': isLoading }"
-        class="button is-black is-fullwidth is-size-7 is-size-6-desktop"
+        class="button is-dark is-fullwidth is-size-7 is-size-6-desktop"
       >
         <span class="icon is-hidden-mobile is-small pr-3">
-          <i class="mdi mdi-cloud-upload mdi-24px"></i>
+          {% include "misc/cloud-upload.svg" %}
         </span>
         <span>Deploy!</span>
       </button>

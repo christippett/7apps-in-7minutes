@@ -60,36 +60,35 @@ ol > li {
 
 /* -------------------------------- Timeline -------------------------------- */
 
-svg {
+svg.timeline {
   overflow: visible;
   margin: 0 auto;
   padding-left: 20px;
 }
-.timeline {
+.axis line {
   stroke-width: 2px;
   stroke: #dbdbdb;
 }
+.axis circle {
+  fill: #dbdbdb;
+}
+.ticks text {
+  font-size: 0.5rem;
+  fill: #b1b1b1;
+  letter-spacing: 1px;
+}
 .labels text {
-  /* text-shadow: 1px 1px 2px rgb(75 75 75 / 60%); */
-  /* fill: #ffffff; */
   font-size: 1.2rem;
   font-weight: 500;
 }
-/* .labels rect {
-  stroke: #ffffff;
-  stroke-width: 1.5;
-  filter: url(#shadow);
-} */
+.labels rect {
+  fill-opacity: 0;
+  /* filter: url(#shadow); */
+}
 .links path {
   stroke-width: 2;
   opacity: 0.6;
   fill: none;
-}
-svg .tick {
-  font-size: 0.5rem;
-  /* font-style: italic; */
-  fill: #b1b1b1;
-  letter-spacing: 1px;
 }
 
 /* --------------------------------- IFrames -------------------------------- */
@@ -107,7 +106,7 @@ iframe {
 .frame-label {
   z-index: 50;
   position: absolute;
-  font-size: 0.75rem;
+  font-size: max(0.4rem, 75%);
   padding: 2px 10px;
   background: rgba(255, 255, 255, 1);
   font-weight: 400;
@@ -157,10 +156,30 @@ iframe {
 /* ---------------------------------- Logs ---------------------------------- */
 
 .log-container {
-  background: #292828;
-  background: linear-gradient(70deg, #112023, #191b1f) 0% 0% / 150% 150%;
-  -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
-  animation: 10s ease 0s infinite normal none running gradient-slider;
+  background: none;
+}
+
+.log-container.is-maximised {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: auto;
+  width: auto;
+  margin: 5rem;
+  z-index: 50;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+.log-container.is-maximised:after {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: auto;
+  width: auto;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .log-container.is-active .mask,
@@ -174,26 +193,26 @@ iframe {
   justify-content: flex-end;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
   opacity: 1;
-  background: rgba(26, 26, 26, 0.6);
   z-index: 10;
   transition: opacity 2s ease-in;
 }
 .log-container .mask .button {
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
   font-weight: 400;
-  border-radius: 6px;
-  opacity: 0.5;
-  box-shadow: 0 0 10px 5px rgba(45, 45, 45, 0.1);
-  transition: all 0.2s ease-in;
   font-family: "Fugaz One", sans-serif;
+  border-radius: 6px;
+  opacity: 0.1;
+  box-shadow: 2px 2px 10px 2px rgba(80, 80, 80, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in;
   text-transform: uppercase;
+  background: #8b8b8b;
 }
 .log-container .mask .button:hover {
   background: #3850cacf;
   opacity: 1;
 }
-.button.is-loading .icon,
-.log-container.is-active .button .icon {
+.button.is-loading svg.icon,
+.log-container.is-active .button svg.icon {
   display: none;
 }
 .logs {
@@ -207,6 +226,10 @@ iframe {
   opacity: 1;
   z-index: 10;
   transition: opacity 2s ease-in;
+  background: #292828;
+  background: linear-gradient(70deg, #112023, #2c3346) 0% 0% / 150% 150%;
+  -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
+  animation: 10s ease 0s infinite normal none running gradient-slider;
 }
 .logs .frame-label {
   background: #3d3d3d;
@@ -219,8 +242,8 @@ iframe {
 }
 
 .logs > p {
-  /* width: 100%; */
-  /* display: block; */
+  width: 100%;
+  display: block;
   white-space: nowrap;
   text-overflow: clip;
   overflow: hidden;
@@ -310,7 +333,79 @@ iframe {
 .logs::-webkit-scrollbar-track {
   overflow: hidden;
 }
-/* ---------------------------------- Misc ---------------------------------- */
+
+/* -------------------------------- Animation ------------------------------- */
+
+@-webkit-keyframes tada {
+  0% {
+    -webkit-transform: scaleX(1);
+    transform: scaleX(1);
+  }
+
+  10%,
+  20% {
+    -webkit-transform: scale3d(0.9, 0.9, 0.9) rotate(-3deg);
+    transform: scale3d(0.9, 0.9, 0.9) rotate(-3deg);
+  }
+
+  30%,
+  50%,
+  70%,
+  90% {
+    -webkit-transform: scale3d(1.1, 1.1, 1.1) rotate(3deg);
+    transform: scale3d(1.1, 1.1, 1.1) rotate(3deg);
+  }
+
+  40%,
+  60%,
+  80% {
+    -webkit-transform: scale3d(1.1, 1.1, 1.1) rotate(-3deg);
+    transform: scale3d(1.1, 1.1, 1.1) rotate(-3deg);
+  }
+
+  to {
+    -webkit-transform: scaleX(1);
+    transform: scaleX(1);
+  }
+}
+
+@keyframes tada {
+  0% {
+    -webkit-transform: scaleX(1);
+    transform: scaleX(1);
+  }
+
+  10%,
+  20% {
+    -webkit-transform: scale3d(0.9, 0.9, 0.9) rotate(-3deg);
+    transform: scale3d(0.9, 0.9, 0.9) rotate(-3deg);
+  }
+
+  30%,
+  50%,
+  70%,
+  90% {
+    -webkit-transform: scale3d(1.1, 1.1, 1.1) rotate(3deg);
+    transform: scale3d(1.1, 1.1, 1.1) rotate(3deg);
+  }
+
+  40%,
+  60%,
+  80% {
+    -webkit-transform: scale3d(1.1, 1.1, 1.1) rotate(-3deg);
+    transform: scale3d(1.1, 1.1, 1.1) rotate(-3deg);
+  }
+
+  to {
+    -webkit-transform: scaleX(1);
+    transform: scaleX(1);
+  }
+}
+
+.animate__tada {
+  -webkit-animation-name: tada;
+  animation-name: tada;
+}
 
 @-webkit-keyframes gradient-slider {
   0% {

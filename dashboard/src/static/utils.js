@@ -31,12 +31,12 @@
       websocket.onmessage = (event) => {
         const message = JSON.parse(event.data);
         const subscriptions = this.getTopicSubscriptions(message.topic);
-        subscriptions.forEach((callback) => callback({ ...message }));
+        subscriptions.forEach((callback) => callback(message));
       };
       return websocket;
     }
 
-    subscribe(topic, callback) {
+    addSubscription(topic, callback) {
       var subscriptions = this.getTopicSubscriptions(topic);
       subscriptions.push(callback);
       this.subscriptions.set(topic, subscriptions);
@@ -57,7 +57,7 @@
       this._activePolls = new Map();
     }
 
-    subscribe(callback) {
+    addSubscription(callback) {
       this.subscriptions.push(callback);
     }
 
@@ -146,14 +146,13 @@
 
     async deployUpdate({ gradient, asciiFont, font }) {
       let payload = { gradient, font, ascii_font: asciiFont };
-      let future = fetch("/deploy", {
+      return await fetch("/deploy", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-      return future;
     }
   }
 
@@ -183,11 +182,11 @@
   const notificationService = new NotificationService();
   const appService = new AppService();
   const logHandler = new LogHandler(document.getElementById("logs"));
-  notificationService.subscribe("log", (message) =>
-    logHandler.createLogRecord(message.body)
+  notificationService.addSubscription("log", (message) =>
+    logHandler.createLogRecord(message.data)
   );
-  notificationService.subscribe("refresh-app", (message) =>
-    appService.refreshApp(message.body)
+  notificationService.addSubscription("refresh-app", (message) =>
+    appService.refreshApp(message.data)
   );
 
   window._ = { notificationService, appService, logHandler };
