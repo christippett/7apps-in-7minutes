@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict, deque
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, DefaultDict, Iterator, List
+from typing import Any, DefaultDict, Iterator, List, Optional
 
 from fastapi import WebSocket
 
@@ -85,7 +85,7 @@ class Notifier:
                 message = Message.parse_raw(d, content_type="application/json")
                 self.history[message.topic].append(message)
 
-    def purge_history(self):
+    def purge_history(self, *topics):
         logger.info("Purging message history")
-        for topic in self.history.keys():
+        for topic in topics or self.history.keys():
             self.history[topic].clear()

@@ -91,7 +91,7 @@ endif %}
     function appDeploy() {
       return {
         id: null,
-        isActive: {{ app_service.build.build_in_progress|tojson }},
+        isActive: {{ app_service.build.has_active_builds()|tojson }},
         isLoading: false,
         isFullscreen: false,
         toggleFullscreen() {

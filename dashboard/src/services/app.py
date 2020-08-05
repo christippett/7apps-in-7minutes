@@ -34,7 +34,7 @@ class AppService:
     def load_from_config(cls, path, notifier: Notifier = None):
         with open(path) as fp:
             config = yaml.safe_load(fp)
-        apps = {app["name"]: App.construct(**app) for app in config["apps"]}
+        apps = {app["name"]: App.parse_obj(app) for app in config["apps"]}
         return cls(notifier=notifier, **apps)
 
     def get_apps(self) -> List[App]:
@@ -60,7 +60,6 @@ class AppService:
         return build_ref
 
     async def request_app(self, app: App, session: ClientSession) -> App:
-        logger.debug("Requesting data for '%s'", app.name)
         async with session.get(app.url) as response:
             data = await response.json()
             app_copy = app.copy(update=data)
@@ -79,56 +78,56 @@ class AppService:
 
     async def refresh_app_data(self):
         self.apps = await self.get_latest_app_data()
-        self._current_version = self.latest_version()
 
     async def poll_apps(self, interval=5):
         start_time = datetime.utcnow()
+        current_apps = list(self.apps.values())
+        current_version = self.latest_version()
         while True:
             if (datetime.utcnow() - start_time).total_seconds() > 600:
                 logging.error("Application monitor timed out")
                 break
             latest_apps = await self.get_latest_app_data()
-            for name, current_app in self.apps.items():
+            versions = set([app.version or "" for app in latest_apps.values()])
+            logger.info("Latest version(s) after refresh: %s", ", ".join(versions))
+            for app in current_apps:
+                name = app.name
                 latest_app = latest_apps[name]
                 if (
-                    current_app.version != latest_app.version
-                    and latest_app.version != self._current_version
+                    app.version != latest_app.version
+                    and latest_app.version != current_version
                 ):
                     logger.info(
-                        "'%s' updated to version '%s'",
-                        current_app.name,
-                        latest_app.version,
+                        "'%s' updated to version %s", name, latest_app.version,
                     )
                     duration = (datetime.utcnow() - start_time).total_seconds()
                     self.apps[name] = latest_app
-                    self._history[name].appendleft(current_app)
-                    if current_app.version is not None:
+                    self._history[name].appendleft(app)
+                    current_apps.remove(app)
+                    if app.version is not None:
                         await self.notifier.send(
                             topic="refresh-app",
                             data={"app": latest_app.json(), "duration": duration},
                         )
-            versions = list(set([app.version for app in latest_apps.values()]))
-            if len(versions) == 1 and versions[0] != self._current_version:
-                new_version = versions[0]
+            a_version = next(iter(versions))
+            if len(versions) == 1 and a_version != current_version:
+                new_version = a_version
                 logger.info("All applications updated to version %s", new_version)
-                self._current_version = new_version
                 break
             await asyncio.sleep(interval)
-        await self.stop_build_monitor()
+        await self.stop_app_monitor()
 
     def monitoring_status(self) -> bool:
         if self._monitor_future is None:
             return Status.INACTIVE
         return Status.INACTIVE if self._monitor_future.done() else Status.ACTIVE
 
-    async def start_build_monitor(self, build_ref: BuildRef, interval=5):
+    async def start_app_monitor(self, interval=5):
         if self.monitoring_status() == Status.INACTIVE:
             logging.info("Starting application monitor")
-            self.notifier.purge_history()  # start fresh
-            self._log_future = asyncio.ensure_future(self.build.get_logs(build_ref))
             self._monitor_future = asyncio.ensure_future(self.poll_apps())
 
-    async def stop_build_monitor(self):
+    async def stop_app_monitor(self):
         if self.monitoring_status() == Status.ACTIVE:
             logger.info("Stopping application monitor")
             self._monitor_future.cancel()

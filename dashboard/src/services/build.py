@@ -3,10 +3,15 @@ import logging
 import os
 import re
 import sys
-from typing import Dict, List
+from asyncio.futures import Future
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional
 
 import google.auth
+import yaml
+from fastapi import BackgroundTasks
 from google.auth.transport.requests import AuthorizedSession
+from pyfiglet import Figlet
 
 from config import settings
 from models.build import BuildRef
@@ -22,8 +27,7 @@ class CloudBuildService:
     def __init__(self, notifier=None):
         self.notifier = notifier
         self.session = AuthorizedSession(credentials)
-        self.build_in_progress = False
-        self._logging = False
+        self.logging_futures = []
 
     def _googlesdk_cloudbuild_client(self):
         third_party_dir = os.path.join(settings.gcloud_dir, "lib", "third_party")
@@ -32,6 +36,16 @@ class CloudBuildService:
         from googlecloudsdk.api_lib.cloudbuild import logs
 
         return logs.CloudBuildClient()
+
+    def generate_yaml_config(self, build_ref: BuildRef) -> str:
+        config = {
+            "steps": [s.dict(exclude_unset=True) for s in build_ref.steps],
+            "substitutions": build_ref.substitutions,
+        }
+        return yaml.dump(config, default_flow_style=False, sort_keys=False) or ""
+
+    def has_active_builds(self) -> bool:
+        return any([not f.done() for f in self.logging_futures])
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
         source = {
@@ -44,7 +58,6 @@ class CloudBuildService:
             json=source,
         )
         resp.raise_for_status()
-        self.build_in_progress = True
         data = resp.json()
         return BuildRef.parse_obj(data["metadata"]["build"])
 
@@ -57,7 +70,9 @@ class CloudBuildService:
         return BuildRef.parse_obj(data)
 
     def get_active_builds(self) -> List[BuildRef]:
-        builds_query = {"filter": 'status="QUEUED" OR status="WORKING"'}
+        builds_query = {
+            "filter": '(status="QUEUED" OR status="WORKING") AND tags="app"'
+        }
         project = "servian-labs-7apps"
         resp = self.session.get(
             f"{settings.cloud_build_api_url}/projects/{project}/builds",
@@ -67,35 +82,67 @@ class CloudBuildService:
         data = resp.json()
         return [BuildRef.parse_obj(b) for b in data.get("builds", [])]
 
-    async def get_logs(self, build_ref: BuildRef):
-        if self._logging:
-            return
-        self._logging = True
-        log_parser = self.parse_log_text
-        notifier = self.notifier
+    async def send_log(self, text: Optional[str] = None, **extra):
+        data = {"text": text}
+        data.update(extra)
+        await self.notifier.send(topic="log", data=data)
 
+    async def capture_logs(self, build_ref: BuildRef):
+        future = asyncio.ensure_future(self.get_logs(build_ref))
+        self.logging_futures.append(future)
+
+        def callback(f: Future):
+            self.logging_futures.remove(f)
+            if f.exception():
+                logger.error("Error while getting Cloud Build logs: %s", f.exception())
+            logger.info("Finished logging Cloud Build output")
+
+        future.add_done_callback(callback)
+
+    async def get_logs(self, build_ref: BuildRef):
+        if build_ref.id in self.logging_futures:
+            return
+
+        @dataclass
         class _LogWriter:
+            logger: Callable
+            parser: Callable
+
+            # gcloud sdk expects a `Print` method
             def Print(self, text):
                 for t in text.split("\n"):
                     asyncio.run_coroutine_threadsafe(
-                        notifier.send(topic="log", data=log_parser(t)), loop=loop
+                        self.logger(**self.parser(t)), loop=loop
                     )
 
-        cb = self._googlesdk_cloudbuild_client()
-        proxy_logger = _LogWriter()
+        logger.info("Getting Cloud Build logs")
+        self.notifier.purge_history("log")
+        header = Figlet(font="slant").renderText("Cloud Build")
+        await self.send_log(header + "Logs to follow...\n\n")
+
+        client = self._googlesdk_cloudbuild_client()
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, cb.Stream, build_ref, proxy_logger)
-        self.build_in_progress = False
-        self._logging = False
+        log_writer = _LogWriter(self.send_log, self.parse_log_text)
+        await loop.run_in_executor(None, client.Stream, build_ref, log_writer)
 
     def parse_log_text(self, text):
         metadata = {"text": text}
+        if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
+            metadata["status"] = text
+
+        # Extract log record
         m = re.match(
             r"^(?P<status>Starting|Finished)? ?Step #(?P<step>\d{1,2}) - \"(?P<id>.*?)\"(?:\: (?P<message>.*))?$",
             text,
         )
         if m:
             metadata.update(m.groupdict())
-        if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
-            metadata["status"] = text
+
+        # Shorten dividers
+        text = re.sub(r"\.{4,}", r"...", text)
+        m = re.match(r"^[=-]{20,}([^-=]+)?", text)
+        if m:
+            label = m.group(1) or ""
+            metadata["message"] = label.ljust(33 - len(label) // 2, "-").rjust(66, "-")
+
         return metadata

@@ -242,6 +242,7 @@ iframe {
   animation: 10s ease 0s infinite normal none running gradient-slider;
 }
 .is-fullscreen .logs {
+  cursor: zoom-out;
   z-index: 75;
   font-size: 0.9rem;
 }
@@ -279,58 +280,67 @@ iframe {
   font-size: 0.5rem;
 }
 
-.logs > p .lg-step {
-  color: #eeeeee;
-  white-space: pre;
-}
 .logs > p .lg-text {
   margin-left: 0.25rem;
   white-space: pre;
 }
-.lg-step {
-  display: none;
-}
-.lg-step:not([data-step=""])::before {
-  content: "Step #";
-}
+
 .logs > p[data-status="finished"] .lg-text::after {
-  content: " 🎉";
+  content: " ✅";
 }
-.logs > p[data-status="starting"] .lg-text::before {
-  content: "🎬 ";
+.logs > p[data-status="starting"] .lg-text::after {
+  content: " ✨";
 }
 
-.logs > p[data-id="gae-flexible"] .lg-id {
+.is-fullscreen .logs p:not([data-id=""]) .lg-step:not([data-step=""])::before {
+  display: inline-block;
+  content: "Step #" attr(data-step) " - ";
+  margin-right: 10px;
+}
+.is-fullscreen .logs p:not([data-id=""]) .lg-step:not([data-step=""]) {
+  display: inline-flex;
+  min-width: 230px;
+  overflow: hidden;
+}
+.is-fullscreen .logs p:not([data-id=""]) .lg-step:not([data-step=""]):after {
+  content: "";
+  flex: 1 0 auto;
+  display: inline-block;
+  border-bottom: 2px dotted;
+  margin: 0 8px 4px;
+  opacity: 0.5;
+}
+.logs > p[data-id="gae-flexible"] .lg-step {
   color: #f28779;
 }
-.logs > p[data-id="gae-standard"] .lg-id {
+.logs > p[data-id="gae-standard"] .lg-step {
   color: #73d0ff;
 }
-.logs > p[data-id="function"] .lg-id {
+.logs > p[data-id="function"] .lg-step {
   color: #ffd580;
 }
-.logs > p[data-id="run-anthos"] .lg-id {
+.logs > p[data-id="run-anthos"] .lg-step {
   color: #ff657a;
 }
-.logs > p[data-id="run-managed"] .lg-id {
+.logs > p[data-id="run-managed"] .lg-step {
   color: #6dde9d;
 }
-.logs > p[data-id="gce"] .lg-id {
+.logs > p[data-id="gce"] .lg-step {
   color: #ee9471;
 }
-.logs > p[data-id="docker-build"] .lg-id {
+.logs > p[data-id="docker-build"] .lg-step {
   color: #3e91df;
 }
-.logs > p[data-id="docker-pull"] .lg-id {
+.logs > p[data-id="docker-pull"] .lg-step {
   color: #3e91df;
 }
-.logs > p[data-id="docker-push"] .lg-id {
+.logs > p[data-id="docker-push"] .lg-step {
   color: #3e91df;
 }
-.logs > p[data-id="gke"] .lg-id {
+.logs > p[data-id="gke"] .lg-step {
   color: #da8de4;
 }
-.logs > p[data-id="requirements-txt"] .lg-id {
+.logs > p[data-id="requirements-txt"] .lg-step {
   color: #83d1be;
 }
 .logs::-webkit-scrollbar {

@@ -36,12 +36,13 @@ class SourceProvenance(BaseModel):
 
 
 class Step(BaseModel):
-    name: str
-    args: List[str]
     id: str
-    waitFor: List[str]
-    dir: Optional[str] = None
-    entrypoint: Optional[str] = None
+    name: str
+    entrypoint: Optional[str]
+    args: Optional[List[str]]
+    env: Optional[List[str]]
+    dir: Optional[str]
+    waitFor: Optional[List[str]]
 
 
 class BuildRef(BaseModel):
@@ -49,18 +50,18 @@ class BuildRef(BaseModel):
 
     id: str
     status: str
-    source: Source
+    source: Optional[Source]
     createTime: datetime
     steps: List[Step]
     timeout: str
-    images: List[str]
+    images: Optional[List[str]]
     projectId: str
     logsBucket: str
-    sourceProvenance: SourceProvenance
-    buildTriggerId: str
-    options: Options
+    sourceProvenance: Optional[SourceProvenance]
+    buildTriggerId: Optional[str]
+    options: Optional[Options]
     logUrl: str
     substitutions: Dict[str, str]
     tags: List[str]
-    artifacts: Artifacts
+    artifacts: Optional[Artifacts]
     queueTtl: str

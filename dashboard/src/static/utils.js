@@ -23,7 +23,7 @@
     connect(uri) {
       const websocket = new WebSocket(uri);
       websocket.onopen = () => console.log("🔌 Websocket connected");
-      websocket.onerror = (e) => console.log(`💥 Websocket error: ${e.message}`);
+      websocket.onerror = () => console.error("💥 Error connecting to websocket");
       websocket.onclose = () => {
         console.log("🔌 Websocket disconnected");
         setTimeout(() => this.connect(uri), 20000);
@@ -172,17 +172,22 @@
 
     createLogRecord(data) {
       let el = document.createElement("p");
-      el.setAttribute("data-step", data.step || "");
       el.setAttribute("data-id", data.id || "");
       el.setAttribute("data-status", (data.status || "").toLowerCase());
 
-      let message = data.status || data.message || data.text;
-      let html = [
-        `<span class="lg-step">${(data.step || "").padEnd(2)}</span> `,
-        `<span class="lg-id">${data.id || ""}</span>`,
-        `<span class="lg-text">${message}</span>`,
-      ];
-      el.innerHTML = html.join(" ");
+      if (data.step) {
+        let step = document.createElement("span");
+        step.dataset.step = data.step;
+        step.setAttribute("class", "lg-step");
+        step.innerText = data.id || "";
+        el.appendChild(step);
+      }
+
+      let message = document.createElement("span");
+      message.setAttribute("class", "lg-text");
+      message.innerText = data.status || data.message || data.text;
+      el.appendChild(message);
+
       this.container.appendChild(el);
       this.container.scrollTop = this.container.scrollHeight;
     }

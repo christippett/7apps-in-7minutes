@@ -1,3 +1,4 @@
+import logging
 import logging.config
 import time
 
@@ -13,6 +14,7 @@ from models import AppTheme
 from services import AppService, CloudBuildService, Notifier
 
 logging.config.dictConfig(settings.logging_config)
+logger = logging.getLogger("main")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -20,7 +22,7 @@ app = FastAPI(debug=settings.debug)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 notifier = Notifier()
-appsvc = AppService.load_from_config("apps.yaml", notifier=notifier)
+app_service = AppService.load_from_config("apps.yaml", notifier=notifier)
 
 
 @app.get("/")
@@ -29,7 +31,7 @@ async def index(request: Request):
         name="index.html",
         context={
             "request": request,
-            "app_service": appsvc,
+            "app_service": app_service,
             "debug": app.debug,
             "unix_timestamp": int(time.time()),
         },
@@ -42,9 +44,11 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     Trigger a Cloud Build job to deploy a new app version.
     """
     try:
-        build_ref = appsvc.deploy_update(theme)
-        background_tasks.add_task(appsvc.start_build_monitor, build_ref)
+        build_ref = app_service.deploy_update(theme)
+        background_tasks.add_task(app_service.build.capture_logs, build_ref)
+        background_tasks.add_task(app_service.start_app_monitor)
     except Exception as e:
+        logger.exception("Error triggering build: %s", e)
         raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
     return {"id": build_ref.id}
 
@@ -57,7 +61,7 @@ def build(id: str):
 
 @app.on_event("startup")
 async def startup():
-    # await appsvc.refresh_app_data()
+    # await app_service.refresh_app_data()
 
     # prime generators (https://stackoverflow.com/a/19892334)
     notifier.save_file_generator.send(None)
