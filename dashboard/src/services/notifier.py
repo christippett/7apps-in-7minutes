@@ -21,10 +21,7 @@ class Notifier:
             lambda: deque(maxlen=80)
         )
         if settings.debug:
-            history_file = self.read_from_file()
-            next(history_file)
-            for message in history_file:
-                self.history[message.topic].append(message)
+            self.load_history_from_file()
 
     async def get_notification_generator(self):
         while True:
@@ -69,18 +66,24 @@ class Notifier:
             self.save_file_generator.send(message)
 
     def get_save_file_generator(self, filename="messages.json"):
+        counter = 0
         with open(filename, mode="w") as fp:
             while True:
                 message = yield
                 fp.write(message.json() + "\n")
+                counter += 1
+                if counter > 100:
+                    fp.flush()
+                    counter = 0
 
-    def read_from_file(self, filename="messages.json") -> Iterator[Message]:
+    def load_history_from_file(self, filename="messages.json"):
+        logger.info("Loading message history from file")
         if not Path(filename).exists():
             return
-        logger.info("Retrieving historical messages from file")
         with open(filename, "r") as fp:
-            for raw_message in fp.readlines():
-                yield Message.parse_raw(raw_message, content_type="application/json")
+            for d in fp.readlines():
+                message = Message.parse_raw(d, content_type="application/json")
+                self.history[message.topic].append(message)
 
     def purge_history(self):
         logger.info("Purging message history")

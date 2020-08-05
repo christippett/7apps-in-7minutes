@@ -72,20 +72,20 @@ svg.timeline {
 .axis circle {
   fill: #dbdbdb;
 }
-.ticks text {
+.axis text {
   font-size: 0.5rem;
   fill: #b1b1b1;
   letter-spacing: 1px;
 }
-.labels text {
+text.label {
   font-size: 1.2rem;
   font-weight: 500;
 }
-.labels rect {
+rect.label {
   fill-opacity: 0;
   /* filter: url(#shadow); */
 }
-.links path {
+path.label {
   stroke-width: 2;
   opacity: 0.6;
   fill: none;

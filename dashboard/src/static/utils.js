@@ -101,7 +101,7 @@
       const timestamp = new Date();
       const el = document.getElementById(app.name);
       const iframe = el.getElementsByTagName("iframe")[0];
-      const overlay = el.getElementsByTagName("is-overlay")[0];
+      const overlay = el.getElementsByClassName("is-overlay")[0];
       const icons = ["😅", "🤔", "🤨", "😬", "🤢"];
 
       var count = 0;

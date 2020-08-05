@@ -84,21 +84,17 @@
           "transform",
           `translate(${this.options.margin.left}, ${this.options.margin.top})`
         );
-      timeline.append("g").attr("id", "markers").classed("markers", true);
-      timeline.append("g").attr("id", "labels").classed("labels", true);
-      timeline.append("g").attr("id", "links").classed("links", true);
+
+      // Add containers for plot items
+      let items = timeline.append("g").classed("items", true);
+      items.append("g").classed("markers", true);
+      items.append("g").classed("labels", true);
+      items.append("g").classed("links", true);
 
       // Add axis
-      timeline
-        .append("g")
-        .attr("id", "axis")
-        .classed("axis", true)
-        .append("line")
-        .attr("y2", this.innerHeight);
-
-      // Add markers to axis bounds
-      timeline
-        .select("#axis")
+      let axis = timeline.append("g").classed("axis", true);
+      axis.append("line").attr("y2", this.innerHeight);
+      axis
         .selectAll("circle")
         .data([0, this.innerHeight])
         .enter()
@@ -116,10 +112,7 @@
           };
         }
       );
-      timeline
-        .append("g")
-        .attr("id", "ticks")
-        .classed("ticks", true)
+      axis
         .selectAll("text")
         .data(axisTicks)
         .enter()
@@ -133,16 +126,20 @@
         });
     }
 
-    updateNodes({ select, type, nodes }) {
+    updateNodes({ parent, tag, nodes }) {
       // Helper function to update timeline based on new/updated data
       // https://www.d3indepth.com/enterexit/
+      let [tagName, className] = tag.split(".");
       let u = this.svg
-        .select(select)
-        .selectAll(type)
+        .select(parent)
+        .selectAll(tag)
         .data(nodes, (d) => d.data.id);
-      u.enter().append(type).merge(u);
+      let enter = u.enter().append(tagName);
+      if (className) {
+        enter = enter.classed(className, true);
+      }
       u.exit().remove();
-      return u;
+      return enter.merge(u);
     }
 
     drawNodes({ nodes }) {
@@ -156,7 +153,11 @@
       const gradientOffset = (colors) =>
         d3.scaleLinear().domain([0, colors.length]).range([0, 100]);
 
-      this.updateNodes({ select: "defs", type: "linearGradient", nodes })
+      this.updateNodes({
+        parent: "defs",
+        tag: "linearGradient",
+        nodes,
+      })
         .attr("id", (d) => d.data.id)
         .attr("x1", -1.5)
         .attr("x2", 1.5)
@@ -174,34 +175,31 @@
         });
 
       // Label container
-      this.updateNodes({ select: "#labels", type: "rect", nodes })
-        .attr("x", (d) => d.x)
-        .attr("y", (d) => d.y - d.dy / 2)
-        .attr("width", (d) => d.data.width)
-        .attr("height", (d) => d.data.height)
-        .attr("rx", 4)
-        .attr("ry", 4)
-        .attr("fill", (d) => `url(#${d.data.id})`);
+      // this.updateNodes({ parent: "#labels", select: "rect", nodes })
+      //   .attr("x", (d) => d.x)
+      //   .attr("y", (d) => d.y - d.dy / 2)
+      //   .attr("width", (d) => d.data.width)
+      //   .attr("height", (d) => d.data.height)
+      //   .attr("rx", 4)
+      //   .attr("ry", 4)
+      //   .attr("fill", (d) => `url(#${d.data.id})`);
 
       // Label text
-      this.updateNodes({ select: "#labels", type: "text", nodes })
+      this.updateNodes({ parent: "g.labels", tag: "text.label", nodes })
         .attr("fill", (d) => `url(#${d.data.id})`)
         .attr("style", (d) => `font-family: '${d.data.theme.font}', sans-serif`)
         .attr("x", (d) => d.x)
         .attr("y", (d) => d.y)
-        .attr("data-width", (d) => d.data.width)
-        .attr("data-dy", (d) => d.dy)
-        .attr("data-dx", (d) => d.dx)
         .attr("transform", (d) => `translate(${d.dx / 2 - 2}, 5)`)
         .text((d) => d.data.label);
 
       // Link labels to axis
-      this.updateNodes({ select: "#links", type: "path", nodes })
+      this.updateNodes({ parent: "g.links", tag: "path.label", nodes })
         .attr("d", (d) => renderer.generatePath(d))
         .attr("stroke", (d) => `url(#${d.data.id})`);
 
       // Place markers on axis
-      this.updateNodes({ select: "#markers", type: "circle", nodes })
+      this.updateNodes({ parent: "g.markers", tag: "circle.label", nodes })
         .style("fill", (d) => d.data.theme.colors[0])
         .attr("cy", (d) => d.getRoot().idealPos)
         .attr("r", 3);
@@ -216,7 +214,7 @@
     tickValue: 30,
     labella: {
       renderer: { layerGap: 50, direction: "right" },
-      force: { minPos: -10, nodeSpacing: 20 },
+      force: { minPos: -10, nodeSpacing: 10 },
     },
   };
   const timeline = new Timeline({ opts: timelineOptions, el: "#timeline" });
