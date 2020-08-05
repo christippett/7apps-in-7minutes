@@ -29,7 +29,7 @@ async def index(request: Request):
         name="index.html",
         context={
             "request": request,
-            "apps": appsvc.get_apps(),
+            "app_service": appsvc,
             "debug": app.debug,
             "unix_timestamp": int(time.time()),
         },
@@ -43,7 +43,7 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     """
     try:
         build_ref = appsvc.deploy_update(theme)
-        background_tasks.add_task(appsvc.start_status_monitor, build_ref)
+        background_tasks.add_task(appsvc.start_build_monitor, build_ref)
     except Exception as e:
         raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
     return {"id": build_ref.id}

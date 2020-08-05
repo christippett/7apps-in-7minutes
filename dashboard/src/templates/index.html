@@ -20,8 +20,8 @@ endif %}
 
   <body>
     <section class="container is-flex">
-      <div class="columns is-centered">
-        <div x-data="{ tab: 'timeline' }" class="column has-text-grey is-relative my-6">
+      <div class="columns is-desktop is-centered">
+        <div class="content-container column is-narrow has-text-grey is-relative my-6">
           <div class="content">
             <p class="title is-4">7-Apps in 7-minutes</p>
             <p class="subtitle is-6">
@@ -44,14 +44,16 @@ endif %}
               </ul>
             </div>
           </nav>
-          <div x-show="tab === 'overview'" class="container">
-            {% include "content/overview.html" %}
-          </div>
-          <div x-show="tab === 'timeline'" class="container">
-            {% include "content/timeline.html" %}
+          <div x-data="{ tab: 'timeline' }">
+            <div x-show="tab === 'overview'" class="container">
+              {% include "content/overview.html" %}
+            </div>
+            <div x-show="tab === 'timeline'" class="container">
+              {% include "content/timeline.html" %}
+            </div>
           </div>
         </div>
-        <div class="column is-7-desktop is-offset-1 columns is-multiline">
+        <div class="column is-offset-1-desktop is-desktop-7 columns is-multiline">
           {% include "content/iframes.html" %}
         </div>
       </div>
@@ -89,11 +91,18 @@ endif %}
     function appDeploy() {
       return {
         id: null,
-        isActive: false,
+        isActive: {{ app_service.build.build_in_progress|tojson }},
         isLoading: false,
+        isFullscreen: false,
+        toggleFullscreen() {
+          if (this.isActive) {
+            this.isFullscreen = !this.isFullscreen;
+          }
+        },
         async deploy() {
           this.isLoading = true;
           console.debug("deploying app");
+          _.logHandler.flushLogs();
           this.id = await _.appService.deployUpdate({
             gradient: this.gradient,
             asciiFont: this.asciiFont,

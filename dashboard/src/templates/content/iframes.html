@@ -1,20 +1,20 @@
-<div class="column is-hidden-tablet">
-  <p class="title is-4">Application IFrames</p>
+<div class="column is-12 is-hidden-desktop">
+  <p class="title is-4">Try it!</p>
   <p class="subtitle is-6">
-    Live previews of each app.
+    Customise the app and watch the deployment happen live.
   </p>
 </div>
 <div class="column is-half is-hidden-mobile">
   <div
     x-data="appDeploy()"
-    :class="{ 'is-active': isActive }"
-    class="log-container box px-0 py-0 is-relative is-shadowless is-clipped"
+    :class="{ 'is-active': isActive, 'is-fullscreen': isFullscreen }"
+    class="build-container box px-0 py-0 is-relative is-shadowless is-clipped"
   >
-    <div class="mask is-overlay px-4 py-4 is-flex">
+    <div class="build-form px-4 py-4 is-flex">
       <button
         @click="deploy()"
         :class="{ 'is-loading': isLoading }"
-        class="button is-dark is-fullwidth is-size-7 is-size-6-desktop"
+        class="button is-dark is-fullwidth is-size-6"
       >
         <span class="icon is-hidden-mobile is-small pr-3">
           {% include "misc/cloud-upload.svg" %}
@@ -22,13 +22,26 @@
         <span>Deploy!</span>
       </button>
     </div>
-    <div id="logs" class="logs is-overlay"></div>
+    <div @click="toggleFullscreen()" id="logs" class="logs is-overlay noselect"></div>
   </div>
 </div>
+<div class="column is-12 is-hidden-desktop">
+  <p class="title is-4">Application IFrames</p>
+  <p class="subtitle is-6">
+    Live previews of each app.
+  </p>
+</div>
 
-{% for app in apps %}
+{% for app in app_service.get_apps() %}
 
-<div id="{{ app.name }}" class="column is-half">
+<div
+  id="{{ app.name }}"
+  class="column is-half is-app"
+  data-url="{{ app.url }}"
+  data-name="{{ app.name }}"
+  data-title="{{ app.title }}"
+  data-version="{{ app.version }}123"
+>
   <div class="box is-relative is-clipped px-0 py-0">
     <div class="frame-label">
       <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
@@ -41,16 +54,11 @@
       <p class="title is-size-5 mt-4"></p>
     </div>
     <iframe
-      name="{{ unix_timestamp }}-{{ loop.index }}"
+      name="{{ app.name }}-{{ unix_timestamp }}"
       src="{{ app.url }}?ts={{ unix_timestamp }}"
       width="100%"
       height="100%"
       class="noselect"
-      data-id="{{ loop.index }}"
-      data-url="{{ app.url }}"
-      data-name="{{ app.name }}"
-      data-title="{{ app.title }}"
-      data-version="{{ app.version }}123"
     >
     </iframe>
   </div>

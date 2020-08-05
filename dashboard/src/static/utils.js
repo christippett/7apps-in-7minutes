@@ -53,6 +53,8 @@
     constructor() {
       this.apps = new Map();
       this.subscriptions = new Array();
+      this.latestVersion = null;
+      this.lastUpdated = new Date(1990, 1, 1);
       this._stylesheets = new Map();
       this._activePolls = new Map();
     }
@@ -91,16 +93,21 @@
     }
 
     async refreshApp({ app, duration }) {
+      let updated = new Date(app.updated);
+      if (updated > this.lastUpdated) {
+        this.latestVersion = app.version;
+        this.lastUpdated = updated;
+      }
       if (this._activePolls.get(app.name)) {
-        console.debug(`☝️ Refresh already in progress for ${app.name}`);
+        console.debug(`☝️ Refresh in progress for ${app.name}`);
         return;
       }
       this._activePolls.set(app.name, true);
 
-      console.log(`🚰 Refreshing ${app.title} with latest version`);
-      const timestamp = new Date();
+      console.log(`🚰 Refreshing ${app.title} (expecting version ${this.latestVersion})`);
       const el = document.getElementById(app.name);
       const iframe = el.getElementsByTagName("iframe")[0];
+      const currentVersion = el.dataset.version;
       const overlay = el.getElementsByClassName("is-overlay")[0];
       const icons = ["😅", "🤔", "🤨", "😬", "🤢"];
 
@@ -116,19 +123,19 @@
           overlay.classList.add("is-hidden");
           overlay.getElementsByClassName("title")[0].innerHTML = app.title;
         }
-        if (resp.app && resp.app.version === app.version) {
+        if (resp.app && resp.app.version === this.latestVersion) {
           this._activePolls.delete(app.name);
           app = { ...app, ...resp.app };
           this.apps.set(app.name, app);
-          iframe.dataset.version = app.version;
-          iframe.dataset.title = app.title;
-          iframe.name = `${iframe.name.split("-")[0]}-${timestamp}`;
-          iframe.src = `${app.url}?ts=${timestamp}`;
-          // Load application font
+          el.dataset.version = app.version;
+          el.dataset.title = app.title;
+          iframe.name = `${iframe.name.split("-")[0]}-${updated}`;
+          iframe.src = `${app.url}?ts=${updated}`;
+          // Load custom application font
           await this.replaceStylesheet(app);
-          // Notify subscribers of updated app
+          // Notify subscribers of app update
           this.subscriptions.forEach((callback) => callback({ app, duration }));
-          // Animate new version
+          // Animate iframe to alert user of new version
           el.classList.add("has-new-version");
           setTimeout(() => el.classList.remove("has-new-version"), 3000);
           return;
@@ -136,8 +143,10 @@
         count++;
         if (count >= 6) {
           this._activePolls.delete(app.name);
-          console.error(`🥵 Unable to refresh latest version for ${app.title}`);
-          break;
+          console.error(
+            `🥵 Failed to get latest version for ${app.title} (expecting ${this.latestVersion}, got ${app.version})`
+          );
+          return;
         }
         await utils.sleep(10000);
         console.debug(`${icons[count - 1]} Still refreshing ${app.title}...`);
@@ -176,6 +185,10 @@
       el.innerHTML = html.join(" ");
       this.container.appendChild(el);
       this.container.scrollTop = this.container.scrollHeight;
+    }
+
+    flushLogs() {
+      this.container.innerHTML = "";
     }
   }
 

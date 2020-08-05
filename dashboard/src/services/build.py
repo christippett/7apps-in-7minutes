@@ -22,6 +22,7 @@ class CloudBuildService:
     def __init__(self, notifier=None):
         self.notifier = notifier
         self.session = AuthorizedSession(credentials)
+        self.build_in_progress = False
         self._logging = False
 
     def _googlesdk_cloudbuild_client(self):
@@ -43,6 +44,7 @@ class CloudBuildService:
             json=source,
         )
         resp.raise_for_status()
+        self.build_in_progress = True
         data = resp.json()
         return BuildRef.parse_obj(data["metadata"]["build"])
 
@@ -83,6 +85,7 @@ class CloudBuildService:
         proxy_logger = _LogWriter()
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, cb.Stream, build_ref, proxy_logger)
+        self.build_in_progress = False
         self._logging = False
 
     def parse_log_text(self, text):

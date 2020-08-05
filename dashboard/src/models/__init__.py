@@ -43,11 +43,3 @@ class Message(BaseModel):
     def __init__(self, **data: Any):
         super().__init__(**data)
         self.metadata.update({"timestamp": datetime.utcnow()})
-
-    @property
-    def historical(self) -> bool:
-        return self.metadata.get("historical", False)
-
-    @historical.setter
-    def historical(self, v: bool):
-        self.metadata["historical"] = v

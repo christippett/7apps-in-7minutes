@@ -45,6 +45,10 @@ footer {
   flex: 1;
 }
 
+.content-container {
+  min-width: 400px;
+}
+
 ol > li {
   padding-left: 0.4rem;
 }
@@ -153,13 +157,13 @@ iframe {
   background-position: 0 0, 30px 30px;
 }
 
-/* ---------------------------------- Logs ---------------------------------- */
+/* ------------------------------- App Builder ------------------------------ */
 
-.log-container {
+.build-container {
   background: none;
 }
 
-.log-container.is-maximised {
+.build-container.is-fullscreen {
   position: fixed !important;
   top: 0;
   left: 0;
@@ -167,11 +171,12 @@ iframe {
   right: 0;
   height: auto;
   width: auto;
-  margin: 5rem;
-  z-index: 50;
+  margin: 2rem;
+  z-index: 100;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
-.log-container.is-maximised:after {
+.build-container.is-fullscreen:after {
+  content: "";
   position: fixed !important;
   top: 0;
   left: 0;
@@ -179,24 +184,25 @@ iframe {
   right: 0;
   height: auto;
   width: auto;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.5);
 }
 
-.log-container.is-active .mask,
-.log-container:not(.is-active) .logs {
+.build-container.is-active .build-form,
+.build-container:not(.is-active) .logs {
   opacity: 0;
-  z-index: 1;
+  z-index: -1;
 }
-.log-container .mask {
+.build-form {
+  z-index: 10;
+  height: 100%;
+  opacity: 1;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
-  opacity: 1;
-  z-index: 10;
   transition: opacity 2s ease-in;
 }
-.log-container .mask .button {
+.build-form .button {
   font-weight: 400;
   font-family: "Fugaz One", sans-serif;
   border-radius: 6px;
@@ -207,14 +213,18 @@ iframe {
   text-transform: uppercase;
   background: #8b8b8b;
 }
-.log-container .mask .button:hover {
+.build-form .button:hover,
+.button.is-loading {
   background: #3850cacf;
   opacity: 1;
 }
 .button.is-loading svg.icon,
-.log-container.is-active .button svg.icon {
+.build-container.is-active .button svg.icon {
   display: none;
 }
+
+/* ---------------------------------- Logs ---------------------------------- */
+
 .logs {
   font-size: 0.6rem;
   font-family: "Roboto Mono", "Courier New", Courier, monospace;
@@ -223,13 +233,17 @@ iframe {
   overflow: scroll;
   padding: 0.75rem;
   border: 0;
-  opacity: 1;
-  z-index: 10;
+  z-index: 0;
   transition: opacity 2s ease-in;
   background: #292828;
+  cursor: zoom-in;
   background: linear-gradient(70deg, #112023, #2c3346) 0% 0% / 150% 150%;
   -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
   animation: 10s ease 0s infinite normal none running gradient-slider;
+}
+.is-fullscreen .logs {
+  z-index: 75;
+  font-size: 0.9rem;
 }
 .logs .frame-label {
   background: #3d3d3d;
