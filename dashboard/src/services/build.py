@@ -127,27 +127,25 @@ class CloudBuildService:
         await loop.run_in_executor(None, client.Stream, build_ref, log_writer)
 
     def parse_log_text(self, text):
-        text = re.sub(r"\.{4,}", r"...", text)
-        metadata = {"text": text}
+        rec = {
+            "text": re.sub(r"\.{4,}", r"...", text),
+            "type": "space" if text.startswith("  ") else None,
+        }
+
+        # Extract log parts
+        log_pattern = r"^(?P<type>Starting|Finished)? ?Step #(?P<step>\d{1,2}) - \"(?P<id>.*?)\"\: ?(?P<message>.*)?$"
+        log_match = re.match(log_pattern, text,)
+        if log_match:
+            rec.update(log_match.groupdict())
+
+        # Shorten section breaks, keeping any text centered
+        divider_match = re.match(r"^[=-]{20,}([^-=]+)?", text)
+        if divider_match:
+            label = divider_match.group(1) or ""
+            rec["type"] = "divider"
+            rec["message"] = label.ljust(33 + (len(label) // 2), "-").rjust(66, "-")
+
         if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
-            metadata["status"] = text.lower()
-            metadata["message"] = text
-
-        # Extract log record
-        m = re.match(
-            r"^(?P<status>Starting|Finished)? ?Step #(?P<step>\d{1,2}) - \"(?P<id>.*?)\"(?:\: (?P<message>.*))?$",
-            text,
-        )
-        if m:
-            metadata.update(m.groupdict())
-
-        # Shorten dividers
-        m = re.match(r"^[=-]{20,}([^-=]+)?", text)
-        if m:
-            label = m.group(1) or ""
-            metadata["status"] = "heading"
-            metadata["message"] = label.ljust(33 + (len(label) // 2), "-").rjust(
-                66, "-"
-            )
-
-        return metadata
+            rec["type"] = "header"
+        rec["message"] = rec.get("message") or rec.get("type") or text
+        return rec

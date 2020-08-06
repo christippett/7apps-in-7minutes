@@ -173,11 +173,11 @@
     createLogRecord(data) {
       let el = document.createElement("p");
       el.setAttribute("data-id", data.id || "");
-      el.setAttribute("data-status", (data.status || "").toLowerCase());
+      el.setAttribute("data-step", data.step || "");
+      el.setAttribute("data-type", (data.type || "").toLowerCase());
 
       if (data.step) {
         let step = document.createElement("span");
-        step.dataset.step = data.step;
         step.setAttribute("class", "lg-step");
         step.innerText = data.id || "";
         el.appendChild(step);
@@ -185,7 +185,7 @@
 
       let message = document.createElement("span");
       message.setAttribute("class", "lg-text");
-      message.innerText = data.message || data.text;
+      message.innerText = data.message;
       el.appendChild(message);
 
       this.container.appendChild(el);

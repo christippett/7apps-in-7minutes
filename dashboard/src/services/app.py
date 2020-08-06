@@ -73,16 +73,18 @@ class AppService:
             for app in self.apps.values():
                 task = self.request_app(app, session)
                 tasks.append(asyncio.ensure_future(task))
-            latest = await asyncio.gather(*tasks)
-        return dict(zip(self.apps.keys(), latest))
+            latest = await asyncio.gather(*tasks, return_exceptions=True)
+        apps = dict(zip(self.apps.keys(), latest))
+        return {name: app for name, app in apps.items() if isinstance(app, App)}
 
     async def refresh_app_data(self):
-        self.apps = await self.get_latest_app_data()
+        self.apps.update(await self.get_latest_app_data())
 
     async def poll_apps(self, interval=5):
         start_time = datetime.utcnow()
         current_apps = list(self.apps.values())
         current_version = self.latest_version()
+        logger.info("Polling apps for updates (latest version is %s)", current_version)
         while True:
             if (datetime.utcnow() - start_time).total_seconds() > 600:
                 logging.error("Application monitor timed out")

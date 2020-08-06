@@ -4,6 +4,7 @@ html,
 body {
   background: #f5f6fa;
   min-height: 100vh;
+  overflow: auto;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
@@ -18,8 +19,13 @@ body {
 
 footer {
   flex: 0;
-  padding: 2rem 4em;
+  padding: 3rem 2em 1rem;
   font-size: 0.8rem;
+  opacity: 0.2;
+  transition: opacity 0.2s ease-in;
+}
+footer:hover {
+  opacity: 1;
 }
 
 /* --------------------------------- Content -------------------------------- */
@@ -218,8 +224,8 @@ iframe {
   background: #3850cacf;
   opacity: 1;
 }
-.button.is-loading svg.icon,
-.build-container.is-active .button svg.icon {
+.button.is-loading span,
+.build-container.is-active .button span {
   display: none;
 }
 
@@ -265,82 +271,109 @@ iframe {
   text-overflow: clip;
   overflow: hidden;
   margin: 0 !important;
-  opacity: 0.95;
+}
+.logs > p,
+.logs p > span {
   letter-spacing: -0.01rem;
   white-space: pre;
 }
 
-.logs > p[data-status="fetchsource"],
-.logs > p[data-status="build"],
-.logs > p[data-status="push"],
-.logs > p[data-status="done"] {
+.logs p > .lg-text {
+  filter: brightness(1.5) saturate(0.5);
+}
+
+.logs > p[data-type="divider"],
+.logs > p[data-type="header"] {
   padding-top: 0.75rem;
   padding-bottom: 0.25rem;
-}
-.logs > p:not([data-status=""]) .lg-text {
   font-weight: 600;
   font-style: italic;
 }
 
-.logs > p[data-status="finished"] .lg-text::before {
-  content: " ✨  ";
+.logs > p[data-type="finished"] .lg-text::after {
+  content: "  ✨";
 }
-.logs > p[data-status="starting"] .lg-text::before {
-  content: " 🏁  ";
-}
-
-@media screen and (min-width: 769px) {
-  .is-fullscreen .logs p:not([data-id=""]) .lg-step:not([data-step=""])::before {
-    display: inline-block;
-    content: "Step #" attr(data-step) " - ";
-  }
-  .is-fullscreen .logs p:not([data-id=""]) .lg-step:not([data-step=""]) {
-    display: inline-flex;
-    min-width: 230px;
-    overflow: hidden;
-  }
-  .is-fullscreen .logs p:not([data-id=""]) .lg-step:not([data-step=""]):after {
-    content: "";
-    flex: 1 0 auto;
-    display: inline-block;
-    border-bottom: 2px dotted;
-    margin-bottom: 4px;
-    margin-left: 6px;
-    opacity: 0.5;
-  }
+.logs > p[data-type="starting"] .lg-text::after {
+  content: "  🏁";
 }
 
+.logs p:not([data-id=""]):not([data-type="space"]):not([data-step=""]) .lg-step {
+  display: inline-flex;
+  min-width: 100px;
+  align-items: center;
+}
+.logs p:not([data-id=""]):not([data-type="space"]):not([data-step=""]) .lg-step:after {
+  content: "➤";
+  flex: 1 0 auto;
+  display: inline-block;
+  background-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    currentcolor 75%,
+    currentcolor calc(100% - 5px),
+    rgba(0, 0, 0, 0) calc(100% - 5px)
+  );
+  height: 1px;
+  line-height: 0;
+  text-align: right;
+  font-size: 0.5rem;
+  filter: brightness(1) saturate(0.5);
+}
 .logs > p .lg-step {
   margin-right: 6px;
 }
 
-.logs > p[data-id="gae-flexible"] .lg-step {
-  color: #f28779;
+.is-fullscreen
+  .logs
+  p:not([data-id=""]):not([data-type="space"]):not([data-step=""])
+  .lg-step {
+  min-width: 140px;
 }
-.logs > p[data-id="gae-standard"] .lg-step {
-  color: #73d0ff;
+
+.is-fullscreen
+  .logs
+  p:not([data-id=""]):not([data-type="space"]):not([data-step=""]):before {
+  display: inline-block;
+  content: "Step" attr(data-step) " - ";
 }
-.logs > p[data-id="function"] .lg-step {
-  color: #ffd580;
+
+.is-fullscreen
+  .logs
+  p:not([data-id=""]):not([data-type="space"]):not([data-step=""])
+  .lg-step:after {
+  padding-top: 0;
+  margin-right: 3%;
+  font-size: 0.8rem;
+  height: 2px;
 }
-.logs > p[data-id="run-anthos"] .lg-step {
+
+.logs > p[data-id="gae-flexible"] {
+  color: #ffa96f;
+}
+.logs > p[data-id="gae-standard"] {
+  color: #ae9fe2;
+}
+.logs > p[data-id="function"] {
+  color: #ffe180;
+}
+.logs > p[data-id="run-anthos"] {
   color: #ff657a;
 }
-.logs > p[data-id="run-managed"] .lg-step {
+.logs > p[data-id="run-managed"] {
   color: #6dde9d;
 }
-.logs > p[data-id="gce"] .lg-step {
-  color: #ee9471;
+.logs > p[data-id="gce"] {
+  color: #a4f0f3;
 }
-.logs > p[data-id="docker-pull"] .lg-step,
-.logs > p[data-id="docker-push"] .lg-step,
-.logs > p[data-id="docker-build"] .lg-step {
-  color: #3e91df;
+.logs > p[data-id="docker-pull"],
+.logs > p[data-id="docker-push"],
+.logs > p[data-id="docker-build"] {
+  color: #73d0ff;
 }
-.logs > p[data-id="gke"] .lg-step {
+.logs > p[data-id="gke"] {
   color: #da8de4;
 }
-.logs > p[data-id="requirements-txt"] .lg-step {
+.logs > p[data-id="requirements-txt"] {
   color: #83d1be;
 }
 

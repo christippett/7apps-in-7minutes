@@ -3,7 +3,7 @@ steps:
   #                                   📜 Setup                                   #
   # ============================================================================ #
 
-  - id: requirements-txt
+  - id: prepare-app
     name: python:3.8-slim
     entrypoint: bash
     args:

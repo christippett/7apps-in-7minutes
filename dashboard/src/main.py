@@ -61,7 +61,7 @@ def build(id: str):
 
 @app.on_event("startup")
 async def startup():
-    # await app_service.refresh_app_data()
+    await app_service.refresh_app_data()
 
     # prime generators (https://stackoverflow.com/a/19892334)
     notifier.save_file_generator.send(None)

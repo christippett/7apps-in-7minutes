@@ -16,13 +16,13 @@
         :class="{ 'is-loading': isLoading }"
         class="button is-dark is-fullwidth is-size-6"
       >
-        <span class="icon is-hidden-mobile is-small pr-3">
+        <span class="icon is-small pr-3">
           {% include "misc/cloud-upload.svg" %}
         </span>
         <span>Deploy!</span>
       </button>
     </div>
-    <div @click="toggleFullscreen()" id="logs" class="logs is-overlay noselect"> </div>
+    <div @click="toggleFullscreen()" id="logs" class="logs noselect is-overlay"> </div>
   </div>
 </div>
 <div class="column is-12 is-hidden-desktop">
