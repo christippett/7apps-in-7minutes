@@ -1,6 +1,5 @@
-{% with %}
-{% set gradient=range(1, 360)|random|string+"deg, "+app.theme.colors|join(", ")%}
-{% set font = app.theme.font|replace(" ", "+") %}
+{% with %} {% set gradient=range(1, 360)|random|string+"deg, "+app.theme.colors|join(",
+")%} {% set font = app.theme.font|replace(" ", "+") %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -52,6 +51,7 @@
         padding: 1.5rem 2rem 1rem;
         text-shadow: 0.05em 0.05em 0.05em rgb(50 50 50 / 50%);
         line-height: 1;
+        text-align: center;
       }
 
       .ascii {
@@ -65,12 +65,12 @@
         font-family: "{{ app.theme.font }}";
         font-size: 1.6rem;
         font-weight: 500;
-        margin: 1.5rem 0;
+        margin: 1.4rem 0;
       }
 
       .version {
         width: max-content;
-        font-size: 0.6rem;
+        font-size: 0.8rem;
         letter-spacing: 0.05em;
         padding: 0.25rem 0.75rem;
         background: rgba(255, 255, 255, 0.15);
