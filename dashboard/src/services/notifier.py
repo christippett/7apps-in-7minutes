@@ -73,7 +73,8 @@ class Notifier:
                 fp.write(message.json() + "\n")
                 counter += 1
                 if counter > self.history_length:
-                    fp.flush()
+                    fp.seek(0)
+                    fp.truncate()
                     counter = 0
 
     def load_history_from_file(self):

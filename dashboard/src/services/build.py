@@ -96,6 +96,7 @@ class CloudBuildService:
             if f.exception():
                 logger.error("Error while getting Cloud Build logs: %s", f.exception())
             logger.info("Finished logging Cloud Build output")
+            self.notifier.purge_history("log")
 
         future.add_done_callback(callback)
 
@@ -126,9 +127,11 @@ class CloudBuildService:
         await loop.run_in_executor(None, client.Stream, build_ref, log_writer)
 
     def parse_log_text(self, text):
+        text = re.sub(r"\.{4,}", r"...", text)
         metadata = {"text": text}
         if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
-            metadata["status"] = text
+            metadata["status"] = text.lower()
+            metadata["message"] = text
 
         # Extract log record
         m = re.match(
@@ -139,10 +142,12 @@ class CloudBuildService:
             metadata.update(m.groupdict())
 
         # Shorten dividers
-        text = re.sub(r"\.{4,}", r"...", text)
         m = re.match(r"^[=-]{20,}([^-=]+)?", text)
         if m:
             label = m.group(1) or ""
-            metadata["message"] = label.ljust(33 - len(label) // 2, "-").rjust(66, "-")
+            metadata["status"] = "heading"
+            metadata["message"] = label.ljust(33 + (len(label) // 2), "-").rjust(
+                66, "-"
+            )
 
         return metadata

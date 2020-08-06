@@ -8,9 +8,9 @@
   <div
     x-data="appDeploy()"
     :class="{ 'is-active': isActive, 'is-fullscreen': isFullscreen }"
-    class="build-container box px-0 py-0 is-relative is-shadowless is-clipped"
+    class="build-container box px-0 py-0 is-relative is-shadowless"
   >
-    <div class="build-form px-4 py-4 is-flex">
+    <div class="build-form px-4 py-4">
       <button
         @click="deploy()"
         :class="{ 'is-loading': isLoading }"
@@ -22,7 +22,7 @@
         <span>Deploy!</span>
       </button>
     </div>
-    <div @click="toggleFullscreen()" id="logs" class="logs is-overlay noselect"></div>
+    <div @click="toggleFullscreen()" id="logs" class="logs is-overlay noselect"> </div>
   </div>
 </div>
 <div class="column is-12 is-hidden-desktop">

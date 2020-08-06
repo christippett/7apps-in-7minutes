@@ -185,7 +185,7 @@
 
       let message = document.createElement("span");
       message.setAttribute("class", "lg-text");
-      message.innerText = data.status || data.message || data.text;
+      message.innerText = data.message || data.text;
       el.appendChild(message);
 
       this.container.appendChild(el);
