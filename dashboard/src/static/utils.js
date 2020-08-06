@@ -174,18 +174,24 @@
       let el = document.createElement("p");
       el.setAttribute("data-id", data.id || "");
       el.setAttribute("data-step", data.step || "");
-      el.setAttribute("data-type", (data.type || "").toLowerCase());
+      if (data.type) el.setAttribute("data-type", data.type.toLowerCase());
 
-      if (data.step) {
+      if (data.step && data.id) {
+        // e.g. Step #10 - gae-standard --->
         let step = document.createElement("span");
         step.setAttribute("class", "lg-step");
-        step.innerText = data.id || "";
+        step.innerText = `Step #${data.step}`.padEnd(8);
         el.appendChild(step);
+
+        let id = document.createElement("span");
+        id.setAttribute("class", "lg-id");
+        id.innerText = data.id;
+        el.appendChild(id);
       }
 
       let message = document.createElement("span");
       message.setAttribute("class", "lg-text");
-      message.innerText = data.message;
+      message.innerText = data.text;
       el.appendChild(message);
 
       this.container.appendChild(el);

@@ -127,14 +127,11 @@ class CloudBuildService:
         await loop.run_in_executor(None, client.Stream, build_ref, log_writer)
 
     def parse_log_text(self, text):
-        rec = {
-            "text": re.sub(r"\.{4,}", r"...", text),
-            "type": "space" if text.startswith("  ") else None,
-        }
+        rec = {"text": text}
 
         # Extract log parts
-        log_pattern = r"^(?P<type>Starting|Finished)? ?Step #(?P<step>\d{1,2}) - \"(?P<id>.*?)\"\: ?(?P<message>.*)?$"
-        log_match = re.match(log_pattern, text,)
+        log_pattern = r"^(?P<type>Starting|Finished)? ?Step #(?P<step>\d{1,2}) - \"(?P<id>.*?)\"(?:\: (?P<text>.*)?)?$"
+        log_match = re.match(log_pattern, text)
         if log_match:
             rec.update(log_match.groupdict())
 
@@ -143,9 +140,11 @@ class CloudBuildService:
         if divider_match:
             label = divider_match.group(1) or ""
             rec["type"] = "divider"
-            rec["message"] = label.ljust(33 + (len(label) // 2), "-").rjust(66, "-")
+            rec["text"] = label.ljust(33 + (len(label) // 2), "-").rjust(66, "-")
 
         if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
             rec["type"] = "header"
-        rec["message"] = rec.get("message") or rec.get("type") or text
+        if re.match(r"[\s\.]+", text):
+            rec["type"] = "linebreak"
+        rec["text"] = re.sub(r"\.{4,}", r"...", rec.get("text") or text)
         return rec

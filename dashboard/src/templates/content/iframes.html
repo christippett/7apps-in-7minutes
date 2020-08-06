@@ -1,10 +1,10 @@
-<div class="column is-12 is-hidden-desktop">
-  <p class="title is-4">Try it!</p>
-  <p class="subtitle is-6">
-    Customise the app and watch the deployment happen live.
-  </p>
-</div>
-<div class="column is-half is-hidden-mobile">
+<div class="column is-half">
+  <div class="is-hidden-tablet mb-5">
+    <p class="title is-4">Try it!</p>
+    <p class="subtitle is-6">
+      Customise the app and watch the deployment happen live.
+    </p>
+  </div>
   <div
     x-data="appDeploy()"
     :class="{ 'is-active': isActive, 'is-fullscreen': isFullscreen }"
@@ -25,7 +25,7 @@
     <div @click="toggleFullscreen()" id="logs" class="logs noselect is-overlay"> </div>
   </div>
 </div>
-<div class="column is-12 is-hidden-desktop">
+<div class="column is-12 is-hidden-tablet">
   <p class="title is-4">Application IFrames</p>
   <p class="subtitle is-6">
     Live previews of each app.

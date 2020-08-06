@@ -21,7 +21,10 @@ endif %}
   <body>
     <section class="container is-flex">
       <div class="columns is-desktop is-centered">
-        <div class="content-container column is-narrow has-text-grey is-relative my-6">
+        <div
+          x-data="{ tab: 'timeline' }"
+          class="content-container column is-narrow has-text-grey is-relative"
+        >
           <div class="content">
             <p class="title is-4">7-Apps in 7-minutes</p>
             <p class="subtitle is-6">
@@ -44,16 +47,16 @@ endif %}
               </ul>
             </div>
           </nav>
-          <div x-data="{ tab: 'timeline' }">
-            <div x-show="tab === 'overview'" class="container">
+          <div>
+            <div x-show="tab === 'overview'">
               {% include "content/overview.html" %}
             </div>
-            <div x-show="tab === 'timeline'" class="container">
+            <div x-show="tab === 'timeline'">
               {% include "content/timeline.html" %}
             </div>
           </div>
         </div>
-        <div class="column is-offset-1-desktop is-desktop-7 columns is-multiline">
+        <div class="iframe-container column columns is-multiline">
           {% include "content/iframes.html" %}
         </div>
       </div>

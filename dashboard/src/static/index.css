@@ -14,12 +14,11 @@ body {
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  padding: 2rem 2rem 0 2rem;
 }
 
 footer {
   flex: 0;
-  padding: 3rem 2em 1rem;
+  padding: 1rem;
   font-size: 0.8rem;
   opacity: 0.2;
   transition: opacity 0.2s ease-in;
@@ -29,6 +28,20 @@ footer:hover {
 }
 
 /* --------------------------------- Content -------------------------------- */
+
+@media (min-width: 1024px) {
+  .content-container {
+    max-width: 400px !important;
+    margin-right: 2rem;
+    margin-top: 2rem;
+  }
+  .iframe-container {
+    margin-left: 2rem;
+  }
+  .container {
+    padding: 5rem 2.5rem !important;
+  }
+}
 
 .tabs {
   font-size: 0.8rem;
@@ -40,11 +53,15 @@ footer:hover {
 }
 
 .box {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  min-height: 200px;
 }
 
 .container {
   width: 100%;
+  padding: 2rem;
 }
 
 .container > .columns {
@@ -52,7 +69,7 @@ footer:hover {
 }
 
 .content-container {
-  min-width: 400px;
+  width: 100%;
 }
 
 ol > li {
@@ -104,6 +121,7 @@ path.label {
 /* --------------------------------- IFrames -------------------------------- */
 
 iframe {
+  flex: 1;
   border-radius: 6px;
   width: auto;
   height: auto;
@@ -167,6 +185,7 @@ iframe {
 
 .build-container {
   background: none;
+  height: 100%;
 }
 
 .build-container.is-fullscreen {
@@ -246,7 +265,7 @@ iframe {
   animation: 10s ease 0s infinite normal none running gradient-slider;
 }
 .build-container:not(.is-fullscreen) .logs:hover {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 .is-fullscreen .logs {
   cursor: zoom-out;
@@ -284,25 +303,30 @@ iframe {
 
 .logs > p[data-type="divider"],
 .logs > p[data-type="header"] {
-  padding-top: 0.75rem;
-  padding-bottom: 0.25rem;
+  padding: 0.75rem 0 0.5rem;
   font-weight: 600;
   font-style: italic;
 }
 
-.logs > p[data-type="finished"] .lg-text::after {
-  content: "  ✨";
+.logs > p[data-type="finished"] .lg-text,
+.logs > p[data-type="starting"] .lg-text {
+  font-weight: 600;
+  font-style: italic;
+  filter: none;
 }
-.logs > p[data-type="starting"] .lg-text::after {
-  content: "  🏁";
+.logs > p[data-type="finished"] .lg-text::before {
+  content: " ✨  ";
+}
+.logs > p[data-type="starting"] .lg-text::before {
+  content: " 🏁  ";
 }
 
-.logs p:not([data-id=""]):not([data-type="space"]):not([data-step=""]) .lg-step {
+.logs > p .lg-id {
   display: inline-flex;
-  min-width: 100px;
+  min-width: 85px;
   align-items: center;
 }
-.logs p:not([data-id=""]):not([data-type="space"]):not([data-step=""]) .lg-step:after {
+.logs > p:not([data-type="linebreak"]) .lg-id:after {
   content: "➤";
   flex: 1 0 auto;
   display: inline-block;
@@ -320,27 +344,21 @@ iframe {
   filter: brightness(1) saturate(0.5);
 }
 .logs > p .lg-step {
+  display: none;
+}
+.logs > p .lg-id {
   margin-right: 6px;
 }
-
-.is-fullscreen
-  .logs
-  p:not([data-id=""]):not([data-type="space"]):not([data-step=""])
-  .lg-step {
+.is-fullscreen .logs > p .lg-step {
+  display: inline-block;
+}
+.is-fullscreen .logs > p .lg-step:after {
+  content: " - ";
+}
+.is-fullscreen .logs > p .lg-id {
   min-width: 140px;
 }
-
-.is-fullscreen
-  .logs
-  p:not([data-id=""]):not([data-type="space"]):not([data-step=""]):before {
-  display: inline-block;
-  content: "Step" attr(data-step) " - ";
-}
-
-.is-fullscreen
-  .logs
-  p:not([data-id=""]):not([data-type="space"]):not([data-step=""])
-  .lg-step:after {
+.is-fullscreen .logs > p .lg-id:after {
   padding-top: 0;
   margin-right: 3%;
   font-size: 0.8rem;
