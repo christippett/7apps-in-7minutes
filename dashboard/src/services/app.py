@@ -1,22 +1,23 @@
 import asyncio
 import logging
+import random
 from collections import defaultdict, deque
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
 import aiohttp
+import requests
 import yaml
 from aiohttp.client import ClientSession
-from fastapi.encoders import jsonable_encoder
+from pyfiglet import Figlet
 
+from config import settings
 from models import App, AppTheme
-from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
 
 logger = logging.getLogger(__name__)
-
 
 Status = Enum("Status", "ACTIVE INACTIVE")
 
@@ -36,6 +37,41 @@ class AppService:
             config = yaml.safe_load(fp)
         apps = {app["name"]: App.parse_obj(app) for app in config["apps"]}
         return cls(notifier=notifier, **apps)
+
+    def get_ascii_fonts(self) -> List[str]:
+        return Figlet().getFonts()
+
+    def get_google_fonts(self) -> List[str]:
+        resp = requests.get(
+            "https://www.googleapis.com/webfonts/v1/webfonts",
+            params={
+                "key": settings.google_api_key,
+                "fields": "items.family,items.category",
+                "sort": "popularity",
+            },
+            headers={"Referer": "7apps.cloud"},
+        )
+        data = resp.json()
+        if not resp.ok:
+            logger.error("Unable to get Google Fonts (%s)", resp.status_code)
+            return ["Permanent Marker", "Staatliches", "Luckiest Guy"]
+        return [
+            f["family"]
+            for f in data["items"]
+            if f["category"] in ["handwriting", "display"]
+        ]
+
+    @property
+    def google_fonts(self):
+        if not hasattr(self, "_google_fonts"):
+            self._google_fonts = random.choices(self.get_google_fonts(), k=10)
+        return self._google_fonts
+
+    @property
+    def ascii_fonts(self):
+        if not hasattr(self, "_ascii_fonts"):
+            self._ascii_fonts = random.choices(self.get_ascii_fonts(), k=10)
+        return self._ascii_fonts
 
     def get_apps(self) -> List[App]:
         return list(self.apps.values())

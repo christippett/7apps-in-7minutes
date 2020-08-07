@@ -82,15 +82,18 @@ endif %}
     integrity="sha512-FHsFVKQ/T1KWJDGSbrUhTJyS1ph3eRrxI228ND0EGaEp6v4a/vGwPWd3Dtd/+9cI7ccofZvl/wulICEurHN1pg=="
     crossorigin="anonymous"
   ></script>
-
+  <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
   <script src="/static/utils.js{{ asset_suffix }}"></script>
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
     /* eslint-disable no-undef */
 
+
     function appDeploy() {
       return {
         id: null,
+        googleFonts: {{ app_service.google_fonts|tojson }},
+        asciiFonts: {{ app_service.ascii_fonts|tojson }},
         isActive: {{ app_service.build.has_active_builds()|tojson }},
         isLoading: false,
         isFullscreen: false,
@@ -98,6 +101,13 @@ endif %}
           if (this.isActive) {
             this.isFullscreen = !this.isFullscreen;
           }
+        },
+        init() {
+          WebFont.load({
+            google: {
+              families: this.googleFonts
+            }
+          });
         },
         async deploy() {
           this.isLoading = true;

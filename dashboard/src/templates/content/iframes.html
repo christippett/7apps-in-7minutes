@@ -1,20 +1,25 @@
-<div class="column is-half">
+<div
+  x-data="appDeploy()"
+  :class="{ 'is-active': isActive, 'is-fullscreen': isFullscreen }"
+  class="column is-half"
+>
   <div class="is-hidden-tablet mb-5">
     <p class="title is-4">Try it!</p>
     <p class="subtitle is-6">
       Customise the app and watch the deployment happen live.
     </p>
   </div>
-  <div
-    x-data="appDeploy()"
-    :class="{ 'is-active': isActive, 'is-fullscreen': isFullscreen }"
-    class="build-container box px-0 py-0 is-relative is-shadowless"
-  >
+  <div class="build-container box is-relative is-clipped px-0 py-0">
+    <div @click="toggleFullscreen()" id="logs" class="logs noselect is-overlay"> </div>
     <div class="build-form px-4 py-4">
+      <nav>
+        <button class="button is-dark is-light">{% include "misc/left.svg" %}</button>
+        <button class="button is-dark is-light">{% include "misc/right.svg" %}</button>
+      </nav>
       <button
         @click="deploy()"
         :class="{ 'is-loading': isLoading }"
-        class="button is-dark is-fullwidth is-size-6"
+        class="button is-dark is-light is-fullwidth"
       >
         <span class="icon is-small pr-3">
           {% include "misc/cloud-upload.svg" %}
@@ -22,7 +27,14 @@
         <span>Deploy!</span>
       </button>
     </div>
-    <div @click="toggleFullscreen()" id="logs" class="logs noselect is-overlay"> </div>
+    <iframe
+      name="demo"
+      src="http://localhost:8080?font={{ app_service.google_fonts[0] }}&ascii_font={{ app_service.ascii_fonts[0] }}"
+      width="100%"
+      height="100%"
+      class="noselect"
+    >
+    </iframe>
   </div>
 </div>
 <div class="column is-12 is-hidden-tablet">

@@ -2,7 +2,6 @@ import json
 import os
 import random
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -65,7 +64,7 @@ elif any(v.startswith("GKE_APP") for v in os.environ):
 elif "GCE_APP" in os.environ:
     title = "Compute Engine"
 else:
-    title = "7-Apps Demo"
+    title = "Demo"
 
 app = Flask("7apps")
 app_data = App(
@@ -78,6 +77,9 @@ app_data = App(
 @app.route("/")
 @cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
+    if request.args:
+        app_data.theme = AppTheme(**request.args)
+        app_data.version = None
     if request.headers.get("Accept") == "application/json":
         return jsonify(asdict(app_data))
 

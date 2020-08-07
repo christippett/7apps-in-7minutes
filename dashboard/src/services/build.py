@@ -7,9 +7,7 @@ from asyncio.futures import Future
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
-import google.auth
 import yaml
-from fastapi import BackgroundTasks
 from google.auth.transport.requests import AuthorizedSession
 from pyfiglet import Figlet
 
@@ -18,15 +16,11 @@ from models.build import BuildRef
 
 logger = logging.getLogger(__name__)
 
-credentials, project = google.auth.default(
-    scopes=["https://www.googleapis.com/auth/cloud-platform"],
-)
-
 
 class CloudBuildService:
     def __init__(self, notifier=None):
         self.notifier = notifier
-        self.session = AuthorizedSession(credentials)
+        self.session = AuthorizedSession(settings.google_credentials)
         self.logging_futures = []
 
     def _googlesdk_cloudbuild_client(self):
@@ -63,7 +57,7 @@ class CloudBuildService:
 
     def get_build(self, id: str) -> BuildRef:
         resp = self.session.get(
-            f"{settings.cloud_build_api_url}/projects/{project}/builds/{id}"
+            f"{settings.cloud_build_api_url}/projects/{settings.google_project}/builds/{id}"
         )
         resp.raise_for_status()
         data = resp.json()
@@ -73,9 +67,8 @@ class CloudBuildService:
         builds_query = {
             "filter": '(status="QUEUED" OR status="WORKING") AND tags="app"'
         }
-        project = "servian-labs-7apps"
         resp = self.session.get(
-            f"{settings.cloud_build_api_url}/projects/{project}/builds",
+            f"{settings.cloud_build_api_url}/projects/{settings.google_project}/builds",
             params=builds_query,
         )
         resp.raise_for_status()
