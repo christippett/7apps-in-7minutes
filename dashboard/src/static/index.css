@@ -235,15 +235,15 @@ iframe {
   font-size: 0.9rem;
   font-weight: 400;
   font-family: "Fugaz One", sans-serif;
-  box-shadow: 2px 4px 10px 2px rgba(80, 80, 80, 0.05);
+  box-shadow: 2px 4px 10px 2px rgba(80, 80, 80, 0.025);
   text-transform: uppercase;
   mix-blend-mode: screen;
   background: #ffffff2b !important;
-  text-shadow: 1px 1px 1px rgb(50 50 50 / 20%);
+  text-shadow: 1px 1px 1px rgb(50 50 50 / 10%);
 }
 .build-form .button svg {
   fill: currentColor;
-  filter: drop-shadow(1px 1px 1px rgb(50 50 50 / 20%));
+  filter: drop-shadow(1px 1px 1px rgb(50 50 50 / 10%));
 }
 .build-form nav button {
   border-radius: 50%;
@@ -275,7 +275,6 @@ iframe {
   transform: scale(1.05);
 }
 .is-fullscreen .logs {
-  cursor: zoom-out;
   z-index: 75;
   font-size: 0.9rem;
   transition-duration: 0s;

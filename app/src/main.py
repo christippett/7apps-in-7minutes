@@ -77,7 +77,7 @@ app_data = App(
 @app.route("/")
 @cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
-    if request.args:
+    if all([a in AppTheme.__dataclass_fields__ for a in request.args]):
         app_data.theme = AppTheme(**request.args)
         app_data.version = None
     if request.headers.get("Accept") == "application/json":
