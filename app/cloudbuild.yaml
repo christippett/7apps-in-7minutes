@@ -89,7 +89,8 @@ steps:
             GRADIENT: "${_GRADIENT}"
             FONT: "${_FONT}"
             ASCII_FONT: "${_ASCII_FONT}"
-        EOT && gcloud app deploy --version=${_VERSION}
+        EOT
+        && gcloud app deploy --version=${_VERSION}
     dir: "app/src"
     waitFor: ["setup"]
 
