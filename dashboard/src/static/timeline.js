@@ -85,12 +85,6 @@
           `translate(${this.options.margin.left}, ${this.options.margin.top})`
         );
 
-      // Add containers for plot items
-      let items = timeline.append("g").classed("items", true);
-      items.append("g").classed("markers", true);
-      items.append("g").classed("labels", true);
-      items.append("g").classed("links", true);
-
       // Add axis
       let axis = timeline.append("g").classed("axis", true);
       axis.append("line").attr("y2", this.innerHeight);
@@ -124,6 +118,12 @@
         .text((d) => {
           return d.tick % 60 == 0 ? `${d.tick / 60}min` : "-";
         });
+
+      // Add containers for plot items
+      let items = timeline.append("g").classed("items", true);
+      items.append("g").classed("markers", true);
+      items.append("g").classed("labels", true);
+      items.append("g").classed("links", true);
     }
 
     updateNodes({ parent, tag, nodes }) {
