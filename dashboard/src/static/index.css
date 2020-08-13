@@ -248,7 +248,7 @@ iframe {
   animation: tada;
   animation-duration: 0.8s;
   animation-delay: 1s;
-  z-index: 999;
+  z-index: 500;
 }
 
 .is-unavailable {
@@ -305,7 +305,7 @@ iframe {
   height: auto;
   width: auto !important;
   margin: 0 0.25rem 0.25rem;
-  z-index: 100;
+  z-index: 999;
 }
 .build-container.is-fullscreen:after {
   content: "";
