@@ -144,6 +144,7 @@ class AppService:
         self.apps.update(await self.get_latest_app_data())
 
     async def poll_apps(self, interval=5):
+        self.refresh_app_data()
         start_time = datetime.utcnow()
         current_apps = list(self.apps.values())
         current_version = self.latest_version()
