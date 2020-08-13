@@ -128,7 +128,8 @@ resource "google_project_iam_member" "default" {
     "roles/gkehub.connect",
     "roles/container.hostServiceAgentUser",
     "roles/monitoring.metricWriter",
-    "roles/logging.logWriter"
+    "roles/logging.logWriter",
+    "roles/cloudbuild.builds.editor"
   ])
 
   project = var.project_id
