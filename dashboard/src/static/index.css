@@ -37,6 +37,9 @@ footer {
   .container {
     padding: 5rem 2.5rem !important;
   }
+  .build-container.is-fullscreen {
+    font-size: 1.4rem !important;
+  }
   .is-fullscreen .logs > p .lg-step {
     display: inline-block;
   }
@@ -97,11 +100,11 @@ ol > li {
   align-items: center;
   z-index: 900;
   position: absolute;
-  bottom: calc(100% + 4px);
+  bottom: calc(100% + 0.4em);
   left: 0;
   right: 0;
   width: fit-content;
-  max-width: min(85%, 350px);
+  max-width: min(90%, 500px);
   margin: 0 auto;
   padding: 0.5em 1em;
   color: #f5f6fa;
@@ -132,7 +135,7 @@ ol > li {
 .is-tooltip:before {
   content: "";
   line-height: 1;
-  margin-right: 1rem;
+  margin-right: 1.1em;
   flex: 1;
 }
 .is-tooltip.has-background-danger-light:before {
@@ -276,7 +279,7 @@ iframe {
   right: 0;
   height: auto;
   width: auto !important;
-  margin: 2rem 1rem;
+  margin: 4rem 1rem 1rem;
   z-index: 100;
 }
 .build-container.is-fullscreen:after {

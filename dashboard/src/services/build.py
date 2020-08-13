@@ -45,7 +45,7 @@ class CloudBuildService:
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
         version = datetime.utcnow().replace(microsecond=0).isoformat()
-        substitutions.update({"VERSION": version})
+        substitutions.update({"_VERSION": version})
         source = {
             "repoName": settings.github_repo,
             "branchName": settings.github_branch,
