@@ -44,7 +44,7 @@ class CloudBuildService:
         return any([not f.done() for f in self.logging_futures])
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
-        version = datetime.utcnow().replace(microsecond=0).isoformat()
+        version = datetime.utcnow().replace(microsecond=0).strftime("%Y-%m-%d %H%M")
         substitutions.update({"_VERSION": version})
         source = {
             "repoName": settings.github_repo,
