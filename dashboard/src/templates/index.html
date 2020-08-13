@@ -94,7 +94,7 @@ endif %}
         gradients: {{ app_service.gradients|tojson }},
         googleFonts: {{ app_service.google_fonts|tojson }},
         asciiFonts: {{ app_service.ascii_fonts|tojson }},
-        isActive: {{ app_service.build.has_active_builds()|tojson }},
+        buildActive: {{ app_service.build.has_active_builds()|tojson }},
         isLoading: false,
         isFullscreen: false,
         styleOpts: ["primary", "success", "info", "warning", "danger"],
@@ -102,7 +102,9 @@ endif %}
         tooltipActive: false,
         init() {
           WebFont.load({ google: { families: this.googleFonts } });
-          this.showTooltip("Customise and deploy a new app version", "info");
+          if (!this.buildActive) {
+            this.showTooltip("Customise and deploy a new app version", "info");
+          }
         },
         showTooltip(text, style = "primary", timeout = 0) {
           this.tooltip.text = text
@@ -150,7 +152,7 @@ endif %}
             let data = await resp.json();
             if (!resp.ok) throw data;
             this.buildId = data.id;
-            this.isActive = true;
+            this.buildActive = true;
             console.info(`👷 Cloud Build job started (${this.buildId})`);
             this.showTooltip(`Cloud Build job started`, "info", 2000);
           } catch (e) {
