@@ -44,9 +44,12 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
     """
     Trigger a Cloud Build job to deploy a new app version.
     """
-    if app_service.build.has_active_builds() or app_service.build.get_active_builds():
-        raise HTTPException(409, detail="Another deployment is already in progress")
     try:
+        if (
+            app_service.build.has_active_builds()
+            or app_service.build.get_active_builds()
+        ):
+            raise HTTPException(409, detail="Another deployment is already in progress")
         build_ref = app_service.deploy_update(theme)
         background_tasks.add_task(app_service.build.capture_logs, build_ref)
         background_tasks.add_task(app_service.start_app_monitor)
