@@ -39,7 +39,7 @@ resource "google_cloud_scheduler_job" "reset" {
   project     = var.project_id
   region      = var.region
   name        = "reset-app"
-  description = "Reset application"
+  description = "🕹️ Reset application"
   schedule    = "*/30 * * * *"
 
   time_zone        = "Australia/Melbourne"
@@ -72,7 +72,7 @@ resource "google_cloud_scheduler_job" "reset" {
 resource "google_service_account" "scheduler" {
   account_id   = "cloud-scheduler"
   display_name = "🤖 Cloud Scheduler service account"
-  description  = "🕹️️️ Account for running Cloud Build jobs"
+  description  = "🕹️️️ Account for scheduling Cloud Build jobs"
   project      = var.project_id
 }
 
