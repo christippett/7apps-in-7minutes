@@ -161,7 +161,7 @@ endif %}
           let font = encodeURIComponent(this.googleFonts[this.themeOpt]);
           let asciiFont = encodeURIComponent(this.asciiFonts[this.themeOpt]);
           let gradient = encodeURIComponent(this.gradients[this.themeOpt]);
-          return `http://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
+          return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
         },
         async deploy() {
           setTimeout(() => this.closeTooltip(), 1000);
