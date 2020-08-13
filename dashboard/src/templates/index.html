@@ -205,12 +205,12 @@ endif %}
             { text: "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong>", style: "danger" },
             { text: "Not long now... See you at the finish line", style: "primary", timeout: timeout * 2 },
           ]
-          messages.forEach(async (message) => {
+          messages.forEach((message) => {
             if (!this.buildActive) return;
-            await _.utils.sleep(timer);
-            this.showTooltip({timeout, style: "info", ...message});
+            setTimeout(() => this.showTooltip({timeout, style: "info", ...message}), timer);
             timer += timeout + (timeout / 4);
-          });        }
+          });
+        }
       };
     }
 
