@@ -40,6 +40,7 @@ footer {
   }
   .build-container.is-fullscreen {
     font-size: 1.4rem !important;
+    margin: 0.5rem 1.5rem 1.5rem !important;
   }
   .is-fullscreen .logs > p .lg-step {
     display: inline-block;
@@ -417,6 +418,8 @@ iframe {
   color: #eeeeee;
 }
 
+.content::-webkit-scrollbar,
+.content::-webkit-scrollbar-thumb,
 .logs::-webkit-scrollbar,
 .logs::-webkit-scrollbar-thumb {
   display: none;
