@@ -5,11 +5,13 @@ import re
 import sys
 from asyncio.futures import Future
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 import yaml
 from google.auth.transport.requests import AuthorizedSession
 from pyfiglet import Figlet
+from requests.exceptions import HTTPError
 
 from config import settings
 from models.build import BuildRef
@@ -42,6 +44,8 @@ class CloudBuildService:
         return any([not f.done() for f in self.logging_futures])
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
+        version = datetime.utcnow().replace(microsecond=0).isoformat()
+        substitutions.update({"SHORT_SHA": version})
         source = {
             "repoName": settings.github_repo,
             "branchName": settings.github_branch,
@@ -51,8 +55,11 @@ class CloudBuildService:
             f"{settings.cloud_build_api_url}/{settings.cloud_build_trigger_id}:run",
             json=source,
         )
-        resp.raise_for_status()
         data = resp.json()
+        if not resp.ok and "error" in data:
+            raise HTTPError(data["error"]["message"], response=resp)
+        else:
+            resp.raise_for_status()
         return BuildRef.parse_obj(data["metadata"]["build"])
 
     def get_build(self, id: str) -> BuildRef:

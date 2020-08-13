@@ -4,13 +4,13 @@ import random
 from collections import defaultdict, deque
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import requests
 import yaml
 from aiohttp.client import ClientSession
-from pyfiglet import Figlet
+from pyfiglet import FigletFont, figlet_format
 
 from config import settings
 from models import App, AppTheme
@@ -30,6 +30,7 @@ class AppService:
         self._history = defaultdict(lambda: deque(maxlen=5))
         self._current_version = None
         self._monitor_future = None
+        self._theme_option_limit = 15
 
     @classmethod
     def load_from_config(cls, path, notifier: Notifier = None):
@@ -38,8 +39,19 @@ class AppService:
         apps = {app["name"]: App.parse_obj(app) for app in config["apps"]}
         return cls(notifier=notifier, **apps)
 
-    def get_ascii_fonts(self) -> List[str]:
-        return Figlet().getFonts()
+    def get_gradients(self) -> List[Dict[str, Any]]:
+        resp = requests.get(
+            "https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json"
+        )
+        return resp.json()
+
+    def get_ascii_fonts(self, max_height=15) -> List[str]:
+        fonts = FigletFont.getFonts()
+        return [
+            f
+            for f in fonts
+            if len(figlet_format("7Apps", font=f).split("\n")) <= max_height
+        ]
 
     def get_google_fonts(self) -> List[str]:
         resp = requests.get(
@@ -62,15 +74,30 @@ class AppService:
         ]
 
     @property
+    def gradients(self):
+        if not hasattr(self, "_gradients"):
+            self._gradients = [
+                g["name"]
+                for g in random.choices(
+                    self.get_gradients(), k=self._theme_option_limit
+                )
+            ]
+        return self._gradients
+
+    @property
     def google_fonts(self):
         if not hasattr(self, "_google_fonts"):
-            self._google_fonts = random.choices(self.get_google_fonts(), k=10)
+            self._google_fonts = random.choices(
+                self.get_google_fonts(), k=self._theme_option_limit
+            )
         return self._google_fonts
 
     @property
     def ascii_fonts(self):
         if not hasattr(self, "_ascii_fonts"):
-            self._ascii_fonts = random.choices(self.get_ascii_fonts(), k=10)
+            self._ascii_fonts = random.choices(
+                self.get_ascii_fonts(), k=self._theme_option_limit
+            )
         return self._ascii_fonts
 
     def get_apps(self) -> List[App]:
@@ -86,7 +113,7 @@ class AppService:
         active_builds = self.build.get_active_builds()
         if len(active_builds) > 0:
             logger.warning(
-                "Skipping deployment, %s builds already in progress",
+                "Skipping deployment, %s build(s) already in progress",
                 len(active_builds),
             )
             build_ref = active_builds[0]

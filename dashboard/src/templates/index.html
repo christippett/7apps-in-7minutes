@@ -87,47 +87,81 @@ endif %}
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
     /* eslint-disable no-undef */
-
-
-    function appDeploy() {
+    function appBuilder() {
       return {
-        id: null,
+        buildId: null,
+        themeOpt: 0,
+        gradients: {{ app_service.gradients|tojson }},
         googleFonts: {{ app_service.google_fonts|tojson }},
         asciiFonts: {{ app_service.ascii_fonts|tojson }},
         isActive: {{ app_service.build.has_active_builds()|tojson }},
         isLoading: false,
         isFullscreen: false,
+        styleOpts: ["primary", "success", "info", "warning", "danger"],
+        tooltip: { text: null, styles: {} },
+        showTooltip: false,
+        init() {
+          WebFont.load({ google: { families: this.googleFonts } });
+        },
+        toggleTooltip(text, style = "primary", timeout = 5000) {
+          this.tooltip.text = text
+          this.styleOpts.forEach((t) => {
+            this.tooltip.styles[`has-background-${t}-light`] = t === style;
+            this.tooltip.styles[`has-text-${t}-dark`] = t === style;
+          })
+          this.showTooltip = true;
+          setTimeout(() => (this.showTooltip = false), timeout);
+          // Give tooltip time to transition out before resetting text
+          setTimeout(() => (this.tooltip = { text: null, styles: {} }), timeout + 2500);
+        },
         toggleFullscreen() {
-          if (this.isActive) {
-            this.isFullscreen = !this.isFullscreen;
+          this.isFullscreen = !this.isFullscreen;
+        },
+        selectTheme(i) {
+          let optsLength = this.googleFonts.length - 1;
+          if (i > optsLength) {
+            this.themeOpt = 0;
+          } else if (i < 0) {
+            this.themeOpt = optsLength;
+          } else {
+            this.themeOpt = i;
           }
         },
-        init() {
-          WebFont.load({
-            google: {
-              families: this.googleFonts
-            }
-          });
+        previewUrl() {
+          let font = encodeURIComponent(this.googleFonts[this.themeOpt]);
+          let asciiFont = encodeURIComponent(this.asciiFonts[this.themeOpt]);
+          let gradient = encodeURIComponent(this.gradients[this.themeOpt]);
+          return `http://localhost:8080?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
         },
         async deploy() {
           this.isLoading = true;
-          console.debug("deploying app");
           _.logHandler.flushLogs();
-          this.id = await _.appService.deployUpdate({
-            gradient: this.gradient,
-            asciiFont: this.asciiFont,
-            font: this.font,
-          });
-          console.debug(`deployment request sent: ${this.id}`);
-          setTimeout(() => (this.isLoading = false), 15000);
-          this.isActive = true;
+          try {
+            console.debug(`🏗️ Starting Cloud Build deployment`);
+            let resp = await _.appService.deployUpdate({
+              gradient: this.gradients[this.themeOpt],
+              asciiFont: this.asciiFonts[this.themeOpt],
+              font: this.googleFonts[this.themeOpt],
+            });
+            let data = await resp.json();
+            if (!resp.ok) throw data;
+            this.buildId = data.id;
+            this.isActive = true;
+            console.info(`👷 Cloud Build job started (${this.buildId})`);
+            this.toggleTooltip(`Cloud Build job started (${this.buildId})`, "info");
+          } catch (e) {
+            console.error(`👺 ${e.detail}`);
+            this.toggleTooltip("Unable to trigger Cloud Build deployment", "danger");
+          } finally {
+            this.isLoading = false;
+          }
         },
       };
     }
 
     // Add callback to update timeline during app deployments
     _.appService.addSubscription(({ app, duration }) => {
-      console.log(`Adding ${app.name} to timeline`);
+      console.log(`📈 Adding ${app.name} to timeline`);
       _.timeline.push({
         id: app.name,
         label: app.title,

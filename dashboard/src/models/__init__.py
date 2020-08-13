@@ -27,7 +27,7 @@ class App(BaseModel):
     name: str
     title: str
     url: str
-    version: Optional[str]
+    version: Optional[str] = Field(alias="SHORT_SHA")
     theme: Optional[AppTheme]
     updated: datetime = Field(default_factory=datetime.utcnow)
 

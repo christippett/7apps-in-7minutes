@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict, deque
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, DefaultDict, Iterator, List, Optional
+from typing import Any, DefaultDict, List
 
 from fastapi import WebSocket
 

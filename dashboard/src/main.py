@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from requests.exceptions import HTTPError
 from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
@@ -47,9 +48,9 @@ def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
         build_ref = app_service.deploy_update(theme)
         background_tasks.add_task(app_service.build.capture_logs, build_ref)
         background_tasks.add_task(app_service.start_app_monitor)
-    except Exception as e:
+    except HTTPError as e:
         logger.exception("Error triggering build: %s", e)
-        raise HTTPException(502, detail=f"Unable to trigger deployment: {e}")
+        raise HTTPException(e.response.status_code, detail=str(e))
     return {"id": build_ref.id}
 
 

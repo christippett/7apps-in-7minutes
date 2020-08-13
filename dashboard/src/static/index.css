@@ -81,6 +81,62 @@ ol > li {
   user-select: none;
 }
 
+.is-tooltip {
+  display: flex;
+  position: absolute;
+  font-size: 0.75em;
+  font-weight: 500;
+  background: #363636;
+  border-radius: 6px;
+  color: #f5f6fa;
+  padding: 0.5em 0.75em;
+  line-height: 1.2;
+  width: fit-content;
+  z-index: 900;
+  max-width: 85%;
+  text-align: center;
+  box-shadow: 2px 2px 10px -2px rgba(80, 80, 80, 0.2);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  top: -1.25rem;
+  align-items: center;
+}
+.is-tooltip:before {
+  content: "";
+  line-height: 1;
+  margin-right: 0.75rem;
+}
+.is-tooltip.has-background-danger-light:before {
+  content: "🙉";
+}
+.is-tooltip.has-background-warning-light:before {
+  content: "🐙";
+}
+.is-tooltip.has-background-success-light:before {
+  content: "🐢";
+}
+.is-tooltip.has-background-info-light:before {
+  content: "🐳";
+}
+.is-tooltip.has-background-primary-light:before {
+  content: "🐿️";
+}
+.is-tooltip:after {
+  content: "";
+  display: block;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  position: absolute;
+  height: 0.7em;
+  width: 0.7em;
+  background: inherit;
+  transform: rotate(45deg);
+  z-index: 1;
+  bottom: -0.35em;
+}
+
 /* -------------------------------- Timeline -------------------------------- */
 
 svg.timeline {
@@ -181,18 +237,32 @@ iframe {
 
 .build-container {
   background: none;
-  height: 100%;
+}
+
+.build-container .box {
+  transition: transform 0.2s ease;
+  cursor: zoom-in;
+}
+.build-container.is-fullscreen .box {
+  cursor: zoom-out;
+  transition-duration: 0s;
+}
+.build-container:not(.is-fullscreen) .box:hover {
+  transform: scale(1.05);
 }
 
 .build-container.is-fullscreen {
+  display: flex;
+  flex-direction: column;
   position: fixed !important;
+  font-size: 1.2rem;
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
   height: auto;
-  width: auto;
-  margin: 2rem;
+  width: auto !important;
+  margin: 1rem;
   z-index: 100;
 }
 .build-container.is-fullscreen:after {
@@ -204,11 +274,12 @@ iframe {
   right: 0;
   height: auto;
   width: auto;
+  z-index: -1;
   background: rgba(255, 255, 255, 0.75);
 }
 
 .build-container.is-active .build-form,
-.build-container:not(.is-active) .logs {
+.build-container.column:not(.is-active) .logs {
   opacity: 0;
   z-index: -1;
 }
@@ -221,7 +292,7 @@ iframe {
   height: 100%;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   transition: color 2s ease-in;
 }
 .build-form nav {
@@ -231,15 +302,23 @@ iframe {
   width: 100%;
   justify-content: space-between;
 }
+.has-text-shadow {
+  text-shadow: 1px 1px 3px rgb(50 50 50 / 20%);
+}
 .build-form .button {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 400;
+  z-index: 100;
   font-family: "Fugaz One", sans-serif;
   box-shadow: 2px 4px 10px 2px rgba(80, 80, 80, 0.025);
   text-transform: uppercase;
-  mix-blend-mode: screen;
   background: #ffffff2b !important;
-  text-shadow: 1px 1px 1px rgb(50 50 50 / 10%);
+}
+.build-container.is-fullscreen .button {
+  font-size: 1.25rem;
+}
+.build-container.is-fullscreen .is-hidden-tablet {
+  display: block !important;
 }
 .build-form .button svg {
   fill: currentColor;
@@ -255,6 +334,21 @@ iframe {
   display: none;
 }
 
+.button.is-tiny {
+  line-height: 1;
+  padding: 0.1em 0.5em;
+  height: auto;
+  width: fit-content;
+  font-size: 0.6rem;
+  align-self: self-start;
+  font-family: Inter;
+  text-transform: lowercase;
+}
+.button.is-tiny svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+
 /* ---------------------------------- Logs ---------------------------------- */
 
 .logs {
@@ -264,20 +358,11 @@ iframe {
   border-radius: 6px;
   overflow: scroll;
   padding: 0.75rem;
-  transition: opacity 2s ease-in, transform 0.5s ease;
+  transition: opacity 2s ease-in;
   background: #292828;
-  cursor: pointer;
   background: linear-gradient(70deg, #112023, #2c3346) 0% 0% / 150% 150%;
   -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
   animation: 10s ease 0s infinite normal none running gradient-slider;
-}
-.build-container:not(.is-fullscreen) .logs:hover {
-  transform: scale(1.05);
-}
-.is-fullscreen .logs {
-  z-index: 75;
-  font-size: 0.9rem;
-  transition-duration: 0s;
 }
 .logs .frame-label {
   background: #3d3d3d;

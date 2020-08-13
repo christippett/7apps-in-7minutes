@@ -1,7 +1,8 @@
 <div
-  x-data="appDeploy()"
-  class="column is-half"
-  :class="{ 'is-active': isActive, 'is-fullscreen': isFullscreen }"
+  class="build-container column is-half is-relative"
+  :class="{ 'is-fullscreen': isFullscreen, 'is-loading': isLoading  }"
+  x-data="appBuilder()"
+  x-init="init"
 >
   <div class="is-hidden-tablet mb-5">
     <p class="title is-4">Try it!</p>
@@ -9,32 +10,40 @@
       Customise the app and watch the deployment happen live.
     </p>
   </div>
-  <div class="build-container box is-relative is-clipped px-0 py-0">
-    <div @click="toggleFullscreen()" id="logs" class="logs noselect is-overlay"> </div>
-    <div class="build-form px-4 py-4">
+  <div class="box is-relative px-0 py-0" @click="toggleFullscreen()">
+    <span class="is-tooltip" :class="tooltip.styles" x-show.transition.duration.300ms="showTooltip" x-text="tooltip.text"></span>
+    <div id="logs" class="logs noselect is-overlay"></div>
+    <div id="build" class="build-form px-4 py-4">
       <nav>
-        <button class="button is-dark is-light">{% include "misc/left.svg" %}</button>
-        <button class="button is-dark is-light">{% include "misc/right.svg" %}</button>
+        <button @click.stop="selectTheme(themeOpt-1)" class="button is-dark is-light"
+          >{% include "misc/left.svg" %}</button
+        >
+        <button @click.stop="selectTheme(themeOpt+1)" class="button is-dark is-light"
+          >{% include "misc/right.svg" %}</button
+        >
       </nav>
       <button
-        @click="deploy()"
+        @click.stop="deploy()"
+        class="button is-dark is-light is-fullwidth has-text-shadow"
         :class="{ 'is-loading': isLoading }"
-        class="button is-dark is-light is-fullwidth"
       >
         <span class="icon is-small pr-3">
           {% include "misc/cloud-upload.svg" %}
         </span>
         <span>Deploy!</span>
       </button>
+      <iframe
+
+        name="preview"
+        x-bind:src="previewUrl()"
+        width="100%"
+        height="100%"
+        style="z-index:-1;"
+        class="noselect is-overlay"
+        scrolling="no"
+      >
+      </iframe>
     </div>
-    <iframe
-      name="demo"
-      src="http://localhost:8080?font={{ app_service.google_fonts[0] }}&ascii_font={{ app_service.ascii_fonts[0] }}"
-      width="100%"
-      height="100%"
-      class="noselect"
-    >
-    </iframe>
   </div>
 </div>
 <div class="column is-12 is-hidden-tablet">
@@ -70,6 +79,8 @@
       src="{{ app.url }}?ts={{ unix_timestamp }}"
       width="100%"
       height="100%"
+      importance="high"
+      scrolling="no"
       class="noselect"
     >
     </iframe>
