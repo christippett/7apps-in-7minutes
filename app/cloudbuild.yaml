@@ -92,6 +92,7 @@ steps:
             ASCII_FONT: "${_ASCII_FONT}"
 
         EOT
+        cat app.yaml;
         gcloud app deploy --version=${_VERSION}
     dir: "app/src"
     waitFor: ["setup"]
