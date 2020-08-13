@@ -353,6 +353,7 @@ iframe {
 }
 .content-blurb {
   margin-bottom: 3.5rem;
+  max-width: 500px;
 }
 .build-form .button svg {
   fill: currentColor;
