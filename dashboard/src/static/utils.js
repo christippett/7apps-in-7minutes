@@ -213,5 +213,5 @@
     appService.refreshApp(message.data)
   );
 
-  window._ = { notificationService, appService, logHandler };
+  window._ = { notificationService, appService, logHandler, utils };
 })();
