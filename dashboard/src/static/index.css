@@ -45,6 +45,9 @@ footer {
   .is-fullscreen .logs > p .lg-step {
     display: inline-block;
   }
+  .is-fullscreen .logs > p .lg-id {
+    min-width: 120px !important;
+  }
 }
 
 .tabs {
@@ -352,7 +355,7 @@ iframe {
   display: block !important;
 }
 .content-blurb {
-  margin-bottom: 3.5rem;
+  margin-bottom: 3rem;
   max-width: 500px;
 }
 .build-form .button svg {
@@ -482,7 +485,7 @@ iframe {
   margin-right: 5px;
 }
 .is-fullscreen .logs > p .lg-id {
-  min-width: 120px;
+  min-width: 100px;
 }
 .is-fullscreen .logs > p .lg-id:after {
   padding-top: 0;
