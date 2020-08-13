@@ -84,7 +84,7 @@ steps:
       - "-c"
       - |
         cp ../app.standard.yaml app.yaml;
-        cat <<EOT > app.yaml
+        cat <<EOT >> app.yaml
           env_variables:
             GRADIENT: "${_GRADIENT}"
             FONT: "${_FONT}"
