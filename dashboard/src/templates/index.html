@@ -182,8 +182,7 @@ endif %}
             this.showTooltip({ text: `Cloud Build deployment job started`, style: "info", timeout: 5000 });
             this.startCommentary();
           } catch (e) {
-            console.error(`👺 ${e.detail}`);
-            this.showTooltip({ text: "Unable to trigger Cloud Build deployment", style: "danger" });
+            this.showTooltip({ text: e.detail, style: "danger" });
           } finally {
             this.isLoading = false;
           }
