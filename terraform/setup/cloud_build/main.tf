@@ -50,8 +50,8 @@ resource "google_cloud_scheduler_job" "reset" {
 
     uri = "https://cloudbuild.googleapis.com/v1/${google_cloudbuild_trigger.deploy.id}:run"
     body = base64encode(jsonencode({
-      repoName   = var.github_branch,
-      branchName = var.github_repo
+      repoName   = var.github_repo,
+      branchName = var.github_branch
     }))
 
     headers = {
