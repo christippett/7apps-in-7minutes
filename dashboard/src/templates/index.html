@@ -101,7 +101,7 @@ endif %}
         init() {
           WebFont.load({ google: { families: this.googleFonts } });
           if (!this.buildActive) {
-            this.showTooltip({ text: "Customise and deploy a new app version", style: "info"});
+            this.showTooltip({ text: "Choose a theme and <span class='has-text-fancy-font'>Deploy!</span>", style: "info"});
           } else {
             this.showTooltip({ text: "Cloud Build deployment in progress", style: "warning", timeout: 5000 });
           }

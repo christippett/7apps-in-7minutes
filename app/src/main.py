@@ -80,6 +80,7 @@ def main(*args, **kwargs):
     # Override theme properties from request parameters
     if request.args and all([a in AppTheme.__dataclass_fields__ for a in request.args]):
         app_info.theme = AppTheme(**request.args)
+        app_info.title = "Preview"
         app_info.version = None
 
     # Return machine-readable app info (used by dashboard)

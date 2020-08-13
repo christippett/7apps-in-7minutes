@@ -1,11 +1,63 @@
+<div class="column is-12 is-hidden-tablet">
+  <p class="title is-4">Application IFrames</p>
+</div>
+
+{% for app in app_service.get_apps() %}
+<div
+  id="{{ app.name }}"
+  class="column is-half is-app"
+  data-url="{{ app.url }}"
+  data-name="{{ app.name }}"
+  data-title="{{ app.title }}"
+  data-version="{{ app.version }}123"
+>
+  <div class="box is-relative is-clipped px-0 py-0">
+    <div class="frame-label">
+      <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
+    </div>
+    <div
+      id="{{ app.name }}-overlay"
+      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
+    >
+      <p class="heading">🛑 {{ app.title }}</p>
+      <p class="title is-size-5 mt-4"></p>
+    </div>
+    <iframe
+      name="{{ app.name }}-{{ unix_timestamp }}"
+      src="{{ app.url }}?ts={{ unix_timestamp }}"
+      width="100%"
+      height="100%"
+      importance="high"
+      scrolling="no"
+      class="has-select-disabled"
+    >
+    </iframe>
+  </div>
+</div>
+{% endfor %}
+
 <div
   class="build-container column is-half is-relative"
   :class="{ 'is-fullscreen': isFullscreen }"
   x-data="appBuilder()"
   x-init="init"
 >
-  <div class="is-hidden-tablet">
-    <p class="title is-4">Cloud Build</p>
+  <div class="is-hidden-tablet content-blurb">
+    <div class="content">
+      <p class="title mt-4 is-4">Cloud Build: Deploy</p>
+      <p>
+        Clicking <span class="has-text-fancy-font">Deploy!</span> below will trigger a new Cloud Build job and
+        a new version of the app will be deployed to all 7 services.
+      </p>
+      <p>
+        Logs from Cloud Build will be streamed in real-time, so you
+        won't miss any of the behind-the-scenes action 🤠
+      </p>
+      <p class="is-size-7">
+        <strong>Note:</strong> The application resets every half-hour, if you're (un)lucky enough to start a deployment
+        while a reset is in progress, you might get an angry error message - no trouble, just try again in a few minutes.
+      </p>
+    </div>
   </div>
   <div class="box is-relative px-0 py-0" @click="toggleFullscreen()">
   <div class="tooltips" x-show.transition.duration.300ms="tooltips.length > 0">
@@ -57,42 +109,3 @@
     </div>
   </div>
 </div>
-<div class="column is-12 is-hidden-tablet">
-  <p class="title is-4">Application IFrames</p>
-</div>
-
-{% for app in app_service.get_apps() %}
-
-<div
-  id="{{ app.name }}"
-  class="column is-half is-app"
-  data-url="{{ app.url }}"
-  data-name="{{ app.name }}"
-  data-title="{{ app.title }}"
-  data-version="{{ app.version }}123"
->
-  <div class="box is-relative is-clipped px-0 py-0">
-    <div class="frame-label">
-      <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
-    </div>
-    <div
-      id="{{ app.name }}-overlay"
-      class="is-unavailable is-overlay px-6 py-6 is-size-6 has-text-weight-medium has-text-centered is-hidden"
-    >
-      <p class="heading">🛑 {{ app.title }}</p>
-      <p class="title is-size-5 mt-4"></p>
-    </div>
-    <iframe
-      name="{{ app.name }}-{{ unix_timestamp }}"
-      src="{{ app.url }}?ts={{ unix_timestamp }}"
-      width="100%"
-      height="100%"
-      importance="high"
-      scrolling="no"
-      class="has-select-disabled"
-    >
-    </iframe>
-  </div>
-</div>
-
-{% endfor %}
