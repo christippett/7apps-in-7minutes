@@ -193,7 +193,7 @@ endif %}
           let timeout = 15000;
           let messages = [
             { text: "The logs below are streaming <em>live</em> from Cloud Build", style: "primary" },
-            { text: "Cloud Build first builds a Docker image for our app, most services are dependent on this step" },
+            { text: "Cloud Build first builds a Docker image for our app, most services will use this image for their deployment" },
             { text: "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers" },
             { text: "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed" },
             { text: "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel", style: "info" },
