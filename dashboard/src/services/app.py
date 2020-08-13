@@ -182,6 +182,11 @@ class AppService:
                 new_version = a_version
                 logger.info("All applications updated to version %s", new_version)
                 break
+            elif not self.build.has_active_builds():
+                logger.warning(
+                    "No active builds. Stopping monitor prematurely before all apps updated"
+                )
+                break
             await asyncio.sleep(interval)
         await self.stop_app_monitor()
 
