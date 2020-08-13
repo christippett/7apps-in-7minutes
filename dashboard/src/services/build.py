@@ -118,13 +118,14 @@ class CloudBuildService:
 
         logger.info("Getting Cloud Build logs")
         self.notifier.purge_history("log")
-        header = Figlet(font="slant").renderText("Cloud Build")
-        await self.send_log(header + "Logs to follow...\n\n")
+        fmt = Figlet(font="slant")
+        await self.send_log(fmt.renderText("Cloud Build") + "Logs to follow...\n\n")
 
         client = self._googlesdk_cloudbuild_client()
         loop = asyncio.get_event_loop()
         log_writer = _LogWriter(self.send_log, self.parse_log_text)
         await loop.run_in_executor(None, client.Stream, build_ref, log_writer)
+        await self.send_log(fmt.renderText("Done!"))
 
     def parse_log_text(self, text):
         rec = {"text": text}
