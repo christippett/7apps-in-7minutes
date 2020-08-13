@@ -178,7 +178,11 @@ class AppService:
                             data={"app": latest_app.dict(), "duration": duration},
                         )
             a_version = next(iter(versions))
-            if len(versions) == 1 and a_version != current_version:
+            if (
+                len(versions) == 1
+                and a_version != current_version
+                and not self.build.has_active_builds()
+            ):
                 new_version = a_version
                 logger.info("All applications updated to version %s", new_version)
                 break
