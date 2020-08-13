@@ -46,7 +46,8 @@ class App:
 
     @property
     def header(self) -> str:
-        return Figlet(font=self.theme.ascii_font).renderText("7Apps")
+        fmt = Figlet(font=self.theme.ascii_font, direction="left-to-right")
+        return fmt.renderText("7Apps")
 
 
 # Set title based on inferred runtime environment
