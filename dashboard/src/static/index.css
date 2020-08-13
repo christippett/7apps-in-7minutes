@@ -18,7 +18,8 @@ body {
 
 footer {
   flex: 0;
-  padding: 1rem;
+  padding: max(env(safe-area-inset-top), 1rem) max(env(safe-area-inset-left), 1rem)
+    max(env(safe-area-inset-bottom), 1rem) max(env(safe-area-inset-right), 1rem);
   font-size: 0.8rem;
   transition: opacity 0.2s ease-in;
 }
@@ -35,7 +36,7 @@ footer {
     margin-left: 2rem !important;
   }
   .container {
-    padding: 5rem 2.5rem !important;
+    padding: 7.5em 2.5rem !important;
   }
   .build-container.is-fullscreen {
     font-size: 1.4rem !important;
@@ -58,7 +59,7 @@ footer {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 200px;
+  min-height: 150px;
 }
 
 .container {
@@ -95,29 +96,42 @@ ol > li {
   font-family: "Fugaz One", sans-serif;
 }
 
-.is-tooltip {
+.tooltips {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  z-index: 900;
   position: absolute;
-  bottom: calc(100% + 0.4em);
+  bottom: calc(100% + 0.2em);
   left: 0;
   right: 0;
-  width: fit-content;
-  max-width: min(90%, 500px);
   margin: 0 auto;
-  padding: 0.5em 1em;
-  color: #f5f6fa;
+  z-index: 900;
   font-size: 0.75em;
   font-weight: 500;
   line-height: 1.2;
   text-align: left;
+  white-space: break-spaces;
+}
+.is-tooltip {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  margin: 0.25em;
+  cursor: pointer;
+  width: fit-content;
+  max-width: min(90%, 500px);
+  padding: 0.5em 1em;
+  color: #f5f6fa;
   background: #363636;
   border-radius: 6px;
   box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
-  cursor: pointer;
 }
-.is-tooltip:after {
+
+.is-tooltip strong {
+  color: currentColor;
+}
+
+.is-tooltip:last-child:after {
   content: "";
   display: block;
   left: 0;
@@ -135,14 +149,17 @@ ol > li {
 .is-tooltip:before {
   content: "";
   line-height: 1;
-  margin-right: 1.1em;
+  margin-right: 0.8em;
   flex: 1;
+  font-size: 1.4em;
 }
+
+/* Emoji selection courtesy of @R-Norris */
 .is-tooltip.has-background-danger-light:before {
-  content: "🙉";
+  content: "🦑";
 }
 .is-tooltip.has-background-warning-light:before {
-  content: "🐙";
+  content: "🐡";
 }
 .is-tooltip.has-background-success-light:before {
   content: "🐢";
@@ -151,7 +168,10 @@ ol > li {
   content: "🐳";
 }
 .is-tooltip.has-background-primary-light:before {
-  content: "🐿️";
+  content: "🐠";
+}
+.is-tooltip.has-background-link-light:before {
+  content: "🐬";
 }
 
 /* -------------------------------- Timeline -------------------------------- */
@@ -174,8 +194,8 @@ svg.timeline {
   letter-spacing: 1px;
 }
 text.label {
-  font-size: 1.2rem;
-  font-weight: 500;
+  font-size: 1.4rem;
+  /* text-shadow: 1px 1px 1px rgb(0 0 0 / 50%); */
 }
 rect.label {
   fill-opacity: 0;
@@ -454,7 +474,7 @@ iframe {
   margin-right: 5px;
 }
 .is-fullscreen .logs > p .lg-id {
-  min-width: 105px;
+  min-width: 120px;
 }
 .is-fullscreen .logs > p .lg-id:after {
   padding-top: 0;

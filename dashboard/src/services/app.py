@@ -154,13 +154,15 @@ class AppService:
                 break
             latest_apps = await self.get_latest_app_data()
             versions = set([app.version or "" for app in latest_apps.values()])
-            logger.info("Latest version(s) after refresh: %s", ", ".join(versions))
+            logger.info("App version(s) after refresh: %s", ", ".join(versions))
             for app in current_apps:
                 name = app.name
-                latest_app = latest_apps[name]
+                latest_app = latest_apps.get(name)
                 if (
-                    app.version != latest_app.version
+                    latest_app
+                    and app.version != latest_app.version
                     and latest_app.version != current_version
+                    and latest_app.updated > start_time
                 ):
                     logger.info(
                         "'%s' updated to version %s", name, latest_app.version,
@@ -190,11 +192,17 @@ class AppService:
     async def start_app_monitor(self, interval=5):
         if self.monitoring_status() == Status.INACTIVE:
             logging.info("Starting application monitor")
+            await self.notifier.send(
+                topic="build", data={"status": "starting"},
+            )
             self._monitor_future = asyncio.ensure_future(self.poll_apps())
 
     async def stop_app_monitor(self):
         if self.monitoring_status() == Status.ACTIVE:
             logger.info("Stopping application monitor")
+            await self.notifier.send(
+                topic="build", data={"status": "finished"},
+            )
             self._monitor_future.cancel()
         else:
             logging.debug("Application monitor not running")

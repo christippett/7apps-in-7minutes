@@ -4,8 +4,25 @@
   x-data="appBuilder()"
   x-init="init"
 >
+  <div class="is-hidden-tablet">
+    <p class="title is-4">Cloud Build</p>
+  </div>
   <div class="box is-relative px-0 py-0" @click="toggleFullscreen()">
-    <div class="is-tooltip" @click.stop="tooltipActive = false" :class="tooltip.styles" x-show.transition.duration.300ms="tooltipActive" x-html="tooltip.text"></div>
+  <div class="tooltips" x-show.transition.duration.300ms="tooltips.length > 0">
+    <template x-for="tip in tooltips" :key="tip">
+        <div
+          @click.stop="closeTooltip(tip)"
+          class="is-tooltip"
+          :class="tooltipClass(tip)"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 transform scale-90"
+          x-transition:enter-end="opacity-100 transform scale-100"
+          x-transition:leave="transition ease-in duration-300"
+          x-transition:leave-start="opacity-100 transform scale-100"
+          x-transition:leave-end="opacity-0 transform scale-90"
+        ><span x-html="tip.text"></span></div>
+      </template>
+    </div>
     <div id="logs" x-show="buildActive" class="logs has-select-disabled is-overlay"></div>
     <div id="build" x-show="!buildActive" class="build-form px-4 py-4">
       <nav>

@@ -121,9 +121,9 @@
 
       // Add containers for plot items
       let items = timeline.append("g").classed("items", true);
+      items.append("g").classed("links", true);
       items.append("g").classed("markers", true);
       items.append("g").classed("labels", true);
-      items.append("g").classed("links", true);
     }
 
     updateNodes({ parent, tag, nodes }) {
@@ -153,11 +153,14 @@
       const gradientOffset = (colors) =>
         d3.scaleLinear().domain([0, colors.length]).range([0, 100]);
 
-      this.updateNodes({
-        parent: "defs",
-        tag: "linearGradient",
-        nodes,
-      })
+      this.svg
+        .select("defs")
+        .selectAll("linearGradient.bg")
+        .data(nodes)
+        .enter()
+        .remove()
+        .append("linearGradient")
+        .classed("bg", true)
         .attr("id", (d) => d.data.id)
         .attr("x1", -1.5)
         .attr("x2", 1.5)
@@ -195,12 +198,12 @@
 
       // Link labels to axis
       this.updateNodes({ parent: "g.links", tag: "path.label", nodes })
-        .attr("d", (d) => renderer.generatePath(d))
-        .attr("stroke", (d) => `url(#${d.data.id})`);
+        .attr("stroke", (d) => `url(#${d.data.id})`)
+        .attr("d", (d) => renderer.generatePath(d));
 
       // Place markers on axis
       this.updateNodes({ parent: "g.markers", tag: "circle.label", nodes })
-        .style("fill", (d) => d.data.theme.colors[0])
+        .attr("fill", (d) => `url(#${d.data.id})`)
         .attr("cy", (d) => d.getRoot().idealPos)
         .attr("r", 3);
     }

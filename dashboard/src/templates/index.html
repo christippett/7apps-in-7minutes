@@ -23,7 +23,7 @@ endif %}
       <div class="columns is-desktop is-centered">
         <div
           x-data="{ tab: 'timeline' }"
-          class="content-container column is-narrow has-text-grey is-relative"
+          class="content-container column is-narrow is-relative"
         >
           <div class="content">
             <p class="title is-4">7-Apps in 7-minutes</p>
@@ -97,27 +97,52 @@ endif %}
         buildActive: {{ app_service.build.has_active_builds()|tojson }},
         isLoading: false,
         isFullscreen: false,
-        styleOpts: ["primary", "success", "info", "warning", "danger"],
-        tooltip: { text: null, styles: {} },
-        tooltipActive: false,
+        tooltips: [],
         init() {
           WebFont.load({ google: { families: this.googleFonts } });
           if (!this.buildActive) {
-            this.showTooltip("Customise and deploy a new app version", "info");
+            this.showTooltip({ text: "Customise and deploy a new app version", style: "info"});
+          } else {
+            this.showTooltip({ text: "Cloud Build deployment in progress", style: "warning", timeout: 5000 });
+          }
+          _.notificationService.addSubscription("refresh-app", (message) => {
+            let app = message.data.app;
+            this.showTooltip({ text: `<strong>${app.title}</strong> has finished updating!`, style: "success", timeout: 5000 });
+          });
+          _.notificationService.addSubscription("build", (message) => {
+            let status = message.data.status;
+            if (status === "finished") {
+              this.showTooltip({ text: `That's a wrap! All services are running the latest version 😅`, style: "success", timeout: 30000 });
+              setTimeout(() => this.buildActive = false, 120000);
+            }
+          });
+        },
+        closeTooltip(tip){
+          if (tip) {
+            let idx = this.tooltips.indexOf(tip);
+            this.tooltips.splice(idx, 1);
+          } else {
+            this.tooltips.pop();
           }
         },
-        showTooltip(text, style = "primary", timeout = 0) {
-          this.tooltip.text = text
-          this.styleOpts.forEach((t) => {
-            this.tooltip.styles[`has-background-${t}-light`] = t === style;
-            this.tooltip.styles[`has-text-${t}-dark`] = t === style;
-          })
-          this.tooltipActive = true;
+        showTooltip({ text, style, timeout }) {
+          if (this.tooltips.length >= 3) {
+            this.closeTooltip();
+          }
+          let tip = { text, style, timeout };
+          this.tooltips.unshift(tip)
           if (timeout > 0) {
-            setTimeout(() => (this.tooltipActive = false), timeout);
-            // Give tooltip time to transition out before resetting text
-            setTimeout(() => (this.tooltip = { text: null, styles: {} }), timeout + 500);
+            setTimeout(() => this.closeTooltip(tip), timeout)
           };
+        },
+        tooltipClass(tip) {
+          let styles = {};
+          let styleOpts = ["primary", "link", "success", "info", "warning", "danger"];
+          styleOpts.forEach((t) => {
+            styles[`has-background-${t}-light`] = t === tip.style;
+            styles[`has-text-${t}-dark`] = t === tip.style;
+          })
+          return styles;
         },
         toggleFullscreen() {
           this.isFullscreen = !this.isFullscreen;
@@ -136,10 +161,10 @@ endif %}
           let font = encodeURIComponent(this.googleFonts[this.themeOpt]);
           let asciiFont = encodeURIComponent(this.asciiFonts[this.themeOpt]);
           let gradient = encodeURIComponent(this.gradients[this.themeOpt]);
-          return `http://localhost:8080?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
+          return `http://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
         },
         async deploy() {
-          this.tooltipActive = false;
+          setTimeout(() => this.closeTooltip(), 1000);
           this.isLoading = true;
           _.logHandler.flushLogs();
           try {
@@ -154,14 +179,36 @@ endif %}
             this.buildId = data.id;
             this.buildActive = true;
             console.info(`👷 Cloud Build job started (${this.buildId})`);
-            this.showTooltip(`Cloud Build job started`, "info", 2000);
+            this.showTooltip({ text: `Cloud Build deployment job started`, style: "info", timeout: 5000 });
+            this.startCommentary();
           } catch (e) {
             console.error(`👺 ${e.detail}`);
-            this.showTooltip("Unable to trigger Cloud Build deployment", "danger");
+            this.showTooltip({ text: "Unable to trigger Cloud Build deployment", style: "danger" });
           } finally {
             this.isLoading = false;
           }
         },
+        startCommentary() {
+          let timer = 10000;
+          let timeout = 15000;
+          let messages = [
+            { text: "The logs below are streaming <em>live</em> from Cloud Build", style: "primary" },
+            { text: "Cloud Build first builds a Docker image for our app, most services are dependent on this step" },
+            { text: "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers" },
+            { text: "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed" },
+            { text: "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel", style: "info" },
+            { text: "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working" },
+            { text: "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>", style: "link" },
+            { text: "Also yes, I spent a ridiculous amount of time messing around with fonts, colours and emojis for this...", style: "warning" },
+            { text: "Just waiting on <strong>App Engine: Flexible</strong> now" },
+            { text: "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient", style: "warning" },
+            { text: "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong>", style: "danger" },
+            { text: "Not long now... See you at the finish line", style: "primary", timeout: timeout * 2 },
+          ]
+          messages.forEach((message) => {
+            setTimeout(() => this.showTooltip({timeout, style: "info", ...message}), timer);
+            timer += timeout + (timeout / 4);
+          });        }
       };
     }
 

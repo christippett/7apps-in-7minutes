@@ -3,7 +3,7 @@ steps:
   #                                   📜 Setup                                   #
   # ============================================================================ #
 
-  - id: requirements-txt
+  - id: setup
     name: python:3.8-slim
     entrypoint: bash
     args:
@@ -45,7 +45,7 @@ steps:
         ".",
       ]
     dir: "app"
-    waitFor: ["docker-pull", "requirements-txt"]
+    waitFor: ["docker-pull", "setup"]
 
   - id: docker-push
     name: gcr.io/cloud-builders/docker
@@ -71,7 +71,7 @@ steps:
         "--source=.",
       ]
     dir: "app/src"
-    waitFor: ["requirements-txt"]
+    waitFor: ["setup"]
 
   # ============================================================================ #
   #                           💪 APP ENGINE (STANDARD)                           #
@@ -85,7 +85,7 @@ steps:
       - |
         cp ../app.standard.yaml app.yaml && gcloud app deploy --version=${_VERSION}
     dir: "app/src"
-    waitFor: ["requirements-txt"]
+    waitFor: ["setup"]
 
   # ============================================================================ #
   #                           🦾 APP ENGINE (FLEXIBLE)                           #

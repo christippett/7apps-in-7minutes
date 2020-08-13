@@ -5,8 +5,8 @@ import re
 import sys
 from asyncio.futures import Future
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Callable, Dict, List, Optional
+from uuid import uuid4
 
 import yaml
 from google.auth.transport.requests import AuthorizedSession
@@ -44,7 +44,7 @@ class CloudBuildService:
         return any([not f.done() for f in self.logging_futures])
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
-        version = datetime.utcnow().replace(microsecond=0).isoformat()
+        version = uuid4().hex[:7] + "-custom"
         substitutions.update({"_VERSION": version})
         source = {
             "repoName": settings.github_repo,
