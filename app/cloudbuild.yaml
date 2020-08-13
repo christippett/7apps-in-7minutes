@@ -83,14 +83,14 @@ steps:
     args:
       - "-c"
       - |
-        cp ../app.standard.yaml app.yaml && \
+        cp ../app.standard.yaml app.yaml;
         cat <<EOT > app.yaml
           env_variables:
             GRADIENT: "${_GRADIENT}"
             FONT: "${_FONT}"
             ASCII_FONT: "${_ASCII_FONT}"
         EOT
-        && gcloud app deploy --version=${_VERSION}
+        gcloud app deploy --version=${_VERSION}
     dir: "app/src"
     waitFor: ["setup"]
 
