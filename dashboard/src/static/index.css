@@ -314,7 +314,7 @@ iframe {
   height: auto;
   width: auto;
   z-index: -1;
-  background: rgb(255, 255, 255);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .build-form {
@@ -337,7 +337,7 @@ iframe {
   justify-content: space-between;
 }
 .build-form .button {
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   font-weight: 400;
   z-index: 100;
   font-family: "Fugaz One", sans-serif;
@@ -348,26 +348,11 @@ iframe {
 .build-container.is-fullscreen .button {
   font-size: 1.25rem;
 }
-.content-blurb {
-  margin-bottom: 3.5rem;
-}
 .build-container.is-fullscreen .content-blurb {
   display: block !important;
-  position: relative;
 }
-.build-container.is-fullscreen .content-blurb:after {
-  content: "";
-  position: absolute;
-  background: white;
-  background: linear-gradient(0deg, white, transparent);
-  width: 100%;
-  height: 4rem;
-  bottom: 0;
-}
-.build-container.is-fullscreen .content-blurb .content {
-  overflow-y: scroll;
-  padding-bottom: 4rem;
-  max-height: 220px;
+.content-blurb {
+  margin-bottom: 3.5rem;
 }
 .build-form .button svg {
   fill: currentColor;

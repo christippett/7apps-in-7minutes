@@ -52,6 +52,9 @@
         text-shadow: 1px 1px 1px rgb(50 50 50 / 30%);
         line-height: 1;
         text-align: center;
+        {% if not app.version %}
+        margin-bottom: 2rem;
+        {% endif %}
       }
 
       .ascii {
