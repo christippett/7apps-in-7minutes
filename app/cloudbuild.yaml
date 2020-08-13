@@ -67,7 +67,7 @@ steps:
         "--trigger-http",
         "--runtime=python38",
         "--entry-point=main",
-        '--set-env-vars="VERSION=$SHORT_SHA,GRADIENT=${_GRADIENT},FONT=${_FONT},ASCII_FONT=${_ASCII_FONT}"',
+        "--set-env-vars=VERSION=$SHORT_SHA,GRADIENT=${_GRADIENT},FONT=${_FONT},ASCII_FONT=${_ASCII_FONT}",
         "--source=.",
       ]
     dir: "app/src"
