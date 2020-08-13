@@ -86,13 +86,12 @@ steps:
         cp ../app.standard.yaml app.yaml;
         cat <<EOT >> app.yaml
 
-          env_variables:
-            GRADIENT: "${_GRADIENT}"
-            FONT: "${_FONT}"
-            ASCII_FONT: "${_ASCII_FONT}"
+        env_variables:
+          GRADIENT: "${_GRADIENT}"
+          FONT: "${_FONT}"
+          ASCII_FONT: "${_ASCII_FONT}"
 
         EOT
-        cat app.yaml;
         gcloud app deploy --version=${_VERSION}
     dir: "app/src"
     waitFor: ["setup"]
