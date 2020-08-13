@@ -99,20 +99,23 @@ endif %}
         isFullscreen: false,
         styleOpts: ["primary", "success", "info", "warning", "danger"],
         tooltip: { text: null, styles: {} },
-        showTooltip: false,
+        tooltipActive: false,
         init() {
           WebFont.load({ google: { families: this.googleFonts } });
+          this.showTooltip("Customise and deploy a new app version", "info");
         },
-        toggleTooltip(text, style = "primary", timeout = 5000) {
+        showTooltip(text, style = "primary", timeout = 0) {
           this.tooltip.text = text
           this.styleOpts.forEach((t) => {
             this.tooltip.styles[`has-background-${t}-light`] = t === style;
             this.tooltip.styles[`has-text-${t}-dark`] = t === style;
           })
-          this.showTooltip = true;
-          setTimeout(() => (this.showTooltip = false), timeout);
-          // Give tooltip time to transition out before resetting text
-          setTimeout(() => (this.tooltip = { text: null, styles: {} }), timeout + 2500);
+          this.tooltipActive = true;
+          if (timeout > 0) {
+            setTimeout(() => (this.tooltipActive = false), timeout);
+            // Give tooltip time to transition out before resetting text
+            setTimeout(() => (this.tooltip = { text: null, styles: {} }), timeout + 2500);
+          };
         },
         toggleFullscreen() {
           this.isFullscreen = !this.isFullscreen;
@@ -134,6 +137,7 @@ endif %}
           return `http://localhost:8080?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
         },
         async deploy() {
+          this.tooltipActive = false;
           this.isLoading = true;
           _.logHandler.flushLogs();
           try {
@@ -148,10 +152,10 @@ endif %}
             this.buildId = data.id;
             this.isActive = true;
             console.info(`👷 Cloud Build job started (${this.buildId})`);
-            this.toggleTooltip(`Cloud Build job started (${this.buildId})`, "info");
+            this.showTooltip(`Cloud Build job started`, "info", 5000);
           } catch (e) {
             console.error(`👺 ${e.detail}`);
-            this.toggleTooltip("Unable to trigger Cloud Build deployment", "danger");
+            this.showTooltip("Unable to trigger Cloud Build deployment", "danger");
           } finally {
             this.isLoading = false;
           }

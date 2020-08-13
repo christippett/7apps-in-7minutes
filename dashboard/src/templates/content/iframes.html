@@ -1,19 +1,13 @@
 <div
   class="build-container column is-half is-relative"
-  :class="{ 'is-fullscreen': isFullscreen, 'is-loading': isLoading  }"
+  :class="{ 'is-fullscreen': isFullscreen }"
   x-data="appBuilder()"
   x-init="init"
 >
-  <div class="is-hidden-tablet mb-5">
-    <p class="title is-4">Try it!</p>
-    <p class="subtitle is-6">
-      Customise the app and watch the deployment happen live.
-    </p>
-  </div>
   <div class="box is-relative px-0 py-0" @click="toggleFullscreen()">
-    <span class="is-tooltip" :class="tooltip.styles" x-show.transition.duration.300ms="showTooltip" x-text="tooltip.text"></span>
-    <div id="logs" class="logs noselect is-overlay"></div>
-    <div id="build" class="build-form px-4 py-4">
+    <div class="is-tooltip" @click.stop="tooltipActive = false" :class="tooltip.styles" x-show.transition.duration.300ms="tooltipActive" x-html="tooltip.text"></div>
+    <div id="logs" x-show="isActive" class="logs has-select-disabled is-overlay"></div>
+    <div id="build" x-show="!isActive" class="build-form px-4 py-4">
       <nav>
         <button @click.stop="selectTheme(themeOpt-1)" class="button is-dark is-light"
           >{% include "misc/left.svg" %}</button
@@ -30,7 +24,7 @@
         <span class="icon is-small pr-3">
           {% include "misc/cloud-upload.svg" %}
         </span>
-        <span>Deploy!</span>
+        <span class="has-text-fancy-font">Deploy!</span>
       </button>
       <iframe
 
@@ -39,7 +33,7 @@
         width="100%"
         height="100%"
         style="z-index:-1;"
-        class="noselect is-overlay"
+        class="has-select-disabled is-overlay"
         scrolling="no"
       >
       </iframe>
@@ -48,9 +42,6 @@
 </div>
 <div class="column is-12 is-hidden-tablet">
   <p class="title is-4">Application IFrames</p>
-  <p class="subtitle is-6">
-    Live previews of each app.
-  </p>
 </div>
 
 {% for app in app_service.get_apps() %}
@@ -81,7 +72,7 @@
       height="100%"
       importance="high"
       scrolling="no"
-      class="noselect"
+      class="has-select-disabled"
     >
     </iframe>
   </div>

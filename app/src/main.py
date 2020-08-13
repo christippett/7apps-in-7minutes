@@ -1,7 +1,8 @@
+import dataclasses
 import json
 import os
 import random
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -22,7 +23,7 @@ class AppTheme:
     font: Optional[str] = None
     ascii_font: Optional[str] = None
     gradient: Optional[str] = None
-    colors: List[str] = field(init=False)
+    colors: List[str] = dataclasses.field(init=False)
 
     def __post_init__(self):
         with open("theme.json", "r") as f:
@@ -48,7 +49,7 @@ class App:
         return Figlet(font=self.theme.ascii_font).renderText("7Apps")
 
 
-# Infer runtime environment from available environment variables + set title
+# Set title based on inferred runtime environment
 if os.getenv("GAE_ENV") == "standard":
     title = "App Engine: Standard"
 elif os.getenv("GAE_SERVICE") == "flexible":
@@ -67,23 +68,24 @@ else:
     title = "Demo"
 
 app = Flask("7apps")
-app_data = App(
-    title=title,
-    version=VERSION,
-    theme=AppTheme(font=FONT, ascii_font=ASCII_FONT, gradient=GRADIENT),
-)
+theme = AppTheme(font=FONT, ascii_font=ASCII_FONT, gradient=GRADIENT)
 
 
 @app.route("/")
 @cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
-    if request.args and all([a in AppTheme.__dataclass_fields__ for a in request.args]):
-        app_data.theme = AppTheme(**request.args)
-        app_data.version = None
-    if request.headers.get("Accept") == "application/json":
-        return jsonify(asdict(app_data))
+    app_info = App(title=title, version=VERSION, theme=theme)
 
-    return render_template("index.html", app=app_data)
+    # Override theme properties from request parameters
+    if request.args and all([a in AppTheme.__dataclass_fields__ for a in request.args]):
+        app_info.theme = AppTheme(**request.args)
+        app_info.version = None
+
+    # Return machine-readable app info (used by dashboard)
+    if request.headers.get("Accept") == "application/json":
+        return jsonify(dataclasses.asdict(app_info))
+
+    return render_template("index.html", app=app_info)
 
 
 if __name__ == "__main__":

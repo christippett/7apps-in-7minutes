@@ -35,12 +35,12 @@ steps:
         "--log-level=error",
         "build",
         "--quiet",
-        "--build-arg=VERSION=$SHORT_SHA",
+        "--build-arg=VERSION=${_VERSION:-$SHORT_SHA}",
         "--build-arg=GRADIENT=${_GRADIENT}",
         "--build-arg=FONT=${_FONT}",
         "--build-arg=ASCII_FONT=${_ASCII_FONT}",
         "--cache-from=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
-        "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
+        "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}",
         "--tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest",
         ".",
       ]
@@ -49,7 +49,12 @@ steps:
 
   - id: docker-push
     name: gcr.io/cloud-builders/docker
-    args: ["--log-level=error", "push", "gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA"]
+    args:
+      [
+        "--log-level=error",
+        "push",
+        "gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}",
+      ]
     waitFor: ["docker-build"]
 
   # ============================================================================ #
@@ -67,7 +72,7 @@ steps:
         "--trigger-http",
         "--runtime=python38",
         "--entry-point=main",
-        "--set-env-vars=VERSION=$SHORT_SHA,GRADIENT=${_GRADIENT},FONT=${_FONT},ASCII_FONT=${_ASCII_FONT}",
+        "--set-env-vars=VERSION=${_VERSION:-$SHORT_SHA},GRADIENT=${_GRADIENT},FONT=${_FONT},ASCII_FONT=${_ASCII_FONT}",
         "--source=.",
       ]
     dir: "app/src"
@@ -83,7 +88,7 @@ steps:
     args:
       - "-c"
       - |
-        cp ../app.standard.yaml app.yaml && gcloud app deploy --version=$SHORT_SHA
+        cp ../app.standard.yaml app.yaml && gcloud app deploy --version=${_VERSION:-$SHORT_SHA}
     dir: "app/src"
     waitFor: ["requirements-txt"]
 
@@ -99,7 +104,7 @@ steps:
         "app",
         "deploy",
         "app.flex.yaml",
-        "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
+        "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}",
       ]
     dir: "app"
     waitFor: ["docker-push"]
@@ -116,7 +121,7 @@ steps:
         "run",
         "deploy",
         "run",
-        "--image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
+        "--image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}",
         "--platform=managed",
       ]
     waitFor: ["docker-push"]
@@ -133,7 +138,7 @@ steps:
         "run",
         "deploy",
         "run-anthos",
-        "--image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
+        "--image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}",
         "--platform=gke",
         "--namespace=default",
       ]
@@ -159,7 +164,7 @@ steps:
         --silent --show-error --fail --insecure \
         --header 'Content-Type: application/json' \
         --header "Host: compute.7apps.cloud" \
-        --data '{ "key": "IMAGE_TAG", "value": "$SHORT_SHA" }'
+        --data '{ "key": "IMAGE_TAG", "value": "${_VERSION:-$SHORT_SHA}" }'
     waitFor: ["docker-push"]
 
   # ============================================================================ #
@@ -173,7 +178,7 @@ steps:
         "set",
         "image",
         "deployment/gke-app",
-        "gke-app=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA",
+        "gke-app=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}",
       ]
     dir: "app"
     waitFor: ["docker-push"]
@@ -184,7 +189,7 @@ steps:
 
 images:
   - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest
-  - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+  - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION:-$SHORT_SHA}
 options:
   logStreamingOption: STREAM_ON
   substitution_option: ALLOW_LOOSE
@@ -203,5 +208,6 @@ substitutions:
   _GRADIENT: ""
   _FONT: ""
   _ASCII_FONT: ""
+  _VERSION: ""
 tags: ["app"]
 timeout: 3600s

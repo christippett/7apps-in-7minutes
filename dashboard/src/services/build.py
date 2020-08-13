@@ -45,7 +45,7 @@ class CloudBuildService:
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
         version = datetime.utcnow().replace(microsecond=0).isoformat()
-        substitutions.update({"SHORT_SHA": version})
+        substitutions.update({"VERSION": version})
         source = {
             "repoName": settings.github_repo,
             "branchName": settings.github_branch,
@@ -142,7 +142,7 @@ class CloudBuildService:
             rec["type"] = "divider"
             rec["text"] = label.ljust(33 + (len(label) // 2), "-").rjust(66, "-")
 
-        if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE"]:
+        if text in ["FETCHSOURCE", "BUILD", "PUSH", "DONE", "ERROR"]:
             rec["type"] = "header"
         if re.match(r"[\s\.]+", text):
             rec["type"] = "linebreak"

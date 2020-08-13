@@ -172,7 +172,7 @@ class AppService:
                     if app.version is not None:
                         await self.notifier.send(
                             topic="refresh-app",
-                            data={"app": latest_app.json(), "duration": duration},
+                            data={"app": latest_app.dict(), "duration": duration},
                         )
             a_version = next(iter(versions))
             if len(versions) == 1 and a_version != current_version:
