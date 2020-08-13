@@ -28,7 +28,7 @@ endif %}
           <div class="content">
             <p class="title is-4">7-Apps in 7-minutes</p>
             <p class="subtitle is-6">
-              One codebase. Seven services.
+              One codebase. One cloud. Seven services.
             </p>
           </div>
           <nav class="mb-5">
@@ -108,6 +108,9 @@ endif %}
           _.notificationService.addSubscription("refresh-app", (message) => {
             let app = message.data.app;
             this.showTooltip({ text: `<strong>${app.title}</strong> has finished updating!`, style: "success", timeout: 5000 });
+            if (app.name === "standard") {
+              setTimeout(() => this.startCommentary(), 15000);
+            }
           });
           _.notificationService.addSubscription("build", (message) => {
             let status = message.data.status;
@@ -127,7 +130,7 @@ endif %}
           }
         },
         showTooltip({ text, style, timeout }) {
-          if (this.tooltips.length >= 3) {
+          if (this.tooltips.length >= 2) {
             this.closeTooltip();
           }
           let tip = { text, style, timeout };
@@ -181,7 +184,7 @@ endif %}
             this.buildActive = true;
             console.info(`👷 Cloud Build job started (${this.buildId})`);
             this.showTooltip({ text: `Cloud Build deployment started`, style: "info", timeout: 5000 });
-            this.startCommentary();
+            setTimeout(() => this.showTooltip({ text: "The logs below are coming to you <strong><em>live</em></strong> from Cloud Build", style: "danger" }), 7500)
           } catch (e) {
             this.showTooltip({ text: e.detail, style: "danger" });
           } finally {
@@ -189,10 +192,11 @@ endif %}
           }
         },
         startCommentary() {
-          let timer = 10000;
-          let timeout = 15000;
+          let timer = 0;
+          let timeout = 1000;
           let messages = [
-            { text: "The logs below are streaming <em>live</em> from Cloud Build", style: "primary" },
+            { text: "We're just waiting on <strong>App Engine: Flexible</strong> now" },
+            { text: "Since we have time, I'll tell you a bit about how this all works", style: "primary" },
             { text: "Cloud Build first builds a Docker image for our app, most services will use this image for their deployment" },
             { text: "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers" },
             { text: "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed" },
@@ -200,15 +204,14 @@ endif %}
             { text: "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working" },
             { text: "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>", style: "link" },
             { text: "Also yes, I spent a ridiculous amount of time messing around with fonts, colours and emojis for this...", style: "warning" },
-            { text: "Just waiting on <strong>App Engine: Flexible</strong> now" },
             { text: "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient", style: "warning" },
-            { text: "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong>", style: "danger" },
+            { text: "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤", style: "danger" },
             { text: "Not long now... See you at the finish line", style: "primary", timeout: timeout * 2 },
           ]
           messages.forEach((message) => {
             if (!this.buildActive) return;
             setTimeout(() => this.showTooltip({timeout, style: "info", ...message}), timer);
-            timer += timeout + (timeout / 4);
+            timer += timeout + (timeout / 2);
           });
         }
       };
