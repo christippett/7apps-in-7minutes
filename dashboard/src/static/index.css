@@ -518,7 +518,7 @@ iframe {
 .logs > p[data-id="gke"] {
   color: #da8de4;
 }
-.logs > p[data-id="requirements-txt"] {
+.logs > p[data-id="setup"] {
   color: #83d1be;
 }
 

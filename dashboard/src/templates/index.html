@@ -180,7 +180,7 @@ endif %}
             this.buildId = data.id;
             this.buildActive = true;
             console.info(`👷 Cloud Build job started (${this.buildId})`);
-            this.showTooltip({ text: `Cloud Build deployment job started`, style: "info", timeout: 5000 });
+            this.showTooltip({ text: `Cloud Build deployment started`, style: "info", timeout: 5000 });
             this.startCommentary();
           } catch (e) {
             this.showTooltip({ text: e.detail, style: "danger" });
@@ -205,8 +205,10 @@ endif %}
             { text: "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong>", style: "danger" },
             { text: "Not long now... See you at the finish line", style: "primary", timeout: timeout * 2 },
           ]
-          messages.forEach((message) => {
-            setTimeout(() => this.showTooltip({timeout, style: "info", ...message}), timer);
+          messages.forEach(async (message) => {
+            if (!this.buildActive) return;
+            await _.utils.sleep(timer);
+            this.showTooltip({timeout, style: "info", ...message});
             timer += timeout + (timeout / 4);
           });        }
       };
