@@ -59,7 +59,7 @@ footer {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 150px;
+  min-height: 180px;
 }
 
 .container {
@@ -336,7 +336,7 @@ iframe {
   justify-content: space-between;
 }
 .build-form .button {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 400;
   z-index: 100;
   font-family: "Fugaz One", sans-serif;
