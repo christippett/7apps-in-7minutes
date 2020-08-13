@@ -83,7 +83,14 @@ steps:
     args:
       - "-c"
       - |
-        cp ../app.standard.yaml app.yaml && gcloud app deploy --version=${_VERSION}
+        cp ../app.standard.yaml app.yaml;
+        cat <<EOT > app.yaml
+          env_variables:
+            GRADIENT: "${_GRADIENT}"
+            FONT: "${_FONT}"
+            ASCII_FONT: "${_ASCII_FONT}"
+        EOT;
+        gcloud app deploy --version=${_VERSION}
     dir: "app/src"
     waitFor: ["setup"]
 
@@ -99,6 +106,7 @@ steps:
         "app",
         "deploy",
         "app.flex.yaml",
+        "--version=${_VERSION}",
         "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION}",
       ]
     dir: "app"
