@@ -40,7 +40,7 @@ resource "google_cloud_scheduler_job" "reset" {
   region      = var.region
   name        = "reset-app"
   description = "🕹️ Reset application"
-  schedule    = "*/45 * * * *"
+  schedule    = "0 * * * *"
 
   time_zone        = "Australia/Melbourne"
   attempt_deadline = "660s"
