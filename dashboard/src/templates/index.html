@@ -116,7 +116,7 @@ endif %}
             let status = message.data.status;
             if (status === "finished") {
               this.closeTooltip();
-              this.showTooltip({ text: `That's a wrap! All services are running the latest version 😅`, style: "success", timeout: 30000 });
+              this.showTooltip({ text: `That's a wrap! All services are running the latest version 😅`, style: "success", timeout: 15000 });
               setTimeout(() => this.buildActive = false, 120000);
             }
           });
@@ -193,7 +193,7 @@ endif %}
         },
         startCommentary() {
           var timer = 0;
-          var timeout = 1000;
+          var timeout = 10000;
           var messages = [
             { text: "We're just waiting on <strong>App Engine: Flexible</strong> now" },
             { text: "Since we have time, I'll tell you a bit about how this all works", style: "primary" },
