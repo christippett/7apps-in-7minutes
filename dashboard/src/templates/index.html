@@ -87,146 +87,242 @@ endif %}
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
     /* eslint-disable no-undef */
-    function appBuilder() {
-      return {
-        buildId: null,
-        themeOpt: 0,
-        gradients: {{ app_service.gradients|tojson }},
-        googleFonts: {{ app_service.google_fonts|tojson }},
-        asciiFonts: {{ app_service.ascii_fonts|tojson }},
-        buildActive: {{ app_service.build.has_active_builds()|tojson }},
-        isLoading: false,
-        isFullscreen: false,
-        tooltips: [],
-        init() {
-          WebFont.load({ google: { families: this.googleFonts } });
-          if (!this.buildActive) {
-            this.showTooltip({ text: "Choose a theme and <span class='has-text-fancy-font'>Deploy!</span>", style: "info"});
-          } else {
-            this.showTooltip({ text: "Cloud Build deployment in progress", style: "warning" });
-          }
-          _.notificationService.addSubscription("refresh-app", (message) => {
-            let app = message.data.app;
-            this.showTooltip({ text: `<strong>${app.title}</strong> has finished updating!`, style: "success", timeout: 5000 });
-            if (app.name === "standard") {
-              setTimeout(() => this.startCommentary(), 15000);
-            }
+
+    class Tooltip {
+      constructor() {
+        this._tooltips = [];
+        this.styles = ["primary", "link", "success", "info", "warning", "danger"];
+      }
+
+      get tooltips() {
+        return this._tooltips;
+      }
+
+      add({ text, style = "info", wait = 0, timeout = 10000, isActive = true } = {}) {
+        let id = +new Date();
+        let tooltip = { text, style, wait, timeout, id, isActive };
+        if (wait > 0) {
+          tooltip.isActive = false;
+          setTimeout(() => (tooltip.isActive = true), wait);
+        }
+        if (timeout > 0) {
+          setTimeout(() => this.close(tooltip), wait + timeout);
+        }
+        this._tooltips.unshift(tooltip);
+        return id;
+      }
+
+      close(tooltip) {
+        let index = this._tooltips.indexOf(tooltip);
+        setTimeout(() => tooltip.isActive = false, 200);
+        setTimeout(() => this._tooltips.splice(index, 1), 1000);
+      }
+
+      reset() {
+        this._tooltips.forEach((tooltip) => this.close(tooltip));
+      }
+
+      getClass(tooltip) {
+        let cls = {};
+        cls[`has-background-${tooltip.style}-light`] = true;
+        cls[`has-text-${tooltip.style}-dark`] = true;
+        return cls;
+      }
+    }
+
+    class AppBuilder {
+      constructor({ tooltip, apps, gradients, fonts, asciiFonts, buildStatus }) {
+        console.debug("🧰 Initialising AppBuilder");
+        Object.assign(this, { apps, gradients, fonts, asciiFonts, buildStatus });
+        WebFont.load({ google: { families: this.fonts } });
+        this.buildTracker = new Map();
+        this.themeOpt = 0;
+        this.isLoading = false;
+      }
+
+      get hasActiveBuild() {
+        return this.buildStatus === "ACTIVE";
+      }
+
+      get previewUrl() {
+        let font = encodeURIComponent(this.fonts[this.themeOpt]);
+        let asciiFont = encodeURIComponent(this.asciiFonts[this.themeOpt]);
+        let gradient = encodeURIComponent(this.gradients[this.themeOpt]);
+        return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
+      }
+
+      get buildCommentary() {
+        return [
+          "We're just waiting on <strong>App Engine: Flexible</strong> now",
+          "Since we have some time on our hands, let me explain a bit about what's happening / has happened",
+          "Cloud Build first builds a Docker image for our app, most services depend on this image for their deployment",
+          "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers",
+          "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed",
+          "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel",
+          "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working",
+          "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>",
+          "Also yes, I spent a ridiculous amount of time messing around with fonts, colours and emojis for this...",
+          "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient",
+          "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤",
+          "Not long now... See you at the finish line",
+        ];
+      }
+
+      init(dependencies) {
+        Object.assign(this, dependencies)
+        this.addAppSubscription();
+        this.addBuildSubscription();
+        this.addTimelineSubscription();
+
+        console.log(`🏗️ Current build status: ${this.buildStatus}`);
+        // show contextual tooltip based on whether there's an active build in progress
+        if (this.hasActiveBuild) {
+          this.tooltip.add({
+            text: "A Cloud Build deployment is already in progress",
+            style: "warning",
           });
-          _.notificationService.addSubscription("build", (message) => {
-            let status = message.data.status;
-            if (status === "finished") {
-              this.closeTooltip();
-              this.showTooltip({ text: `That's a wrap! All services are running the latest version 😅`, style: "success", timeout: 15000 });
-              setTimeout(() => this.buildActive = false, 120000);
-            }
+        } else {
+          this.tooltip.add({
+            text:
+              "Pick a theme, click <span class='has-text-fancy-font'>Deploy!</span>, then sit back and enjoy the show",
+            timeout: 0,
           });
-        },
-        closeTooltip(tip){
-          if (tip) {
-            let idx = this.tooltips.indexOf(tip);
-            this.tooltips.splice(idx, 1);
-          } else {
-            this.tooltips.pop();
+        }
+      }
+
+      addAppSubscription() {
+        console.log("🗞️ Subscribing to app events");
+        _.notificationService.addSubscription("refresh-app", (message) => {
+          let app = message.data.app;
+          let build = message.data.build;
+          let inflightApps = this.buildTracker.get(build.id);
+          let doneCount = this.apps.length - inflightApps.length;
+          if (inflightApps) {
+            inflightApps.splice(inflightApps.indexOf(app.name), 1);
           }
-        },
-        showTooltip({ text, style, timeout }) {
-          if (this.tooltips.length >= 3) {
-            this.closeTooltip();
-          }
-          let tip = { text, style, timeout };
-          this.tooltips.unshift(tip)
-          if (timeout > 0) {
-            setTimeout(() => this.closeTooltip(tip), timeout)
-          };
-        },
-        tooltipClass(tip) {
-          let styles = {};
-          let styleOpts = ["primary", "link", "success", "info", "warning", "danger"];
-          styleOpts.forEach((t) => {
-            styles[`has-background-${t}-light`] = t === tip.style;
-            styles[`has-text-${t}-dark`] = t === tip.style;
-          })
-          return styles;
-        },
-        toggleFullscreen() {
-          this.isFullscreen = !this.isFullscreen;
-        },
-        selectTheme(i) {
-          let optsLength = this.googleFonts.length - 1;
-          if (i > optsLength) {
-            this.themeOpt = 0;
-          } else if (i < 0) {
-            this.themeOpt = optsLength;
-          } else {
-            this.themeOpt = i;
-          }
-        },
-        previewUrl() {
-          let font = encodeURIComponent(this.googleFonts[this.themeOpt]);
-          let asciiFont = encodeURIComponent(this.asciiFonts[this.themeOpt]);
-          let gradient = encodeURIComponent(this.gradients[this.themeOpt]);
-          return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
-        },
-        async deploy() {
-          setTimeout(() => this.closeTooltip(), 1000);
-          this.isLoading = true;
-          _.logHandler.flushLogs();
-          try {
-            console.debug(`🏗️ Starting Cloud Build deployment`);
-            let resp = await _.appService.deployUpdate({
-              gradient: this.gradients[this.themeOpt],
-              asciiFont: this.asciiFonts[this.themeOpt],
-              font: this.googleFonts[this.themeOpt],
+          console.log(
+            `🕹️ ${app.title} has been updated to version ${app.version} (${doneCount}/${this.apps.length})`
+          );
+          this.tooltip.add({
+            text: `<strong>${app.title}</strong> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
+            style: "success",
+            timeout: 5000,
+          });
+          if (inflightApps.length == 1 && inflightApps.includes("flex"))  {
+            var wait = 0;
+            var timeout = 10000;
+            this.buildCommentary.forEach((text) => {
+              this.tooltip.add({ text, wait, timeout });
+              wait = wait + timeout + 1000;
             });
-            let data = await resp.json();
-            if (!resp.ok) throw data;
-            this.buildId = data.id;
-            this.buildActive = true;
-            console.info(`👷 Cloud Build job started (${this.buildId})`);
-            this.showTooltip({ text: `Cloud Build deployment started`, style: "info", timeout: 5000 });
-            setTimeout(() => this.showTooltip({ text: "The logs below are coming to you <strong><em>LIVE</em></strong> from Cloud Build", style: "danger" }), 7500)
-          } catch (e) {
-            this.showTooltip({ text: e.detail, style: "danger" });
-          } finally {
-            this.isLoading = false;
           }
-        },
-        startCommentary() {
-          var timer = 0;
-          var timeout = 10000;
-          var messages = [
-            { text: "We're just waiting on <strong>App Engine: Flexible</strong> now" },
-            { text: "Since we have time, I'll tell you a bit about how this all works", style: "primary" },
-            { text: "Cloud Build first builds a Docker image for our app, most services will use this image for their deployment" },
-            { text: "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers" },
-            { text: "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed" },
-            { text: "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel", style: "info" },
-            { text: "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working" },
-            { text: "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>", style: "link" },
-            { text: "Also yes, I spent a ridiculous amount of time messing around with fonts, colours and emojis for this...", style: "warning" },
-            { text: "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient", style: "warning" },
-            { text: "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤", style: "danger" },
-            { text: "Not long now... See you at the finish line", style: "primary", timeout: timeout * 2 },
-          ]
-          messages.forEach((message) => {
-            if (!this.buildActive) return;
-            setTimeout(() => this.showTooltip({timeout, style: "info", ...message}), timer);
-            timer += timeout + (timeout / 2);
+        });
+      }
+
+      addBuildSubscription() {
+        console.log("🗞️ Subscribing to build events");
+        _.notificationService.addSubscription("build", (message) => {
+          let status = message.data.status;
+          if (status === "started") {
+
+          } else if (status === "finished") {
+            this.buildStatus = "INACTIVE";
+            this.tooltip.reset();
+            this.tooltip.add({
+              text: `All services updated. That's a wrap!`,
+              style: "success",
+            });
+          }
+        });
+      }
+
+      addTimelineSubscription() {
+        console.log("🗞️ Subscribing to app updates");
+        // Add callback to update timeline during app deployments
+        _.appService.addSubscription(({ app, duration }) => {
+          console.log(`📈 Adding ${app.name} to timeline`);
+          _.timeline.push({
+            id: app.name,
+            label: app.title,
+            theme: app.theme,
+            value: duration,
           });
+        });
+      }
+
+      async deploy() {
+        console.debug(`🏗️ Starting Cloud Build deployment`);
+        this.isLoading = true;
+        this.tooltip.reset();
+        _.logHandler.flushLogs();
+
+        // trigger build from backend
+        let resp = await _.appService.deployUpdate({
+          gradient: this.gradients[this.themeOpt],
+          asciiFont: this.asciiFonts[this.themeOpt],
+          font: this.fonts[this.themeOpt],
+        });
+        let data = await resp.json();
+
+        // show error via tooltip
+        if (!resp.ok) {
+          this.tooltip.add({ text: data.detail, style: "danger" });
+          return;
+        }
+
+        console.info(`👷 Cloud Build deployment started (${data.id})`);
+        this.buildStatus = "ACTIVE";
+        this.buildTracker.set(data.id, [...this.apps]);
+        this.tooltip.add({ text: "Cloud Build deployment started", style: "primary" });
+        this.tooltip.add({
+          text:
+            "The logs below are coming to you <strong><em>LIVE</em></strong> from Cloud Build",
+          wait: 7500,
+          style: "danger",
+        });
+        this.isLoading = false;
+      }
+
+      previousTheme(previewFrame) {
+        this.selectTheme(this.themeOpt - 1);
+        previewFrame.src = this.previewUrl;
+      }
+
+      nextTheme(previewFrame) {
+        this.selectTheme(this.themeOpt + 1);
+        previewFrame.src = this.previewUrl;
+      }
+
+      selectTheme(opt) {
+        let themeCount = this.fonts.length - 1;
+        if (opt > themeCount) {
+          this.themeOpt = 0;
+        } else if (opt < 0) {
+          this.themeOpt = themeCount;
+        } else {
+          this.themeOpt = opt;
+        }
+      }
+    }
+
+    function appBuilder() {
+      var props = {
+        apps: {{ app_service.app_names|tojson }},
+        gradients: {{ app_service.gradients|tojson }},
+        fonts: {{ app_service.google_fonts|tojson }},
+        asciiFonts: {{ app_service.ascii_fonts|tojson }},
+        buildStatus: {{ app_service.deployment_status(as_string=True)|tojson }}
+      };
+      return {
+        tooltips: [],
+        tooltip: new Tooltip({ collection: this.tooltips }),
+        builder: new AppBuilder(props),
+        init() {
+          this.tooltip._tooltips = this.tooltips;
+          this.builder.init({ tooltip: this.tooltip });
         }
       };
     }
-
-    // Add callback to update timeline during app deployments
-    _.appService.addSubscription(({ app, duration }) => {
-      console.log(`📈 Adding ${app.name} to timeline`);
-      _.timeline.push({
-        id: app.name,
-        label: app.title,
-        theme: app.theme,
-        value: duration,
-      });
-    });
   </script>
 </html>
 {% endwith %}

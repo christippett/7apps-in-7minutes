@@ -4,8 +4,9 @@ import os
 import re
 import sys
 from asyncio.futures import Future
+from collections import deque
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Deque, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import yaml
@@ -23,7 +24,7 @@ class CloudBuildService:
     def __init__(self, notifier=None):
         self.notifier = notifier
         self.session = AuthorizedSession(settings.google_credentials)
-        self.logging_futures = []
+        self._active_builds: Deque[Tuple[BuildRef, Future]] = deque(maxlen=10)
 
     def _googlesdk_cloudbuild_client(self):
         third_party_dir = os.path.join(settings.gcloud_dir, "lib", "third_party")
@@ -33,17 +34,14 @@ class CloudBuildService:
 
         return logs.CloudBuildClient()
 
-    def generate_yaml_config(self, build_ref: BuildRef) -> str:
+    def generate_config(self, build_ref: BuildRef) -> str:
         config = {
             "steps": [s.dict(exclude_unset=True) for s in build_ref.steps],
             "substitutions": build_ref.substitutions,
         }
         return yaml.dump(config, default_flow_style=False, sort_keys=False) or ""
 
-    def has_active_builds(self) -> bool:
-        return any([not f.done() for f in self.logging_futures])
-
-    def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
+    async def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
         version = uuid4().hex[:7] + "-custom"
         substitutions.update({"_VERSION": version})
         source = {
@@ -82,28 +80,24 @@ class CloudBuildService:
         data = resp.json()
         return [BuildRef.parse_obj(b) for b in data.get("builds", [])]
 
+    def active_builds(self) -> List[BuildRef]:
+        active_builds = [b for b, f in self._active_builds if not f.done()]
+        if not active_builds:
+            active_builds = self.get_active_builds()
+        return active_builds
+
     async def send_log(self, text: Optional[str] = None, **extra):
         data = {"text": text}
         data.update(extra)
         await self.notifier.send(topic="log", data=data)
 
-    async def capture_logs(self, build_ref: BuildRef):
-        future = asyncio.ensure_future(self.get_logs(build_ref))
-        self.logging_futures.append(future)
+    async def start_log_stream(self, build_ref: BuildRef):
+        logger.info("Getting Cloud Build logs")
+        self.notifier.purge_history("log")
+        log_future = asyncio.ensure_future(self.stream_logs(build_ref))
+        self._active_builds.append((build_ref, log_future))
 
-        def callback(f: Future):
-            self.logging_futures.remove(f)
-            if f.exception():
-                logger.error("Error while getting Cloud Build logs: %s", f.exception())
-            logger.info("Finished logging Cloud Build output")
-            self.notifier.purge_history("log")
-
-        future.add_done_callback(callback)
-
-    async def get_logs(self, build_ref: BuildRef):
-        if build_ref.id in self.logging_futures:
-            return
-
+    async def stream_logs(self, build_ref: BuildRef):
         @dataclass
         class _LogWriter:
             logger: Callable
@@ -116,8 +110,6 @@ class CloudBuildService:
                         self.logger(**self.parser(t)), loop=loop
                     )
 
-        logger.info("Getting Cloud Build logs")
-        self.notifier.purge_history("log")
         fmt = Figlet(font="slant")
         await self.send_log(fmt.renderText("Cloud Build") + "Logs to follow...\n\n")
 

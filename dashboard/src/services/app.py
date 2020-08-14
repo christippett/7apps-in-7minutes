@@ -4,22 +4,24 @@ import random
 from collections import defaultdict, deque
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Union, cast
 
 import aiohttp
 import requests
 import yaml
 from aiohttp.client import ClientSession
+from aiohttp.typedefs import LooseHeaders
 from pyfiglet import FigletFont, figlet_format
 
 from config import settings
 from models import App, AppTheme
+from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
 
 logger = logging.getLogger(__name__)
 
-Status = Enum("Status", "ACTIVE INACTIVE")
+Status = Enum("Status", "ACTIVE INACTIVE UNKNOWN")
 
 
 class AppService:
@@ -29,7 +31,7 @@ class AppService:
         self.build = CloudBuildService(notifier=notifier)
         self._history = defaultdict(lambda: deque(maxlen=5))
         self._current_version = None
-        self._monitor_future = None
+        self._build_future = None
         self._theme_option_limit = 15
 
     @classmethod
@@ -100,16 +102,14 @@ class AppService:
             )
         return self._ascii_fonts
 
-    def get_apps(self) -> List[App]:
-        return list(self.apps.values())
-
-    def get_app(self, name: str) -> Optional[App]:
-        return self.apps.get(name)
+    @property
+    def app_names(self) -> List[str]:
+        return [app.name for app in self.apps.values()]
 
     def latest_version(self):
         return list(sorted(self.apps.values(), key=lambda app: app.updated))[0].version
 
-    def deploy_update(self, theme: AppTheme):
+    async def start_deployment(self, theme: AppTheme):
         active_builds = self.build.get_active_builds()
         if len(active_builds) > 0:
             logger.warning(
@@ -119,7 +119,7 @@ class AppService:
             build_ref = active_builds[0]
         else:
             logger.info("Triggering new deployment with payload: %s", theme.json())
-            build_ref = self.build.trigger_build(theme.get_build_substitutions())
+            build_ref = await self.build.trigger_build(theme.get_build_substitutions())
         return build_ref
 
     async def request_app(self, app: App, session: ClientSession) -> App:
@@ -130,7 +130,7 @@ class AppService:
             return app_copy
 
     async def get_latest_app_data(self) -> Dict[str, App]:
-        headers = {"Accept": "application/json"}
+        headers = cast(LooseHeaders, {"Accept": "application/json"})
         tasks = []
         async with aiohttp.ClientSession(headers=headers) as session:
             for app in self.apps.values():
@@ -143,76 +143,85 @@ class AppService:
     async def refresh_app_data(self):
         self.apps.update(await self.get_latest_app_data())
 
-    async def poll_apps(self, interval=5):
+    async def poll_apps(self, build_ref: BuildRef, interval=10):
         await self.refresh_app_data()
         start_time = datetime.utcnow()
         current_apps = list(self.apps.values())
         current_version = self.latest_version()
-        logger.info("Polling apps for updates (latest version is %s)", current_version)
         while True:
-            if (datetime.utcnow() - start_time).total_seconds() > 600:
+            timer = int((datetime.utcnow() - start_time).total_seconds())
+            if timer > 600:
                 logging.error("Application monitor timed out")
                 break
             latest_apps = await self.get_latest_app_data()
-            versions = set([app.version or "" for app in latest_apps.values()])
-            logger.info("App version(s) after refresh: %s", ", ".join(versions))
+            latest_versions = set([app.version or "" for app in latest_apps.values()])
+            latest_version = next(iter(latest_versions))
+            logger.debug(
+                "%s -vs- %s (⏳ %ss)", latest_version, ", ".join(latest_versions), timer
+            )
             for app in current_apps:
-                name = app.name
-                latest_app = latest_apps.get(name)
+                latest_app = latest_apps.get(app.name)
+                logger.debug("[%s] %s", app.name, app.version)
                 if (
-                    latest_app
+                    latest_app is not None
+                    and app.version is not None
                     and app.version != latest_app.version
                     and latest_app.version != current_version
                     and latest_app.updated > start_time
                 ):
                     logger.info(
-                        "'%s' updated to version %s", name, latest_app.version,
+                        "[%s] Update complete (%s -> %s)",
+                        app.name,
+                        app.version,
+                        latest_app.version,
                     )
-                    duration = (datetime.utcnow() - start_time).total_seconds()
-                    self.apps[name] = latest_app
-                    self._history[name].appendleft(app)
-                    current_apps.remove(app)
-                    if app.version is not None:
-                        await self.notifier.send(
-                            topic="refresh-app",
-                            data={"app": latest_app.dict(), "duration": duration},
-                        )
-            a_version = next(iter(versions))
-            if (
-                len(versions) == 1
-                and a_version != current_version
-                and not self.build.has_active_builds()
-            ):
-                new_version = a_version
-                logger.info("All applications updated to version %s", new_version)
+                    self.apps[app.name] = latest_app
+                    self._history[app.name].appendleft(app)
+                    current_apps.remove(app)  # remove app from poll rotation
+                    await self.notifier.send(
+                        topic="refresh-app",
+                        data={
+                            "build": build_ref.dict(),
+                            "app": latest_app.dict(),
+                            "duration": timer,
+                        },
+                    )
+            if len(latest_versions) == 1 and latest_version != current_version:
+                logger.info(
+                    "All applications updated (%s -> %s)",
+                    current_version,
+                    latest_version,
+                )
                 break
-            elif not self.build.has_active_builds():
+            elif self.build.active_builds() == 0:
                 logger.warning(
-                    "No active builds. Stopping monitor prematurely before all apps updated"
+                    "Stopping monitor early (%s)", ", ".join(latest_versions)
                 )
                 break
             await asyncio.sleep(interval)
-        await self.stop_app_monitor()
+        await self.stop_build_monitor()
 
-    def monitoring_status(self) -> bool:
-        if self._monitor_future is None:
-            return Status.INACTIVE
-        return Status.INACTIVE if self._monitor_future.done() else Status.ACTIVE
+    def deployment_status(self, as_string=False) -> Union[str, Status]:
+        if self._build_future is None:
+            status = Status.INACTIVE
+        else:
+            status = Status.INACTIVE if self._build_future.done() else Status.ACTIVE
+        return status.name if as_string else status
 
-    async def start_app_monitor(self, interval=5):
-        if self.monitoring_status() == Status.INACTIVE:
+    async def start_build_monitor(self, build_ref: BuildRef, interval=10):
+        if self.deployment_status() == Status.INACTIVE:
             logging.info("Starting application monitor")
             await self.notifier.send(
                 topic="build", data={"status": "starting"},
             )
-            self._monitor_future = asyncio.ensure_future(self.poll_apps())
+            self._build_future = asyncio.ensure_future(self.poll_apps(build_ref))
 
-    async def stop_app_monitor(self):
-        if self.monitoring_status() == Status.ACTIVE:
+    async def stop_build_monitor(self):
+        if self.deployment_status() == Status.ACTIVE:
             logger.info("Stopping application monitor")
             await self.notifier.send(
                 topic="build", data={"status": "finished"},
             )
-            self._monitor_future.cancel()
+            self._build_future.cancel()
         else:
             logging.debug("Application monitor not running")

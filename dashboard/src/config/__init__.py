@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import google.auth
 from google.auth.credentials import Credentials
