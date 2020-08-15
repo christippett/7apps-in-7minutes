@@ -44,8 +44,8 @@ class AppTheme:
 
     def is_vibrant(self, colors: List[Color]):
         return (
-            min([c.get_saturation() for c in colors]) > 0.5
-            and min([c.get_luminance() for c in colors]) > 0.2
+            min([c.get_saturation() for c in colors]) > 0.8
+            and min([c.get_luminance() for c in colors]) < 0.5
         )
 
 

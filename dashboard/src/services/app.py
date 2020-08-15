@@ -51,8 +51,8 @@ class AppService:
             try:
                 colors = [Color(c) for c in gradient["colors"]]
                 gradient["vibrant"] = (
-                    min([c.get_saturation() for c in colors]) > 0.5
-                    and min([c.get_luminance() for c in colors]) > 0.2
+                    min([c.get_saturation() for c in colors]) > 0.8
+                    and min([c.get_luminance() for c in colors]) < 0.5
                 )
             except ValueError:
                 gradient["vibrant"] = False
@@ -89,10 +89,8 @@ class AppService:
     @property
     def gradients(self):
         if not hasattr(self, "_gradients"):
-            gradients = filter(lambda g: g["vibrant"], self.get_gradients())
-            self._gradients = random.choices(
-                [g["name"] for g in gradients], k=self._theme_limit
-            )
+            gradients = list(filter(lambda g: g["vibrant"], self.get_gradients()))
+            self._gradients = random.choices(gradients, k=self._theme_limit)
         return self._gradients
 
     @property

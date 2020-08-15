@@ -86,6 +86,9 @@ endif %}
   <script src="/static/utils.js{{ asset_suffix }}"></script>
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
+    {%- include "props.js" -%}
+  </script>
+  <script>
     /* eslint-disable no-undef */
 
     class Tooltip {
@@ -103,16 +106,16 @@ endif %}
         let tooltip = { id, text, style, wait, timeout, active: true };
         setTimeout(() => this._tooltips.push(tooltip), wait);
         if (timeout > 0) {
-          setTimeout(() => this.close(tooltip), (timeout + wait));
+          setTimeout(() => this.close(tooltip), timeout + wait);
         }
         return id;
       }
 
       queue({ messages = [], timeout = 8000, wait = 1000, style = "info" } = {}) {
-        var timer = timeout + wait
+        var timer = timeout + wait;
         messages.forEach((msg, index) => {
           let tooltip = typeof msg === "string" ? { text: msg } : msg;
-          setTimeout(() => this.add({ style, timeout, ...tooltip }), (timer * index));
+          setTimeout(() => this.add({ style, timeout, ...tooltip }), timer * index);
         });
       }
 
@@ -142,18 +145,12 @@ endif %}
       constructor({ tooltip, apps, gradients, fonts, asciiFonts, buildStatus }) {
         console.debug("🧰 Initialising AppBuilder");
         Object.assign(this, { apps, gradients, fonts, asciiFonts, buildStatus });
-        WebFont.load({ google: { families: this.fonts } });
+        this.gradientNames = gradients.map((g) => g.name);
         this.buildTracker = new Map();
         this.themeOpt = 0;
         this.isLoading = false;
         this.activeBuild = null;
-      }
-
-      get previewUrl() {
-        let font = encodeURIComponent(this.fonts[this.themeOpt]);
-        let asciiFont = encodeURIComponent(this.asciiFonts[this.themeOpt]);
-        let gradient = encodeURIComponent(this.gradients[this.themeOpt]);
-        return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
+        WebFont.load({ google: { families: this.fonts } });
       }
 
       get buildCommentary() {
@@ -179,7 +176,7 @@ endif %}
         this.addTimelineSubscription();
         this.tooltip.add({
           text:
-            "Pick a theme, click <span class='has-text-fancy-font'>Deploy!</span>, then sit back and enjoy the show",
+            "Pick a theme, click <span class='has-text-fancy-font'>Deploy</span>, then sit back, relax and watch <strong>Cloud Build</strong> do its thing.",
           timeout: 0,
         });
       }
@@ -200,7 +197,10 @@ endif %}
             timeout: 5000,
           });
           if (appList.length == 1 && appList.includes("flex")) {
-            setTimeout(() => this.tooltip.queue({ messages: this.buildCommentary }), 2500);
+            setTimeout(
+              () => this.tooltip.queue({ messages: this.buildCommentary }),
+              2500
+            );
           }
         });
       }
@@ -245,7 +245,7 @@ endif %}
 
         // trigger build from backend
         let resp = await _.appService.deployUpdate({
-          gradient: this.gradients[this.themeOpt],
+          gradient: this.gradientNames[this.themeOpt],
           asciiFont: this.asciiFonts[this.themeOpt],
           font: this.fonts[this.themeOpt],
         });
@@ -264,12 +264,17 @@ endif %}
           return;
         } else {
           let messages = [
-            { text: "Nice one! You just triggered a <strong>Cloud Build</strong> job, it's going to update each service with the theme you selected." },
             {
               text:
-                "The stream of text you see below are the logs output by Cloud Build. It's a bit cramped though - you can maximise the frame by clicking on it."
+                "Nice one! You just triggered a <strong>Cloud Build</strong> job, it's going to update each service with the theme you selected.",
             },
-            { text: "The level at which I've over-engineered this demo is ridiculous..." },
+            {
+              text:
+                "The stream of text you see below are the logs output by Cloud Build. It's a bit cramped though - you can maximise the frame by clicking on it.",
+            },
+            {
+              text: "The level at which I've over-engineered this demo is ridiculous...",
+            },
           ];
           this.tooltip.queue({ messages });
         }
@@ -278,43 +283,38 @@ endif %}
         this.buildTracker.set(data.id, [...this.apps]);
         this.isLoading = false;
       }
-
-      previousTheme(previewFrame) {
-        this.selectTheme(this.themeOpt - 1);
-        previewFrame.src = this.previewUrl;
-      }
-
-      nextTheme(previewFrame) {
-        this.selectTheme(this.themeOpt + 1);
-        previewFrame.src = this.previewUrl;
-      }
-
-      selectTheme(opt) {
-        let themeCount = this.fonts.length - 1;
-        if (opt > themeCount) {
-          this.themeOpt = 0;
-        } else if (opt < 0) {
-          this.themeOpt = themeCount;
-        } else {
-          this.themeOpt = opt;
-        }
-      }
     }
 
     function appBuilder() {
-      var props = {
-        apps: {{ app_service.app_names|tojson }},
-        gradients: {{ app_service.gradients|tojson }},
-        fonts: {{ app_service.google_fonts|tojson }},
-        asciiFonts: {{ app_service.ascii_fonts|tojson }}
-      };
       return {
         tooltips: [],
         tooltip: new Tooltip({ collection: this.tooltips }),
         builder: new AppBuilder(props),
+        themeOpt: 0,
         init() {
           this.tooltip._tooltips = this.tooltips;
           this.builder.init({ tooltip: this.tooltip });
+        },
+        selectTheme(opt) {
+          let themeCount = props.fonts.length - 1;
+          if (opt > themeCount) {
+            this.themeOpt = 0;
+          } else if (opt < 0) {
+            this.themeOpt = themeCount;
+          } else {
+            this.themeOpt = opt;
+          }
+        },
+        themeStyle() {
+          let colors = props.gradients[this.themeOpt].colors;
+          // return `color: ${colors[0]}; mix-blend-mode: soft-light; filter: grayscale(0.5)`;
+          return "";
+        },
+        previewUrl() {
+          let font = encodeURIComponent(props.fonts[this.themeOpt]);
+          let asciiFont = encodeURIComponent(props.asciiFonts[this.themeOpt]);
+          let gradient = encodeURIComponent(props.gradients[this.themeOpt].name);
+          return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
         },
       };
     }

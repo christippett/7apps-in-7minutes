@@ -38,7 +38,7 @@
 
 <div
   class="build-container column is-half is-relative"
-  :class="{ 'is-fullscreen': isFullscreen }"
+  :class="{ 'is-fullscreen': isFullscreen, 'is-active': builder.activeBuild !== null }"
   x-data="{ isFullscreen: false, ...appBuilder() }"
   x-init="init"
 >
@@ -70,29 +70,29 @@
       </template>
     </div>
     <div id="logs" x-show.transition.duration.200ms="builder.activeBuild !== null" class="logs has-select-disabled is-overlay"></div>
-    <div id="build" x-show.transition.duration.200ms="builder.activeBuild === null" class="build-form px-4 py-4">
+    <div id="build" x-show.transition.duration.200ms="builder.activeBuild === null" class="build-form px-5 py-5">
       <nav>
-        <button @click.stop="builder.previousTheme($refs.preview)" class="button is-dark is-light"
+        <button @click.stop="selectTheme(themeOpt - 1)" class="button is-light" :style="themeStyle()"
           >{% include "misc/left.svg" %}</button
         >
-        <button @click.stop="builder.nextTheme($refs.preview)" class="button is-dark is-light"
+        <button @click.stop="selectTheme(themeOpt + 1)" class="button is-light" :style="themeStyle()"
           >{% include "misc/right.svg" %}</button
         >
       </nav>
       <button
         @click.stop="builder.deploy()"
-        class="button is-dark is-light is-fullwidth has-text-shadow"
+        class="button is-light"
         :class="{ 'is-loading': builder.isLoading }"
+        :style="themeStyle()"
       >
-        <span class="icon is-small pr-3">
-          {% include "misc/cloud-upload.svg" %}
+        <span class="icon">
+          {% include "misc/touch.svg" %}
         </span>
-        <span class="has-text-fancy-font">Deploy!</span>
+        <span class="has-text-fancy-font">Deploy</span>
       </button>
       <iframe
         name="preview"
-        :src="builder.previewUrl"
-        x-ref="preview"
+        :src="previewUrl()"
         width="100%"
         height="100%"
         style="z-index:-1;"

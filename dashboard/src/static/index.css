@@ -290,8 +290,8 @@ iframe {
   cursor: zoom-out;
   transition-duration: 0s;
 }
-.build-container:not(.is-fullscreen) .box:hover {
-  transform: scale(1.05);
+.build-container.is-active:not(.is-fullscreen) .box:hover {
+  transform: scale(1.02);
 }
 
 .build-container.is-fullscreen {
@@ -341,13 +341,17 @@ iframe {
   justify-content: space-between;
 }
 .build-form .button {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 400;
   z-index: 100;
+  opacity: 0.6;
+  transition: opacity 0.2s ease-in;
   font-family: "Fugaz One", sans-serif;
-  box-shadow: 2px 4px 10px 2px rgba(80, 80, 80, 0.025);
-  text-transform: uppercase;
-  background: #ffffff2b !important;
+  box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
+  background: rgb(245 245 245 / 90%) !important;
+}
+.build-form .button:hover {
+  opacity: 0.8;
 }
 .build-container.is-fullscreen .button {
   font-size: 1.25rem;
@@ -361,7 +365,6 @@ iframe {
 }
 .build-form .button svg {
   fill: currentColor;
-  filter: drop-shadow(1px 1px 1px rgb(50 50 50 / 10%));
 }
 .build-form nav button {
   border-radius: 50%;
@@ -371,21 +374,6 @@ iframe {
 }
 .button.is-loading span {
   display: none;
-}
-
-.button.is-tiny {
-  line-height: 1;
-  padding: 0.1em 0.5em;
-  height: auto;
-  width: fit-content;
-  font-size: 0.6rem;
-  align-self: self-start;
-  font-family: Inter;
-  text-transform: lowercase;
-}
-.button.is-tiny svg {
-  width: 1.2em;
-  height: 1.2em;
 }
 
 /* ---------------------------------- Logs ---------------------------------- */
