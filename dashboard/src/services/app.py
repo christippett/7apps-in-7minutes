@@ -11,6 +11,7 @@ import requests
 import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
+from colour import Color
 from pyfiglet import FigletFont, figlet_format
 
 from config import settings
@@ -32,7 +33,7 @@ class AppService:
         self._history = defaultdict(lambda: deque(maxlen=5))
         self._current_version = None
         self._build_future = None
-        self._theme_option_limit = 15
+        self._theme_limit = 15
 
     @classmethod
     def load_from_config(cls, path, notifier: Notifier = None):
@@ -45,7 +46,17 @@ class AppService:
         resp = requests.get(
             "https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json"
         )
-        return resp.json()
+        data = resp.json()
+        for gradient in data:
+            try:
+                colors = [Color(c) for c in gradient["colors"]]
+                gradient["vibrant"] = (
+                    min([c.get_saturation() for c in colors]) > 0.5
+                    and min([c.get_luminance() for c in colors]) > 0.2
+                )
+            except ValueError:
+                gradient["vibrant"] = False
+        return data
 
     def get_ascii_fonts(self, max_height=15) -> List[str]:
         fonts = FigletFont.getFonts()
@@ -78,19 +89,17 @@ class AppService:
     @property
     def gradients(self):
         if not hasattr(self, "_gradients"):
-            self._gradients = [
-                g["name"]
-                for g in random.choices(
-                    self.get_gradients(), k=self._theme_option_limit
-                )
-            ]
+            gradients = filter(lambda g: g["vibrant"], self.get_gradients())
+            self._gradients = random.choices(
+                [g["name"] for g in gradients], k=self._theme_limit
+            )
         return self._gradients
 
     @property
     def google_fonts(self):
         if not hasattr(self, "_google_fonts"):
             self._google_fonts = random.choices(
-                self.get_google_fonts(), k=self._theme_option_limit
+                self.get_google_fonts(), k=self._theme_limit
             )
         return self._google_fonts
 
@@ -98,7 +107,7 @@ class AppService:
     def ascii_fonts(self):
         if not hasattr(self, "_ascii_fonts"):
             self._ascii_fonts = random.choices(
-                self.get_ascii_fonts(), k=self._theme_option_limit
+                self.get_ascii_fonts(), k=self._theme_limit
             )
         return self._ascii_fonts
 
@@ -110,7 +119,7 @@ class AppService:
         return list(sorted(self.apps.values(), key=lambda app: app.updated))[0].version
 
     async def start_deployment(self, theme: AppTheme):
-        active_builds = self.build.get_active_builds()
+        active_builds = self.build.active_builds(refresh=True)
         if len(active_builds) > 0:
             logger.warning(
                 "Skipping deployment, %s build(s) already in progress",
@@ -208,20 +217,22 @@ class AppService:
             status = Status.INACTIVE if self._build_future.done() else Status.ACTIVE
         return status.name if as_string else status
 
-    async def start_build_monitor(self, build_ref: BuildRef, interval=10):
+    async def start_build_monitor(self, build_ref: BuildRef):
         if self.deployment_status() == Status.INACTIVE:
-            logging.info("Starting application monitor")
+            logging.info("Starting build monitor")
             await self.notifier.send(
                 topic="build", data={"status": "starting"},
             )
             self._build_future = asyncio.ensure_future(self.poll_apps(build_ref))
+        else:
+            logger.warning("Build monitor already active")
 
     async def stop_build_monitor(self):
         if self.deployment_status() == Status.ACTIVE:
-            logger.info("Stopping application monitor")
+            logger.info("Stopping build monitor")
             await self.notifier.send(
                 topic="build", data={"status": "finished"},
             )
             self._build_future.cancel()
         else:
-            logging.debug("Application monitor not running")
+            logging.warning("No active build monitor to stop")

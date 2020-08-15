@@ -80,9 +80,9 @@ class CloudBuildService:
         data = resp.json()
         return [BuildRef.parse_obj(b) for b in data.get("builds", [])]
 
-    def active_builds(self) -> List[BuildRef]:
+    def active_builds(self, refresh=False) -> List[BuildRef]:
         active_builds = [b for b, f in self._active_builds if not f.done()]
-        if not active_builds:
+        if not active_builds and refresh:
             active_builds = self.get_active_builds()
         return active_builds
 
@@ -92,6 +92,9 @@ class CloudBuildService:
         await self.notifier.send(topic="log", data=data)
 
     async def start_log_stream(self, build_ref: BuildRef):
+        if any(map(lambda b: b.id == build_ref.id, self.active_builds())):
+            logger.info("Build already accounted for - skipping logs")
+            return
         logger.info("Getting Cloud Build logs")
         self.notifier.purge_history("log")
         log_future = asyncio.ensure_future(self.stream_logs(build_ref))

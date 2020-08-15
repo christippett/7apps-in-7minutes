@@ -60,14 +60,17 @@
     <template x-for="tip in tooltips" :key="tip.id">
         <div
           @click.stop="tooltip.close(tip)"
-          x-show.transition.300ms="tip.isActive"
+          x-show.transition.200ms="tip.active"
           class="is-tooltip"
           :class="tooltip.getClass(tip)"
-        ><span x-html="tip.text"></span></div>
+          :data-icon="tip.icon"
+        >
+          <span x-html="tip.text"></span>
+        </div>
       </template>
     </div>
-    <div id="logs" x-show.transition.duration.500ms="builder.hasActiveBuild" class="logs has-select-disabled is-overlay"></div>
-    <div id="build" x-show.transition.duration.500ms="!builder.hasActiveBuild" class="build-form px-4 py-4">
+    <div id="logs" x-show.transition.duration.200ms="builder.activeBuild !== null" class="logs has-select-disabled is-overlay"></div>
+    <div id="build" x-show.transition.duration.200ms="builder.activeBuild === null" class="build-form px-4 py-4">
       <nav>
         <button @click.stop="builder.previousTheme($refs.preview)" class="button is-dark is-light"
           >{% include "misc/left.svg" %}</button

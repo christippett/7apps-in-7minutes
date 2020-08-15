@@ -3,7 +3,14 @@ import logging.config
 import time
 
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
+from fastapi import (
+    BackgroundTasks,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from requests.exceptions import HTTPError
@@ -40,21 +47,21 @@ async def index(request: Request):
 
 
 @app.post("/deploy")
-async def deploy(theme: AppTheme, background_tasks: BackgroundTasks):
+async def deploy(
+    theme: AppTheme, background_tasks: BackgroundTasks, response: Response
+):
     """
     Trigger a Cloud Build job to deploy a new app version.
     """
     try:
-        if app_service.build.active_builds():
-            raise HTTPException(409, detail="Another deployment is already in progress")
+        response.status_code = 409 if app_service.build.active_builds() else 200
         build_ref = await app_service.start_deployment(theme)
         background_tasks.add_task(app_service.build.start_log_stream, build_ref)
         background_tasks.add_task(app_service.start_build_monitor, build_ref)
     except HTTPError as e:
-        logger.exception("Error triggering build: %s", e)
-        raise HTTPException(
-            e.response.status_code, detail="Unable to trigger Cloud Build deployment"
-        )
+        logger.exception(e)
+        code = e.response.status_code
+        raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
     return {"id": build_ref.id}
 
 

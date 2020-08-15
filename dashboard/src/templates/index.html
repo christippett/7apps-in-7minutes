@@ -98,28 +98,36 @@ endif %}
         return this._tooltips;
       }
 
-      add({ text, style = "info", wait = 0, timeout = 10000, isActive = true } = {}) {
+      add({ text, style = "info", wait = 0, timeout = 10000 } = {}) {
         let id = +new Date();
-        let tooltip = { text, style, wait, timeout, id, isActive };
-        if (wait > 0) {
-          tooltip.isActive = false;
-          setTimeout(() => (tooltip.isActive = true), wait);
-        }
+        let tooltip = { id, text, style, wait, timeout, active: true };
+        setTimeout(() => this._tooltips.push(tooltip), wait);
         if (timeout > 0) {
-          setTimeout(() => this.close(tooltip), wait + timeout);
+          setTimeout(() => this.close(tooltip), (timeout + wait));
         }
-        this._tooltips.unshift(tooltip);
         return id;
+      }
+
+      queue({ messages = [], timeout = 8000, wait = 1000, style = "info" } = {}) {
+        var timer = timeout + wait
+        messages.forEach((msg, index) => {
+          let tooltip = typeof msg === "string" ? { text: msg } : msg;
+          setTimeout(() => this.add({ style, timeout, ...tooltip }), (timer * index));
+        });
       }
 
       close(tooltip) {
         let index = this._tooltips.indexOf(tooltip);
-        setTimeout(() => tooltip.isActive = false, 200);
-        setTimeout(() => this._tooltips.splice(index, 1), 1000);
+        tooltip.active = false;
+        setTimeout(() => this._tooltips.splice(index, 1), 300);
       }
 
       reset() {
-        this._tooltips.forEach((tooltip) => this.close(tooltip));
+        this._tooltips.forEach((tooltip) => {
+          if (tooltip.active) {
+            this.close(tooltip);
+          }
+        });
       }
 
       getClass(tooltip) {
@@ -138,10 +146,7 @@ endif %}
         this.buildTracker = new Map();
         this.themeOpt = 0;
         this.isLoading = false;
-      }
-
-      get hasActiveBuild() {
-        return this.buildStatus === "ACTIVE";
+        this.activeBuild = null;
       }
 
       get previewUrl() {
@@ -161,7 +166,6 @@ endif %}
           "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel",
           "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working",
           "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>",
-          "Also yes, I spent a ridiculous amount of time messing around with fonts, colours and emojis for this...",
           "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient",
           "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤",
           "Not long now... See you at the finish line",
@@ -169,25 +173,15 @@ endif %}
       }
 
       init(dependencies) {
-        Object.assign(this, dependencies)
+        Object.assign(this, dependencies);
         this.addAppSubscription();
         this.addBuildSubscription();
         this.addTimelineSubscription();
-
-        console.log(`🏗️ Current build status: ${this.buildStatus}`);
-        // show contextual tooltip based on whether there's an active build in progress
-        if (this.hasActiveBuild) {
-          this.tooltip.add({
-            text: "A Cloud Build deployment is already in progress",
-            style: "warning",
-          });
-        } else {
-          this.tooltip.add({
-            text:
-              "Pick a theme, click <span class='has-text-fancy-font'>Deploy!</span>, then sit back and enjoy the show",
-            timeout: 0,
-          });
-        }
+        this.tooltip.add({
+          text:
+            "Pick a theme, click <span class='has-text-fancy-font'>Deploy!</span>, then sit back and enjoy the show",
+          timeout: 0,
+        });
       }
 
       addAppSubscription() {
@@ -195,26 +189,18 @@ endif %}
         _.notificationService.addSubscription("refresh-app", (message) => {
           let app = message.data.app;
           let build = message.data.build;
-          let inflightApps = this.buildTracker.get(build.id);
-          let doneCount = this.apps.length - inflightApps.length;
-          if (inflightApps) {
-            inflightApps.splice(inflightApps.indexOf(app.name), 1);
+          let appList = this.buildTracker.get(build.id) || [];
+          if (appList) {
+            appList.splice(appList.indexOf(app.name), 1);
           }
-          console.log(
-            `🕹️ ${app.title} has been updated to version ${app.version} (${doneCount}/${this.apps.length})`
-          );
+          console.log(`🕹️ ${app.title} has been updated to version ${app.version}`);
           this.tooltip.add({
             text: `<strong>${app.title}</strong> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
             style: "success",
             timeout: 5000,
           });
-          if (inflightApps.length == 1 && inflightApps.includes("flex"))  {
-            var wait = 0;
-            var timeout = 10000;
-            this.buildCommentary.forEach((text) => {
-              this.tooltip.add({ text, wait, timeout });
-              wait = wait + timeout + 1000;
-            });
+          if (appList.length == 1 && appList.includes("flex")) {
+            setTimeout(() => this.tooltip.queue({ messages: this.buildCommentary }), 2500);
           }
         });
       }
@@ -224,14 +210,15 @@ endif %}
         _.notificationService.addSubscription("build", (message) => {
           let status = message.data.status;
           if (status === "started") {
-
           } else if (status === "finished") {
-            this.buildStatus = "INACTIVE";
-            this.tooltip.reset();
             this.tooltip.add({
-              text: `All services updated. That's a wrap!`,
+              text: `All seven services have been updated updated. That's a wrap!`,
               style: "success",
             });
+            setTimeout(() => {
+              this.activeBuild = null;
+              this.tooltip.reset();
+            }, 20000);
           }
         });
       }
@@ -264,22 +251,31 @@ endif %}
         });
         let data = await resp.json();
 
-        // show error via tooltip
-        if (!resp.ok) {
+        // process response
+        if (resp.status == 409) {
+          let messages = [
+            "Opps, it seems a deployment is already in progress.",
+            "Let's take a look...",
+          ];
+          this.tooltip.queue({ messages, style: "danger" });
+        } else if (!resp.ok) {
           this.tooltip.add({ text: data.detail, style: "danger" });
+          this.isLoading = false;
           return;
+        } else {
+          let messages = [
+            { text: "Nice one! You just triggered a <strong>Cloud Build</strong> job, it's going to update each service with the theme you selected." },
+            {
+              text:
+                "The stream of text you see below are the logs output by Cloud Build. It's a bit cramped though - you can maximise the frame by clicking on it."
+            },
+            { text: "The level at which I've over-engineered this demo is ridiculous..." },
+          ];
+          this.tooltip.queue({ messages });
         }
 
-        console.info(`👷 Cloud Build deployment started (${data.id})`);
-        this.buildStatus = "ACTIVE";
+        this.activeBuild = data;
         this.buildTracker.set(data.id, [...this.apps]);
-        this.tooltip.add({ text: "Cloud Build deployment started", style: "primary" });
-        this.tooltip.add({
-          text:
-            "The logs below are coming to you <strong><em>LIVE</em></strong> from Cloud Build",
-          wait: 7500,
-          style: "danger",
-        });
         this.isLoading = false;
       }
 
@@ -310,8 +306,7 @@ endif %}
         apps: {{ app_service.app_names|tojson }},
         gradients: {{ app_service.gradients|tojson }},
         fonts: {{ app_service.google_fonts|tojson }},
-        asciiFonts: {{ app_service.ascii_fonts|tojson }},
-        buildStatus: {{ app_service.deployment_status(as_string=True)|tojson }}
+        asciiFonts: {{ app_service.ascii_fonts|tojson }}
       };
       return {
         tooltips: [],
@@ -320,7 +315,7 @@ endif %}
         init() {
           this.tooltip._tooltips = this.tooltips;
           this.builder.init({ tooltip: this.tooltip });
-        }
+        },
       };
     }
   </script>

@@ -5,6 +5,7 @@ import random
 from dataclasses import dataclass
 from typing import List, Optional
 
+from colour import Color
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
@@ -28,7 +29,11 @@ class AppTheme:
     def __post_init__(self):
         with open("theme.json", "r") as f:
             theme = json.load(f)
-        self.gradients = {i["name"]: i["colors"] for i in theme["gradients"]}
+        self.gradients = {
+            g["name"]: g["colors"]
+            for g in theme["gradients"]
+            if self.is_vibrant(list(map(Color, g["colors"])))
+        }
         if not self.gradient:
             self.gradient = random.choice(list(self.gradients.keys()))
         if not self.font:
@@ -36,6 +41,12 @@ class AppTheme:
         if not self.ascii_font:
             self.ascii_font = random.choice(theme["ascii_fonts"])
         self.colors = self.gradients[self.gradient]
+
+    def is_vibrant(self, colors: List[Color]):
+        return (
+            min([c.get_saturation() for c in colors]) > 0.5
+            and min([c.get_luminance() for c in colors]) > 0.2
+        )
 
 
 @dataclass
