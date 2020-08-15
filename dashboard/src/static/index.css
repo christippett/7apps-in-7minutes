@@ -37,6 +37,7 @@ footer {
   flex-direction: column;
   justify-content: center;
   padding: 2rem;
+  max-width: 1100px;
 }
 
 .title {
@@ -72,7 +73,7 @@ ol > li {
   align-items: center;
   position: absolute;
   max-width: 90%;
-  bottom: calc(100% - 0.6rem);
+  bottom: calc(100% - 0.7rem);
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -343,7 +344,7 @@ iframe {
   background: rgb(245 245 245 / 90%) !important;
   box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
   font-size: 0.8rem;
-  opacity: 0.6;
+  opacity: 1;
   transition: opacity 0.2s ease-in;
   z-index: 100;
 }
@@ -565,7 +566,7 @@ iframe {
     margin-left: 2rem;
   }
   .build-container.is-fullscreen {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin: 0.5rem 1.5rem 1.5rem;
   }
   .is-fullscreen .logs > p .lg-step {

@@ -25,7 +25,7 @@
   <div class="box is-relative px-0 py-0">
     <div id="logs" x-show.transition.duration.200ms="builder.activeBuild !== null" class="logs has-select-disabled is-overlay"></div>
     <div id="build" x-show.transition.duration.200ms="builder.activeBuild === null" class="build-form">
-      <button @click.stop="builder.deploy()" class="deploy button is-light" :class="{ 'is-loading': builder.isLoading }">
+      <button @click.stop="builder.deploy(themeOpt)" class="deploy button is-light" :class="{ 'is-loading': builder.isLoading }">
         <span class="icon">
           {% include "misc/touch.svg" %}
         </span>

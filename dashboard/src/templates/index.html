@@ -20,7 +20,7 @@ endif %}
 
   <body>
     <section class="container">
-      <div class="content mb-6">
+      <div class="content has-text-centered mb-6">
         <p class="title is-3">7-Apps in 7-minutes</p>
         <p class="subtitle is-6">
           Seven apps. One codebase. One cloud.
@@ -148,7 +148,7 @@ endif %}
           this.tooltip.add({
             text: `<strong>${app.title}</strong> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
             style: "success",
-            timeout: 80000,
+            timeout: 8000,
           });
           if (appList.length == 1 && appList.includes("flex")) {
             setTimeout(
@@ -172,7 +172,7 @@ endif %}
             setTimeout(() => {
               this.activeBuild = null;
               this.tooltip.reset();
-            }, 20000);
+            }, 10000);
           }
         });
       }
@@ -191,7 +191,7 @@ endif %}
         });
       }
 
-      async deploy() {
+      async deploy(themeOpt) {
         console.debug(`🏗️ Starting Cloud Build deployment`);
         this.isLoading = true;
         this.tooltip.reset();
@@ -199,9 +199,9 @@ endif %}
 
         // trigger build from backend
         let resp = await _.appService.deployUpdate({
-          gradient: this.gradientNames[this.themeOpt],
-          asciiFont: this.asciiFonts[this.themeOpt],
-          font: this.fonts[this.themeOpt],
+          gradient: this.gradientNames[themeOpt],
+          asciiFont: this.asciiFonts[themeOpt],
+          font: this.fonts[themeOpt],
         });
         let data = await resp.json();
 

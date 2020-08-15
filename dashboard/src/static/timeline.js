@@ -160,7 +160,7 @@
         .remove()
         .append("linearGradient")
         .classed("bg", true)
-        .attr("id", (d) => d.data.id)
+        .attr("id", (d) => `bg-${d.data.id}`)
         .attr("x1", -1.5)
         .attr("x2", 1.5)
         .attr("y1", -2)
@@ -188,7 +188,7 @@
 
       // Label text
       this.updateNodes({ parent: "g.labels", tag: "text.label", nodes })
-        .attr("fill", (d) => `url(#${d.data.id})`)
+        .attr("fill", (d) => `url(#bg-${d.data.id})`)
         .attr("style", (d) => `font-family: '${d.data.theme.font}', sans-serif`)
         .attr("x", (d) => d.x)
         .attr("y", (d) => d.y)
@@ -197,12 +197,12 @@
 
       // Link labels to axis
       this.updateNodes({ parent: "g.links", tag: "path.label", nodes })
-        .attr("stroke", (d) => `url(#${d.data.id})`)
+        .attr("stroke", (d) => `url(#bg-${d.data.id})`)
         .attr("d", (d) => renderer.generatePath(d));
 
       // Place markers on axis
       this.updateNodes({ parent: "g.markers", tag: "circle.label", nodes })
-        .attr("fill", (d) => `url(#${d.data.id})`)
+        .attr("fill", (d) => `url(#bg-${d.data.id})`)
         .attr("cy", (d) => d.getRoot().idealPos)
         .attr("r", 3);
     }
