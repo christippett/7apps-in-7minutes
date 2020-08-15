@@ -18,65 +18,29 @@ body {
 
 footer {
   flex: 0;
-  padding: max(env(safe-area-inset-top), 1rem) max(env(safe-area-inset-left), 1rem)
-    max(env(safe-area-inset-bottom), 1rem) max(env(safe-area-inset-right), 1rem);
+  padding: max(env(safe-area-inset-top), 2rem) max(env(safe-area-inset-left), 2rem)
+    max(env(safe-area-inset-bottom), 2rem) max(env(safe-area-inset-right), 2rem);
   font-size: 0.8rem;
-  transition: opacity 0.2s ease-in;
 }
 
 /* --------------------------------- Content -------------------------------- */
-
-@media (min-width: 1024px) {
-  .content-container {
-    max-width: 400px !important;
-    margin-right: 2rem;
-    margin-top: 2rem;
-  }
-  .iframe-container {
-    margin-left: 2rem !important;
-  }
-  .container {
-    padding: 10em 2rem !important;
-  }
-  .build-container.is-fullscreen {
-    font-size: 1.3rem !important;
-    margin: 0.5rem 1.5rem 1.5rem !important;
-  }
-  .is-fullscreen .logs > p .lg-step {
-    display: inline-block;
-  }
-  .is-fullscreen .logs > p .lg-id {
-    min-width: 120px !important;
-  }
-}
-
-.tabs {
-  font-size: 0.8rem;
-}
-
-.content {
-  line-height: 1.4;
-  font-size: 0.9rem;
-}
 
 .box {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 180px;
+  min-height: 200px;
 }
 
 .container {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 2rem;
 }
 
-.container > .columns {
-  flex: 1;
-}
-
-.content-container {
-  width: 100%;
+.title {
+  font-family: "Fugaz One", sans-serif;
 }
 
 ol > li {
@@ -107,7 +71,8 @@ ol > li {
   flex-direction: column;
   align-items: center;
   position: absolute;
-  bottom: calc(100% + 0.1em);
+  max-width: 90%;
+  bottom: calc(100% - 0.6rem);
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -117,7 +82,22 @@ ol > li {
   line-height: 1.4;
   text-align: left;
   white-space: break-spaces;
+  transition: opacity 0.2s ease-in;
+  opacity: 0;
 }
+.is-active .tooltips,
+.is-fullscreen .tooltips {
+  opacity: 1;
+}
+.is-fullscreen .tooltips {
+  bottom: inherit;
+  top: 0;
+  margin-top: 1rem;
+}
+.build-container:hover .tooltips {
+  opacity: 1;
+}
+
 .is-tooltip {
   display: inline-flex;
   align-items: center;
@@ -142,6 +122,7 @@ ol > li {
   display: block;
   left: 0;
   right: 0;
+  bottom: -0.5em;
   margin: 0 auto;
   position: absolute;
   height: 1.1em;
@@ -149,7 +130,6 @@ ol > li {
   background: inherit;
   transform: rotate(45deg);
   z-index: 1;
-  bottom: -0.5em;
   box-shadow: 1px 1px 1px -1px;
 }
 .is-tooltip:before {
@@ -182,10 +162,16 @@ ol > li {
 
 /* -------------------------------- Timeline -------------------------------- */
 
+.timeline-container {
+  margin: 0 auto;
+  width: 15%;
+  height: 100%;
+  display: flex;
+}
+
 svg.timeline {
   overflow: visible;
   margin: 0 auto;
-  padding-left: 20px;
 }
 .axis line {
   stroke-width: 2px;
@@ -195,7 +181,7 @@ svg.timeline {
   fill: #dbdbdb;
 }
 .axis text {
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   fill: #b1b1b1;
   letter-spacing: 1px;
 }
@@ -280,100 +266,143 @@ iframe {
 .build-container {
   background: none;
   order: -1;
+  cursor: zoom-in;
+  transition: opacity 0.2s ease-in, filter 0.2s ease-in;
+}
+
+.build-container.is-fullscreen {
+  cursor: zoom-out;
+}
+
+.build-container.is-fullscreen .is-hidden-tablet {
+  display: block !important;
 }
 
 .build-container .box {
   transition: transform 0.2s ease;
-  cursor: zoom-in;
-}
-.build-container.is-fullscreen .box {
-  cursor: zoom-out;
-  transition-duration: 0s;
-}
-.build-container.is-active:not(.is-fullscreen) .box:hover {
-  transform: scale(1.02);
+  overflow: hidden;
 }
 
-.build-container.is-fullscreen {
+.build-container.is-fullscreen .box {
+  transition-duration: 0s;
+}
+
+.build-container.is-active:not(.is-fullscreen) .box:hover {
+  transform: scale(1.05);
+}
+
+/* Fullscreen --------------------------------------------------------------- */
+
+.is-fullscreen {
   display: flex;
   flex-direction: column;
-  position: fixed !important;
   font-size: 1.1rem;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  height: auto;
-  width: auto !important;
-  margin: 0 0.25rem 0.25rem;
+  margin: 0.5rem 0.75rem 1.5rem;
   z-index: 999;
 }
-.build-container.is-fullscreen:after {
+
+.is-fullscreen:after {
   content: "";
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  height: auto;
-  width: auto;
   z-index: -1;
   background: rgba(255, 255, 255, 0.95);
 }
 
+.is-fullscreen,
+.is-fullscreen:after {
+  height: auto !important;
+  width: auto !important;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+/* Build Form --------------------------------------------------------------- */
+
 .build-form {
+  height: 100%;
+  padding: 1.5rem;
   position: absolute;
   left: 0;
   right: 0;
   display: flex;
-  z-index: 10;
-  height: 100%;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  z-index: 10;
   transition: color 2s ease-in;
 }
-.build-form nav {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  justify-content: space-between;
+
+.is-fullscreen .build-form {
+  padding: 2em;
+  font-size: 2rem;
 }
+
 .build-form .button {
+  background: rgb(245 245 245 / 90%) !important;
+  box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
   font-size: 0.8rem;
-  font-weight: 400;
-  z-index: 100;
   opacity: 0.6;
   transition: opacity 0.2s ease-in;
-  font-family: "Fugaz One", sans-serif;
-  box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
-  background: rgb(245 245 245 / 90%) !important;
+  z-index: 100;
 }
+
 .build-form .button:hover {
   opacity: 0.8;
 }
-.build-container.is-fullscreen .button {
-  font-size: 1.25rem;
+
+.deploy.button {
+  font-family: "Fugaz One", sans-serif;
+  font-size: 0.7rem;
+  width: max-content;
 }
-.build-container.is-fullscreen .content-blurb {
-  display: block !important;
+
+.is-fullscreen .deploy.button {
+  font-size: 1rem;
 }
-.content-blurb {
-  margin-bottom: 3.5rem;
-  max-width: 500px;
-}
+
 .build-form .button svg {
   fill: currentColor;
 }
-.build-form nav button {
+
+/* previous/next theme navigation */
+
+.build-form nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+.is-fullscreen .build-form nav {
+  padding: 1em;
+  font-size: 1.25rem;
+}
+
+.build-form nav .button {
   border-radius: 50%;
-  height: 28px;
-  width: 28px;
+  height: 2em;
+  width: 2em;
   padding: 2px;
 }
-.button.is-loading span {
-  display: none;
+
+/* Preview Container -------------------------------------------------------- */
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.5rem;
+  -webkit-animation: 60s ease 0s infinite normal none running gradient-slider;
+  animation: 60s ease 0s infinite normal none running gradient-slider;
+}
+
+.preview .title {
+  color: white;
+  text-shadow: 1px 1px 1px rgb(50 50 50 / 30%);
+  font-size: 1.75em;
 }
 
 /* ---------------------------------- Logs ---------------------------------- */
@@ -390,6 +419,7 @@ iframe {
   background: linear-gradient(70deg, #112023, #2c3346) 0% 0% / 150% 150%;
   -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
   animation: 10s ease 0s infinite normal none running gradient-slider;
+  z-index: 1;
 }
 .logs .frame-label {
   background: #3d3d3d;
@@ -526,6 +556,38 @@ iframe {
 }
 .logs::-webkit-scrollbar-track {
   overflow: hidden;
+}
+
+/* Media Queries ------------------------------------------------------------ */
+
+@media (min-width: 1024px) {
+  .iframe-container {
+    margin-left: 2rem;
+  }
+  .build-container.is-fullscreen {
+    font-size: 1.3rem;
+    margin: 0.5rem 1.5rem 1.5rem;
+  }
+  .is-fullscreen .logs > p .lg-step {
+    display: inline-block;
+  }
+  .is-fullscreen .logs > p .lg-id {
+    min-width: 120px;
+  }
+}
+
+@media (min-width: 768px) {
+  .iframe-container {
+    --columnGap: 6% !important;
+  }
+  .build-container:not(.is-active) {
+    opacity: 0.25;
+    filter: grayscale(1);
+  }
+  .build-container:not(.is-active):hover {
+    opacity: 1;
+    filter: none;
+  }
 }
 
 /* -------------------------------- Animation ------------------------------- */

@@ -2,10 +2,12 @@
   "use strict";
   class Timeline {
     constructor({ el, opts }) {
+      this.el = d3.select(el);
+      this.height = this.el.node().getBoundingClientRect().height;
+      this.width = this.el.node().getBoundingClientRect().width;
       this.options = opts;
-      this.el = el;
-      this.innerWidth = opts.initialWidth - opts.margin.left - opts.margin.right;
-      this.innerHeight = opts.initialHeight - opts.margin.top - opts.margin.bottom;
+      this.innerWidth = this.width - this.width / 2;
+      this.innerHeight = this.height - opts.margin.top - opts.margin.bottom;
       this.nodeMap = new Map();
       this._canvas = document.createElement("canvas").getContext("2d");
     }
@@ -24,9 +26,9 @@
     newSvg() {
       let svg = d3
         .create("svg")
-        .attr("viewBox", `0 0 ${this.options.initialWidth} ${this.options.initialHeight}`)
-        .attr("width", this.options.initialWidth)
-        .attr("height", this.options.initialHeight)
+        .attr("viewBox", `0 0 ${this.width} ${this.height}`)
+        .attr("width", this.width)
+        .attr("height", this.height)
         .classed("timeline", true);
       svg
         .append("defs")
@@ -48,11 +50,11 @@
     create() {
       this.svg = this.newSvg();
       this.drawTimeline();
-      d3.select(this.el).append(() => this.svg.node());
+      this.el.append(() => this.svg.node());
     }
 
     remove() {
-      d3.select(this.el).remove();
+      this.el.remove();
     }
 
     push(item = { id, label, value, theme }) {
@@ -80,10 +82,7 @@
     drawTimeline() {
       let timeline = this.svg
         .append("g")
-        .attr(
-          "transform",
-          `translate(${this.options.margin.left}, ${this.options.margin.top})`
-        );
+        .attr("transform", `translate(${this.width / 2}, ${this.options.margin.top})`);
 
       // Add axis
       let axis = timeline.append("g").classed("axis", true);
@@ -113,7 +112,7 @@
         .append("text")
         .attr("x", 0)
         .attr("y", (d) => d.y)
-        .attr("transform", "translate(-12, 2.5)")
+        .attr("transform", "translate(15, 2.5)")
         .attr("text-anchor", "end")
         .text((d) => {
           return d.tick % 60 == 0 ? `${d.tick / 60}min` : "-";
@@ -210,9 +209,7 @@
   }
 
   const timelineOptions = {
-    margin: { left: 25, right: 0, top: 25, bottom: 0 },
-    initialWidth: 250,
-    initialHeight: 450,
+    margin: { left: 40, right: 0, top: 50, bottom: 50 },
     maxValue: 10 * 60, // max seconds
     tickValue: 30,
     labella: {

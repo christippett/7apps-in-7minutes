@@ -19,46 +19,16 @@ endif %}
   </head>
 
   <body>
-    <section class="container is-flex">
-      <div class="columns is-desktop is-centered">
-        <div
-          x-data="{ tab: 'timeline' }"
-          class="content-container column is-narrow is-relative"
-        >
-          <div class="content">
-            <p class="title is-4">7-Apps in 7-minutes</p>
-            <p class="subtitle is-6">
-              One cloud. One codebase. Seven apps.
-            </p>
-          </div>
-          <nav class="mb-5">
-            <div class="tabs">
-              <ul>
-                <li :class="{ 'is-active': tab === 'overview' }">
-                  <a @click="tab = 'overview'">
-                    <span>Overview</span>
-                  </a>
-                </li>
-                <li :class="{ 'is-active': tab === 'timeline' }">
-                  <a @click="tab = 'timeline'">
-                    <span>Timeline</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </nav>
-          <div>
-            <div x-show="tab === 'overview'">
-              {% include "content/overview.html" %}
-            </div>
-            <div x-show="tab === 'timeline'">
-              {% include "content/timeline.html" %}
-            </div>
-          </div>
-        </div>
-        <div class="iframe-container column columns is-multiline">
-          {% include "content/iframes.html" %}
-        </div>
+    <section class="container">
+      <div class="content mb-6">
+        <p class="title is-3">7-Apps in 7-minutes</p>
+        <p class="subtitle is-6">
+          Seven apps. One codebase. One cloud.
+        </p>
+      </div>
+      <div class="iframe-container columns is-variable is-multiline is-relative">
+        <div id="timeline" class="timeline-container is-overlay"></div>
+        {% include "content/iframes.html" %} {% include "content/build.html" %}
       </div>
     </section>
     <footer>
@@ -153,22 +123,6 @@ endif %}
         WebFont.load({ google: { families: this.fonts } });
       }
 
-      get buildCommentary() {
-        return [
-          "We're just waiting on <strong>App Engine: Flexible</strong> now",
-          "Since we have some time on our hands, let me explain a bit about what's happening / has happened",
-          "Cloud Build first builds a Docker image for our app, most services depend on this image for their deployment",
-          "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers",
-          "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed",
-          "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel",
-          "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working",
-          "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>",
-          "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient",
-          "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤",
-          "Not long now... See you at the finish line",
-        ];
-      }
-
       init(dependencies) {
         Object.assign(this, dependencies);
         this.addAppSubscription();
@@ -176,7 +130,7 @@ endif %}
         this.addTimelineSubscription();
         this.tooltip.add({
           text:
-            "Pick a theme, click <span class='has-text-fancy-font'>Deploy</span>, then sit back, relax and watch <strong>Cloud Build</strong> do its thing.",
+            "Deploy a new version and watch the deployment live. Choose a theme, click <span class='has-text-fancy-font'>Deploy</span> and <strong>Cloud Build</strong> will take care of the rest.",
           timeout: 0,
         });
       }
@@ -194,7 +148,7 @@ endif %}
           this.tooltip.add({
             text: `<strong>${app.title}</strong> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
             style: "success",
-            timeout: 5000,
+            timeout: 80000,
           });
           if (appList.length == 1 && appList.includes("flex")) {
             setTimeout(
@@ -283,6 +237,22 @@ endif %}
         this.buildTracker.set(data.id, [...this.apps]);
         this.isLoading = false;
       }
+
+      get buildCommentary() {
+        return [
+          "We're just waiting on <strong>App Engine: Flexible</strong> now",
+          "Since we have some time on our hands, let me explain a bit about what's happening / has happened",
+          "Cloud Build first builds a Docker image for our app, most services depend on this image for their deployment",
+          "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers",
+          "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed",
+          "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel",
+          "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working",
+          "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>",
+          "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient",
+          "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤",
+          "Not long now... See you at the finish line",
+        ];
+      }
     }
 
     function appBuilder() {
@@ -305,10 +275,17 @@ endif %}
             this.themeOpt = opt;
           }
         },
-        themeStyle() {
+        themeStyle(scope) {
           let colors = props.gradients[this.themeOpt].colors;
-          // return `color: ${colors[0]}; mix-blend-mode: soft-light; filter: grayscale(0.5)`;
-          return "";
+          let primaryColor = colors[0];
+          if (scope === "preview") {
+            return [
+              `background: ${primaryColor};`,
+              `background: linear-gradient(45deg,${colors.join(",")}) 0% 0% / 400% 400%;`,
+            ].join(" ");
+          } else if (scope === "title") {
+            return `font-family: '${props.fonts[this.themeOpt]}';`;
+          }
         },
         previewUrl() {
           let font = encodeURIComponent(props.fonts[this.themeOpt]);
