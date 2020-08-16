@@ -1,7 +1,5 @@
 steps:
-  # ========================================================================== #
-  # 📜 Setup                                                                   #
-  # ========================================================================== #
+  # 📜 Export Python dependencies as `requirements.txt` ---------------------- #
 
   - id: setup
     name: python:3.8-slim
@@ -14,9 +12,22 @@ steps:
     dir: "app"
     waitFor: ["-"]
 
-  # ========================================================================== #
-  #  📦 BUILD DOCKER IMAGE                                                     #
-  # ========================================================================== #
+  # 🗑️ Remove stopped App Engine versions ------------------------------------ #
+
+  - id: housekeeping
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        gcloud app versions delete --quiet \
+          `gcloud app versions list \
+            --format="value(id)" \
+            --filter="version.servingStatus:STOPPED" \
+          | sort | uniq`
+    waitFor: ["-"]
+
+  # 📦 Prepare Docker image -------------------------------------------------- #
 
   - id: docker-pull
     name: gcr.io/cloud-builders/docker
@@ -53,7 +64,7 @@ steps:
     waitFor: ["docker-build"]
 
   # ========================================================================== #
-  # 🕹️ CLOUD FUNCTIONS                                                         #
+  # 🕹️ CLOUD FUNCTIONS
   # ========================================================================== #
 
   - id: function
@@ -74,7 +85,7 @@ steps:
     waitFor: ["setup"]
 
   # ========================================================================== #
-  # 🥔 APP ENGINE (STANDARD)                                                   #
+  # 🥔 APP ENGINE (STANDARD)
   # ========================================================================== #
 
   - id: gae-standard
@@ -97,7 +108,7 @@ steps:
     waitFor: ["setup"]
 
   # ========================================================================== #
-  # 🐌 APP ENGINE (FLEXIBLE)                                                   #
+  # 🐌 APP ENGINE (FLEXIBLE)
   # ========================================================================== #
 
   - id: gae-flexible
@@ -115,7 +126,7 @@ steps:
     waitFor: ["docker-push"]
 
   # ========================================================================== #
-  # 🏃‍♀️ CLOUD RUN                                                               #
+  # 🏃‍♀️ CLOUD RUN
   # ========================================================================== #
 
   - id: run-managed
@@ -132,7 +143,7 @@ steps:
     waitFor: ["docker-push"]
 
   # ========================================================================== #
-  # 🏃‍♂️ CLOUD RUN (ANTHOS)                                                      #
+  # 🏃‍♂️ CLOUD RUN (ANTHOS)
   # ========================================================================== #
 
   - id: run-anthos
@@ -150,7 +161,7 @@ steps:
     waitFor: ["docker-push"]
 
   # ========================================================================== #
-  # 🤖 GOOGLE COMPUTE ENGINE                                                   #
+  # 🤖 GOOGLE COMPUTE ENGINE
   # ========================================================================== #
 
   - id: compute-engine
@@ -173,7 +184,7 @@ steps:
     waitFor: ["docker-push"]
 
   # ========================================================================== #
-  # 🚂 GOOGLE KUBERENTES ENGINE (GKE)                                          #
+  # 🚂 GOOGLE KUBERENTES ENGINE (GKE)
   # ========================================================================== #
 
   - id: kubernetes
@@ -187,23 +198,6 @@ steps:
       ]
     dir: "app"
     waitFor: ["docker-push"]
-
-  # ========================================================================== #
-  # 🗑️ Remove stopped App Engine versions                                      #
-  # ========================================================================== #
-
-  - id: clean-up
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: bash
-    args:
-      - "-c"
-      - |
-        gcloud app versions delete --quiet \
-          `gcloud app versions list \
-            --format="value(id)" \
-            --filter="version.servingStatus:STOPPED" \
-          | sort | uniq`
-    waitFor: ["gae-standard", "gae-flexible"]
 
 # ⚙️ Configuration ----------------------------------------------------------- #
 
