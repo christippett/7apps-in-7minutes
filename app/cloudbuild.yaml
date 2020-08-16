@@ -73,7 +73,7 @@ steps:
   # 🥔 APP ENGINE (STANDARD)
   # ========================================================================== #
 
-  - id: appengine-std
+  - id: app-engine-std
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: bash
     args:
@@ -96,7 +96,7 @@ steps:
   # 🐌 APP ENGINE (FLEXIBLE)
   # ========================================================================== #
 
-  - id: appengine-flex
+  - id: app-engine-flex
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
@@ -195,8 +195,8 @@ steps:
         gcloud app versions list \
           --format="value(id)" \
           --filter="version.createTime<-P1h AND version.servingStatus:STOPPED" \
-        | sort | uniq | xargs -I {} gcloud app versions delete {}
-    waitFor: ["appengine-std", "appengine-flex"]
+        | sort | uniq | xargs -I {} gcloud app versions delete {} || true
+    waitFor: ["app-engine-std", "app-engine-flex"]
 
 # ⚙️ Configuration ----------------------------------------------------------- #
 
