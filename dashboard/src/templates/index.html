@@ -21,9 +21,10 @@ endif %}
   <body>
     <section class="container">
       <div class="content has-text-centered mb-6">
-        <p class="title is-3">7-Apps in 7-minutes</p>
-        <p class="subtitle is-6">
-          Seven apps. One codebase. One cloud.
+        <p class="title is-fancy is-3">7-Apps in 7-minutes</p>
+        <p class="subtitle is-italic is-6">
+          Deploying a Python Flask app to every service on
+          <span class="google-logo">{% include "misc/google-cloud-logo.svg" %}</span>
         </p>
       </div>
       <div class="iframe-container columns is-variable is-multiline is-relative">
@@ -71,7 +72,7 @@ endif %}
         return this._tooltips;
       }
 
-      add({ text, style = "info", wait = 0, timeout = 10000 } = {}) {
+      add({ text, style = "info", wait = 0, timeout = 12000 } = {}) {
         let id = +new Date();
         let tooltip = { id, text, style, wait, timeout, active: true };
         setTimeout(() => this._tooltips.push(tooltip), wait);
@@ -81,7 +82,7 @@ endif %}
         return id;
       }
 
-      queue({ messages = [], timeout = 8000, wait = 1000, style = "info" } = {}) {
+      queue({ messages = [], timeout = 12000, wait = 1000, style = "info" } = {}) {
         var timer = timeout + wait;
         messages.forEach((msg, index) => {
           let tooltip = typeof msg === "string" ? { text: msg } : msg;
@@ -130,7 +131,7 @@ endif %}
         this.addTimelineSubscription();
         this.tooltip.add({
           text:
-            "Deploy a new version and watch the deployment live. Choose a theme, click <span class='has-text-fancy-font'>Deploy</span> and <strong>Cloud Build</strong> will take care of the rest.",
+            "Pick a theme, click <span class='is-fancy'>Deploy</span> and then sit back, relax and let <strong>Cloud Build</strong> take care of the rest.",
           timeout: 0,
         });
       }
@@ -146,15 +147,20 @@ endif %}
           }
           console.log(`🕹️ ${app.title} has been updated to version ${app.version}`);
           this.tooltip.add({
-            text: `<strong>${app.title}</strong> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
+            text: `<span class='is-fancy'>${app.title}</span> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
             style: "success",
-            timeout: 8000,
+            timeout: 6000,
           });
           if (appList.length == 1 && appList.includes("flex")) {
-            setTimeout(
-              () => this.tooltip.queue({ messages: this.buildCommentary }),
-              2500
-            );
+            let messages = [
+              "Just waiting on <span class='is-fancy'>App Engine: Flexible</span> now, it takes <em>significantly</em> longer to update than every other service.",
+              {
+                text:
+                  "Don't be alarmed that no new logs show up, we won't see anything now until the deployment finishes.",
+                style: "warning",
+              },
+            ];
+            setTimeout(() => this.tooltip.queue({ messages, style: "danger" }), 20000);
           }
         });
       }
@@ -167,12 +173,14 @@ endif %}
           } else if (status === "finished") {
             this.tooltip.add({
               text: `All seven services have been updated updated. That's a wrap!`,
-              style: "success",
+              style: "primary",
+              wait: 2000,
+              timeout: 0,
             });
             setTimeout(() => {
               this.activeBuild = null;
               this.tooltip.reset();
-            }, 10000);
+            }, 30000);
           }
         });
       }
@@ -191,7 +199,7 @@ endif %}
         });
       }
 
-      async deploy(themeOpt) {
+      async deploy(themeOpt = 0) {
         console.debug(`🏗️ Starting Cloud Build deployment`);
         this.isLoading = true;
         this.tooltip.reset();
@@ -205,53 +213,37 @@ endif %}
         });
         let data = await resp.json();
 
-        // process response
+        // Queue some messages to show a commentary when the build is
+        // in-progress
+        let messages = [
+          "The stream of text below are the logs from Cloud Build. Click anywhere below to make them larger.",
+          {
+            text:
+              "Special shoutout to my wife for her careful consideration for what emojis to use for these tooltips, the maritime theme was her idea. Thanks hun ❤️",
+            style: "primary",
+            wait: 12000,
+          },
+        ];
+
+        // A status code of 409 means another build is in progress
         if (resp.status == 409) {
-          let messages = [
-            "Opps, it seems a deployment is already in progress.",
-            "Let's take a look...",
-          ];
-          this.tooltip.queue({ messages, style: "danger" });
+          messages.unshift({
+            text: "It seems a deployment is already in progress. Let's take a look...",
+            style: "danger",
+          });
         } else if (!resp.ok) {
           this.tooltip.add({ text: data.detail, style: "danger" });
           this.isLoading = false;
           return;
         } else {
-          let messages = [
-            {
-              text:
-                "Nice one! You just triggered a <strong>Cloud Build</strong> job, it's going to update each service with the theme you selected.",
-            },
-            {
-              text:
-                "The stream of text you see below are the logs output by Cloud Build. It's a bit cramped though - you can maximise the frame by clicking on it.",
-            },
-            {
-              text: "The level at which I've over-engineered this demo is ridiculous...",
-            },
-          ];
-          this.tooltip.queue({ messages });
+          messages.unshift(
+            "Nice one! You just triggered a new <strong>Cloud Build</strong> job, it's going to deploy a new version of the app to each of the services."
+          );
         }
-
+        this.tooltip.queue({ messages });
         this.activeBuild = data;
         this.buildTracker.set(data.id, [...this.apps]);
         this.isLoading = false;
-      }
-
-      get buildCommentary() {
-        return [
-          "We're just waiting on <strong>App Engine: Flexible</strong> now",
-          "Since we have some time on our hands, let me explain a bit about what's happening / has happened",
-          "Cloud Build first builds a Docker image for our app, most services depend on this image for their deployment",
-          "<strong>Cloud Functions</strong> and <strong>App Engine: Standard</strong> are the only two services that don't use containers",
-          "Each service uses a slightly different method for deploying/updating apps, in most cases a single CLI command is all that's needed",
-          "<strong>Compute Engine</strong> is probably the trickiest - it uses a custom webhook that Cloud Build connects to via a <a href='https://cloud.google.com/iap/docs/using-tcp-forwarding'>Identity-Aware Proxy</a> TCP tunnel",
-          "Everything is setup/documented using <strong>Terraform</strong>. Just as well too, otherwise I'm sure I'd forget all the steps it took to get Anthos working",
-          "<a href='https://github.com/servian/7apps-google-cloud'>If you're interested, the source code for everything is on GitHub</a>",
-          "<strong>App Engine: Flexible</strong> always takes this long, we just have to patient",
-          "<strong>App Engine: Flexible</strong>... more like <strong>App Engine: <em>Fle-Zzzzz-ible</em></strong> 💤",
-          "Not long now... See you at the finish line",
-        ];
       }
     }
 

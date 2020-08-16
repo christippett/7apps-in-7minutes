@@ -33,7 +33,7 @@ class AppService:
         self._history = defaultdict(lambda: deque(maxlen=5))
         self._current_version = None
         self._build_future = None
-        self._theme_limit = 15
+        self._theme_limit = 20
 
     @classmethod
     def load_from_config(cls, path, notifier: Notifier = None):

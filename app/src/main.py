@@ -71,9 +71,9 @@ elif "FUNCTION_TARGET" in os.environ:
 elif "K_SERVICE" in os.environ and any("ANTHOS" in v for v in os.environ):
     title = "Cloud Run: Anthos"
 elif "K_SERVICE" in os.environ:
-    title = "Cloud Run: Managed"
+    title = "Cloud Run"
 elif any(v.startswith("GKE_APP") for v in os.environ):
-    title = "Kubernetes Engine"
+    title = "Kubernetes"
 elif "GCE_APP" in os.environ:
     title = "Compute Engine"
 else:

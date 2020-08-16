@@ -105,10 +105,10 @@
       this._activePolls.set(app.name, true);
       const el = document.getElementById(app.name);
       const iframe = el.getElementsByTagName("iframe")[0];
-      const overlay = el.getElementsByClassName("is-overlay")[0];
+      const mask = el.getElementsByClassName("mask")[0];
 
       // You can never have too many emojis... I'm using these to provide a bit
-      // of colour when I log to the console
+      // of colour when logging to the console
       const icons = ["😅", "🤔", "🤨", "😬", "🤢"];
 
       // Although the backend has confirmed the app is updated, it may take a
@@ -122,14 +122,14 @@
           // If there's an error with the app, we mask the iframe's contents and
           // provide feedback to the user
           iframe.setAttribute("data-error", true);
-          overlay.classList.remove("is-hidden");
-          overlay.getElementsByClassName("title")[0].innerHTML = resp.error;
+          mask.classList.remove("is-hidden");
+          mask.getElementsByClassName("notice")[0].innerHTML = resp.error;
         } else if (iframe.dataset.error) {
           // Remove the mask covering the iframe if there was an error in a
           // previous iteration that's no longer relevant
           iframe.removeAttribute("data-error");
-          overlay.classList.add("is-hidden");
-          overlay.getElementsByClassName("title")[0].innerHTML = app.title;
+          mask.classList.add("is-hidden");
+          mask.getElementsByClassName("notice")[0].innerHTML = app.title;
         }
 
         // Check whether the version returned by the client matches the latest
@@ -141,11 +141,10 @@
           app = { ...app, ...resp.app };
           this.apps.set(app.name, app);
 
-          // Update elements that reference the app's properties. No fancy React
-          // or Vue here, we have to do it by hand
+          // Update elements that reference the app's properties
           el.dataset.version = app.version;
           el.dataset.title = app.title;
-          iframe.name = `${iframe.name.split("-")[0]}-${updated}`;
+          iframe.name = `${iframe.name.split("-")[0]}-${app.version}`;
           iframe.src = `${app.url}?ts=${updated}`;
 
           // Send notification to client-side subscribers that the app has been
