@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class Notifier:
-    def __init__(self, history_length=250):
+    def __init__(self, history_length=300):
         self.connections: List[WebSocket] = list()
         self.notification_generator = self.get_notification_generator()
         self.save_file_generator = self.get_save_file_generator()

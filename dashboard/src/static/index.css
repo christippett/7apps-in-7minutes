@@ -87,8 +87,8 @@ footer {
   line-height: 1.4;
   text-align: left;
   white-space: break-spaces;
-  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
-  transform: translateY(calc(-100% + 0.5rem));
+  transition: opacity 0.2s ease-in;
+  transform: translateY(calc(-100% - 0.1rem));
   opacity: 0;
 }
 .is-active .tooltips,
@@ -305,7 +305,7 @@ iframe.app-frame {
   display: flex;
   flex-direction: column;
   font-size: 1.1rem;
-  margin: 5rem 1%;
+  margin: 25% 1%;
   z-index: 999;
 }
 
@@ -324,6 +324,10 @@ iframe.app-frame {
   left: 0;
   bottom: 0;
   right: 0;
+}
+
+.is-fullscreen .is-hidden-tablet {
+  display: none;
 }
 
 /* Build Form --------------------------------------------------------------- */
@@ -401,8 +405,6 @@ iframe.app-frame {
   align-items: center;
   justify-content: center;
   padding: 0 0.5rem 2.5rem;
-  -webkit-animation: 60s ease 0s infinite normal none running gradient-slider;
-  animation: 60s ease 0s infinite normal none running gradient-slider;
 }
 
 .preview-frame .title {
@@ -423,8 +425,6 @@ iframe.app-frame {
   transition: opacity 2s ease-in;
   background: #292828;
   background: linear-gradient(70deg, #112023, #2c3346) 0% 0% / 150% 150%;
-  -webkit-animation: 10s ease 0s infinite normal none running gradient-slider;
-  animation: 10s ease 0s infinite normal none running gradient-slider;
   z-index: 1;
 }
 .logs .frame-label {
@@ -520,19 +520,19 @@ iframe.app-frame {
   height: 2px;
 }
 
-.logs > p[data-id="gae-flexible"] {
+.logs > p[data-id="appengine-flex"] {
   color: #ffa96f;
 }
-.logs > p[data-id="gae-standard"] {
+.logs > p[data-id="appengine-std"] {
   color: #ae9fe2;
 }
 .logs > p[data-id="function"] {
   color: #ffe180;
 }
-.logs > p[data-id="run-anthos"] {
+.logs > p[data-id="cloud-run-gke"] {
   color: #ff657a;
 }
-.logs > p[data-id="run-managed"] {
+.logs > p[data-id="cloud-run"] {
   color: #6dde9d;
 }
 .logs > p[data-id="compute-engine"] {
@@ -546,7 +546,8 @@ iframe.app-frame {
 .logs > p[data-id="kubernetes"] {
   color: #da8de4;
 }
-.logs > p[data-id="setup"] {
+.logs > p[data-id="python-setup"],
+.logs > p[data-id="housekeeping"] {
   color: #83d1be;
 }
 
@@ -663,38 +664,5 @@ iframe.app-frame {
   to {
     -webkit-transform: scaleX(1);
     transform: scaleX(1);
-  }
-}
-
-.animate__tada {
-  -webkit-animation-name: tada;
-  animation-name: tada;
-}
-
-@-webkit-keyframes gradient-slider {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes gradient-slider {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
   }
 }

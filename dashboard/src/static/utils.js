@@ -55,11 +55,26 @@
 
   class AppService {
     constructor() {
-      this.apps = new Map();
       this.subscriptions = new Array();
       this.latestVersion = null;
       this.lastUpdated = new Date(1990, 1, 1);
+      this._apps = new Map();
       this._activePolls = new Map();
+    }
+
+    get apps() {
+      return Array.from(this._apps.values()).map((app) => {
+        return {
+          isLatestVersion: this.latestVersion === app.version,
+          ...app,
+        };
+      });
+    }
+
+    addApps({ apps }) {
+      apps.map((app) => {
+        this._apps.set(app.name, app);
+      });
     }
 
     addSubscription(callback) {
@@ -139,7 +154,7 @@
 
           // Update local copy of the app
           app = { ...app, ...resp.app };
-          this.apps.set(app.name, app);
+          this._apps.set(app.name, app);
 
           // Update elements that reference the app's properties
           el.dataset.version = app.version;
@@ -236,27 +251,206 @@
     }
   }
 
-  /* Setup ------------------------------------------------------------------ */
+  /* Tooltip Controller ------------------------------------------------------ */
 
-  // Initialise everything and make them accessible globally
-  const notificationService = new NotificationService();
-  const appService = new AppService();
-  const logHandler = new LogHandler(document.getElementById("logs"));
+  class Tooltip {
+    constructor() {
+      this._tooltips = [];
+      this.styles = ["primary", "link", "success", "info", "warning", "danger"];
+    }
 
-  // When a build is active, the backend will send log messages that will be
-  // picked up by the `LogHandler` and added to the DOM
-  notificationService.addSubscription("log", (message) =>
-    logHandler.createLogRecord(message.data)
-  );
+    get tooltips() {
+      return this._tooltips;
+    }
 
-  // The backend is responsible for polling each app to check if and when
-  // they're updated to a new version. When a new version is detected, the
-  // backend sends a message to every client so they can refresh and show the
-  // new version
-  notificationService.addSubscription("refresh-app", (message) =>
-    appService.refreshApp(message.data)
-  );
+    add({ text, style = "info", wait = 0, timeout = 12000 } = {}) {
+      let id = +new Date();
+      let tooltip = { id, text, style, wait, timeout, active: true };
+      setTimeout(() => this._tooltips.push(tooltip), wait);
+      if (timeout > 0) {
+        setTimeout(() => this.close(tooltip), timeout + wait);
+      }
+      return id;
+    }
 
-  // Move aside Lodash, I'm commandeering this 'ere underscore
-  window._ = { notificationService, appService, logHandler, utils };
+    queue({ messages = [], timeout = 12000, wait = 1000, style = "info" } = {}) {
+      var timer = timeout + wait;
+      messages.forEach((msg, index) => {
+        let tooltip = typeof msg === "string" ? { text: msg } : msg;
+        setTimeout(() => this.add({ style, timeout, ...tooltip }), timer * index);
+      });
+    }
+
+    close(tooltip) {
+      tooltip.active = false;
+      setTimeout(() => this._tooltips.splice(this._tooltips.indexOf(tooltip), 1), 1000);
+      console.log();
+    }
+
+    reset() {
+      this._tooltips.forEach((tooltip) => {
+        if (tooltip.active) {
+          this.close(tooltip);
+        }
+      });
+    }
+
+    getClass(tooltip) {
+      let cls = {};
+      cls[`has-background-${tooltip.style}-light`] = true;
+      cls[`has-text-${tooltip.style}-dark`] = true;
+      return cls;
+    }
+  }
+
+  class AppBuilder {
+    constructor({ appService, logHandler, notifier, timeline }) {
+      this.activeBuild = null;
+      this.appService = appService;
+      this.logHandler = logHandler;
+      this.notifier = notifier;
+      this.timeline = timeline;
+
+      // Create skeleton timeline
+      this.timeline.create();
+
+      // When there's an active build in-progress, the backend will send log
+      // messages that will be processed by the `LogHandler` and added to the
+      // DOM
+      this.notifier.addSubscription("log", (message) =>
+        this.logHandler.createLogRecord(message.data)
+      );
+    }
+
+    init({ externalRef }) {
+      Object.assign(this, externalRef);
+      WebFont.load({ google: { families: this.fonts } });
+      this.tooltip.add({
+        text:
+          "Pick a theme, click <span class='is-fancy'>Deploy</span> and then sit back, relax and let <strong>Cloud Build</strong> do the rest.",
+        timeout: 0,
+      });
+    }
+
+    addUpdateHandler() {
+      console.log("🗞️ Subscribing to app update events");
+      this.notifier.addSubscription("refresh-app", (message) => {
+        let app = message.data.app;
+        let build = message.data.build;
+
+        console.log(`🕹️ ${app.title} has been updated to version ${app.version}`);
+        this.tooltip.add({
+          text: `<span class='is-fancy'>${app.title}</span> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
+          style: "success",
+          timeout: 6000,
+        });
+
+        // Add the updated application to the timeline
+        console.log(`📈 Adding ${app.name} to timeline`);
+        this.timeline.push({
+          id: app.name,
+          label: app.title,
+          theme: app.theme,
+          value: duration,
+        });
+
+        // Because App Engine: Flexible takes such a long time to update,
+        // there's a period of time where there's no new logs. This can be a
+        // little disconverting, so we add a bit of commentary to set
+        // expectations.
+        let oldApps = this.appService.apps.filter((app) => !app.isLatestVersion);
+        if (oldApps.length == 1 && oldApps.map((a) => a.name).includes("flex")) {
+          let messages = [
+            "Just waiting on <span class='is-fancy'>App Engine: Flexible</span> now. For whatever reason, it takes <strong><em>significantly</em></strong> longer to update than any other service.",
+            {
+              text:
+                "We'll be waiting awhile. Don't be alarmed if no new logs show up, we won't see anything for a few minutes until the deployment completes.",
+              style: "warning",
+            },
+          ];
+          setTimeout(() => this.tooltip.queue({ messages, style: "danger" }), 20000);
+        }
+      });
+    }
+
+    addBuildEventHandler() {
+      console.log("🗞️ Subscribing to build events");
+      this.notifier.addSubscription("build", (message) => {
+        let status = message.data.status;
+        if (status === "started") {
+        } else if (status === "finished") {
+          this.tooltip.add({
+            text: `All seven services have been updated updated. That's a wrap!`,
+            style: "primary",
+            wait: 2000,
+            timeout: 0,
+          });
+          setTimeout(() => {
+            this.activeBuild = null;
+            this.tooltip.reset();
+          }, 30000);
+        }
+      });
+    }
+
+    async deploy(themeOpt = 0) {
+      console.debug(`🏗️ Starting Cloud Build deployment`);
+      this.isLoading = true;
+      this.tooltip.reset();
+
+      // Add callbacks for the various notifications that'll be sent as part
+      // of the build process
+      this.addUpdateHandler();
+      this.addBuildEventHandler();
+
+      // Trigger build from backend
+      let resp = await this.appService.deployUpdate({
+        gradient: this.gradients[themeOpt].name,
+        asciiFont: this.asciiFonts[themeOpt],
+        font: this.fonts[themeOpt],
+      });
+      let data = await resp.json();
+
+      // Queue some messages to show a commentary when the build is
+      // in-progress
+      let messages = [
+        "The build logs from Cloud Build are streaming live below. You can make the output larger by clicking anywhere below.",
+        {
+          text:
+            "Special shoutout to my wife for her careful consideration for what emojis to use for these tooltips ❤️",
+          style: "primary",
+          wait: 12000,
+        },
+      ];
+
+      // A status code of 409 means another build is in progress
+      if (resp.status == 409) {
+        messages.unshift({
+          text:
+            "It seems a deployment is already in progress. Let's take a peek at the logs...",
+          style: "danger",
+        });
+      } else if (!resp.ok) {
+        this.tooltip.add({ text: data.detail, style: "danger" });
+        this.isLoading = false;
+        return;
+      } else {
+        messages.unshift(
+          "Nice one! You just triggered a new <strong>Cloud Build</strong> job, it's going to deploy a new version of the app to each service."
+        );
+      }
+      this.tooltip.queue({ messages });
+      this.activeBuild = data;
+      this.isLoading = false;
+    }
+  }
+
+  Object.assign(window, {
+    AppBuilder,
+    Tooltip,
+    NotificationService,
+    AppService,
+    LogHandler,
+    utils,
+  });
 })();

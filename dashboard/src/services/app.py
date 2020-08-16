@@ -15,7 +15,7 @@ from colour import Color
 from pyfiglet import FigletFont, figlet_format
 
 from config import settings
-from models import App, AppTheme
+from models import App, AppList, AppTheme
 from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
@@ -113,6 +113,9 @@ class AppService:
     def app_names(self) -> List[str]:
         return [app.name for app in self.apps.values()]
 
+    def json(self) -> str:
+        return AppList(__root__=list(self.apps.values())).json()
+
     def latest_version(self):
         return list(sorted(self.apps.values(), key=lambda app: app.updated))[0].version
 
@@ -120,10 +123,11 @@ class AppService:
         active_builds = self.build.active_builds(refresh=True)
         if len(active_builds) > 0:
             logger.warning(
-                "Skipping deployment, %s build(s) already in progress",
+                "Skipping new deployment, %s build(s) already in progress",
                 len(active_builds),
             )
             build_ref = active_builds[0]
+            self.build.start_log_stream(build_ref)
         else:
             logger.info("Triggering new deployment with payload: %s", theme.json())
             build_ref = await self.build.trigger_build(theme.get_build_substitutions())

@@ -64,8 +64,9 @@
         fontSize: "0.8rem",
         fontFace: item.theme.font,
       });
+      item.frame = d3.select(`#${d.data.id}`);
+      item.height = frame.node().getBoundingClientRect().height;
       item.width = textMetrics.width;
-      item.height = 28;
       this.nodeMap.set(
         item.id,
         new labella.Node(this.timelineScale(item.value), item.height, item)
@@ -76,7 +77,8 @@
     refresh() {
       let nodes = Array.from(this.nodeMap.values());
       let force = new labella.Force(this.options.labella.force).nodes(nodes).compute();
-      this.drawNodes({ nodes: force.nodes() });
+      // this.drawNodes({ nodes: force.nodes() });
+      this.drawNodes({ nodes });
     }
 
     drawTimeline() {
@@ -143,7 +145,8 @@
 
     drawNodes({ nodes }) {
       let renderer = new labella.Renderer({
-        nodeHeight: nodes[0].width,
+        // nodeHeight: nodes[0].width,
+        nodeHeight: "200",
         ...this.options.labella.renderer,
       });
       renderer.layout(nodes); // adds x,y,dx,dy to nodes
@@ -187,17 +190,18 @@
       //   .attr("fill", (d) => `url(#${d.data.id})`);
 
       // Label text
-      this.updateNodes({ parent: "g.labels", tag: "text.label", nodes })
-        .attr("fill", (d) => `url(#bg-${d.data.id})`)
-        .attr("style", (d) => `font-family: '${d.data.theme.font}', sans-serif`)
-        .attr("x", (d) => d.x)
-        .attr("y", (d) => d.y)
-        .attr("transform", (d) => `translate(${d.dx / 2 - 2}, 5)`)
-        .text((d) => d.data.label);
+      // this.updateNodes({ parent: "g.labels", tag: "text.label", nodes })
+      //   .attr("fill", (d) => `url(#bg-${d.data.id})`)
+      //   .attr("style", (d) => `font-family: '${d.data.theme.font}', sans-serif`)
+      //   .attr("x", (d) => d.x)
+      //   .attr("y", (d) => d.y)
+      //   .attr("transform", (d) => `translate(${d.dx / 2 - 2}, 5)`)
+      //   .text((d) => d.data.label);
 
       // Link labels to axis
       this.updateNodes({ parent: "g.links", tag: "path.label", nodes })
         .attr("stroke", (d) => `url(#bg-${d.data.id})`)
+        .attr("stroke", "red")
         .attr("d", (d) => renderer.generatePath(d));
 
       // Place markers on axis
@@ -208,17 +212,5 @@
     }
   }
 
-  const timelineOptions = {
-    margin: { left: 40, right: 0, top: 50, bottom: 50 },
-    maxValue: 10 * 60, // max seconds
-    tickValue: 30,
-    labella: {
-      renderer: { layerGap: 50, direction: "right" },
-      force: { minPos: -10, nodeSpacing: 10 },
-    },
-  };
-  const timeline = new Timeline({ opts: timelineOptions, el: "#timeline" });
-  timeline.create();
-
-  window._.timeline = timeline;
+  window.Timeline = Timeline;
 })();

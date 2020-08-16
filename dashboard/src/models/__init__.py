@@ -32,6 +32,10 @@ class App(BaseModel):
     updated: datetime = Field(default_factory=datetime.utcnow)
 
 
+class AppList(BaseModel):
+    __root__: List[App]
+
+
 class Message(BaseModel):
     topic: str
     data: Dict[str, Any]

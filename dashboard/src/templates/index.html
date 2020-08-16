@@ -60,202 +60,32 @@ endif %}
     {%- include "props.js" -%}
   </script>
   <script>
-    /* eslint-disable no-undef */
+    const timelineOptions = {
+      margin: { left: 40, right: 0, top: 50, bottom: 50 },
+      maxValue: 10 * 60, // max seconds
+      tickValue: 30,
+      labella: {
+        renderer: { layerGap: 50, direction: "right" },
+        force: { minPos: -10, nodeSpacing: 10 },
+      },
+    };
 
-    class Tooltip {
-      constructor() {
-        this._tooltips = [];
-        this.styles = ["primary", "link", "success", "info", "warning", "danger"];
-      }
-
-      get tooltips() {
-        return this._tooltips;
-      }
-
-      add({ text, style = "info", wait = 0, timeout = 12000 } = {}) {
-        let id = +new Date();
-        let tooltip = { id, text, style, wait, timeout, active: true };
-        setTimeout(() => this._tooltips.push(tooltip), wait);
-        if (timeout > 0) {
-          setTimeout(() => this.close(tooltip), timeout + wait);
-        }
-        return id;
-      }
-
-      queue({ messages = [], timeout = 12000, wait = 1000, style = "info" } = {}) {
-        var timer = timeout + wait;
-        messages.forEach((msg, index) => {
-          let tooltip = typeof msg === "string" ? { text: msg } : msg;
-          setTimeout(() => this.add({ style, timeout, ...tooltip }), timer * index);
-        });
-      }
-
-      close(tooltip) {
-        let index = this._tooltips.indexOf(tooltip);
-        tooltip.active = false;
-        setTimeout(() => this._tooltips.splice(index, 1), 300);
-      }
-
-      reset() {
-        this._tooltips.forEach((tooltip) => {
-          if (tooltip.active) {
-            this.close(tooltip);
-          }
-        });
-      }
-
-      getClass(tooltip) {
-        let cls = {};
-        cls[`has-background-${tooltip.style}-light`] = true;
-        cls[`has-text-${tooltip.style}-dark`] = true;
-        return cls;
-      }
-    }
-
-    class AppBuilder {
-      constructor({ tooltip, apps, gradients, fonts, asciiFonts, buildStatus }) {
-        console.debug("🧰 Initialising AppBuilder");
-        Object.assign(this, { apps, gradients, fonts, asciiFonts, buildStatus });
-        this.gradientNames = gradients.map((g) => g.name);
-        this.buildTracker = new Map();
-        this.themeOpt = 0;
-        this.isLoading = false;
-        this.activeBuild = null;
-        WebFont.load({ google: { families: this.fonts } });
-      }
-
-      init(dependencies) {
-        Object.assign(this, dependencies);
-        this.addAppSubscription();
-        this.addBuildSubscription();
-        this.addTimelineSubscription();
-        this.tooltip.add({
-          text:
-            "Pick a theme, click <span class='is-fancy'>Deploy</span> and then sit back, relax and let <strong>Cloud Build</strong> take care of the rest.",
-          timeout: 0,
-        });
-      }
-
-      addAppSubscription() {
-        console.log("🗞️ Subscribing to app events");
-        _.notificationService.addSubscription("refresh-app", (message) => {
-          let app = message.data.app;
-          let build = message.data.build;
-          let appList = this.buildTracker.get(build.id) || [];
-          if (appList) {
-            appList.splice(appList.indexOf(app.name), 1);
-          }
-          console.log(`🕹️ ${app.title} has been updated to version ${app.version}`);
-          this.tooltip.add({
-            text: `<span class='is-fancy'>${app.title}</span> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
-            style: "success",
-            timeout: 6000,
-          });
-          if (appList.length == 1 && appList.includes("flex")) {
-            let messages = [
-              "Just waiting on <span class='is-fancy'>App Engine: Flexible</span> now, it takes <em>significantly</em> longer to update than every other service.",
-              {
-                text:
-                  "Don't be alarmed that no new logs show up, we won't see anything now until the deployment finishes.",
-                style: "warning",
-              },
-            ];
-            setTimeout(() => this.tooltip.queue({ messages, style: "danger" }), 20000);
-          }
-        });
-      }
-
-      addBuildSubscription() {
-        console.log("🗞️ Subscribing to build events");
-        _.notificationService.addSubscription("build", (message) => {
-          let status = message.data.status;
-          if (status === "started") {
-          } else if (status === "finished") {
-            this.tooltip.add({
-              text: `All seven services have been updated updated. That's a wrap!`,
-              style: "primary",
-              wait: 2000,
-              timeout: 0,
-            });
-            setTimeout(() => {
-              this.activeBuild = null;
-              this.tooltip.reset();
-            }, 30000);
-          }
-        });
-      }
-
-      addTimelineSubscription() {
-        console.log("🗞️ Subscribing to app updates");
-        // Add callback to update timeline during app deployments
-        _.appService.addSubscription(({ app, duration }) => {
-          console.log(`📈 Adding ${app.name} to timeline`);
-          _.timeline.push({
-            id: app.name,
-            label: app.title,
-            theme: app.theme,
-            value: duration,
-          });
-        });
-      }
-
-      async deploy(themeOpt = 0) {
-        console.debug(`🏗️ Starting Cloud Build deployment`);
-        this.isLoading = true;
-        this.tooltip.reset();
-        _.logHandler.flushLogs();
-
-        // trigger build from backend
-        let resp = await _.appService.deployUpdate({
-          gradient: this.gradientNames[themeOpt],
-          asciiFont: this.asciiFonts[themeOpt],
-          font: this.fonts[themeOpt],
-        });
-        let data = await resp.json();
-
-        // Queue some messages to show a commentary when the build is
-        // in-progress
-        let messages = [
-          "The stream of text below are the logs from Cloud Build. Click anywhere below to make them larger.",
-          {
-            text:
-              "Special shoutout to my wife for her careful consideration for what emojis to use for these tooltips, the maritime theme was her idea. Thanks hun ❤️",
-            style: "primary",
-            wait: 12000,
-          },
-        ];
-
-        // A status code of 409 means another build is in progress
-        if (resp.status == 409) {
-          messages.unshift({
-            text: "It seems a deployment is already in progress. Let's take a look...",
-            style: "danger",
-          });
-        } else if (!resp.ok) {
-          this.tooltip.add({ text: data.detail, style: "danger" });
-          this.isLoading = false;
-          return;
-        } else {
-          messages.unshift(
-            "Nice one! You just triggered a new <strong>Cloud Build</strong> job, it's going to deploy a new version of the app to each of the services."
-          );
-        }
-        this.tooltip.queue({ messages });
-        this.activeBuild = data;
-        this.buildTracker.set(data.id, [...this.apps]);
-        this.isLoading = false;
-      }
-    }
-
-    function appBuilder() {
+    function data() {
       return {
+        isFullscreen: false,
+        isLoading: false,
+        themeOpt: 0,
         tooltips: [],
         tooltip: new Tooltip({ collection: this.tooltips }),
-        builder: new AppBuilder(props),
-        themeOpt: 0,
+        builder: new AppBuilder({
+          appService: new AppService(),
+          logHandler: new LogHandler(document.getElementById("logs")),
+          notifier: new NotificationService(),
+          timeline: new Timeline({ opts: timelineOptions, el: "#timeline" }),
+        }),
         init() {
           this.tooltip._tooltips = this.tooltips;
-          this.builder.init({ tooltip: this.tooltip });
+          this.builder.init({ externalRef: { ...this, ...props } });
         },
         selectTheme(opt) {
           let themeCount = props.fonts.length - 1;

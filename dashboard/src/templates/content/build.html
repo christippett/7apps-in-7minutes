@@ -2,7 +2,7 @@
   @click="isFullscreen = !isFullscreen"
   class="build-container column is-half is-relative"
   :class="{ 'is-fullscreen': isFullscreen, 'is-active': builder.activeBuild !== null }"
-  x-data="{ isFullscreen: false, ...appBuilder() }"
+  x-data="data()"
   x-init="init"
 >
   <div class="is-hidden-tablet my-4">
@@ -14,8 +14,8 @@
     <div class="tooltips">
     <template x-for="tip in tooltips" :key="tip.id">
         <div
-          @click.stop="tooltip.close(tip)"
-          x-show.transition.200ms="tip.active"
+          @click.stop="tip.active = false"
+          x-show.transition.duration.1000ms="tip.active"
           class="is-tooltip"
           :class="tooltip.getClass(tip)"
           :data-icon="tip.icon"
@@ -43,7 +43,7 @@
           <span class="icon">
             {% include "misc/touch.svg" %}
           </span>
-          <span class="is-fancy">Start deployment!</span>
+          <span class="is-fancy">Start deployment</span>
         </button>
       </div>
     </div>
