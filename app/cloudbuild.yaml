@@ -12,21 +12,6 @@ steps:
     dir: "app"
     waitFor: ["-"]
 
-  # 🗑️ Remove stopped App Engine versions ------------------------------------ #
-
-  - id: housekeeping
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: bash
-    args:
-      - "-c"
-      - |
-        gcloud app versions delete --quiet \
-          `gcloud app versions list \
-            --format="value(id)" \
-            --filter="version.servingStatus:STOPPED" \
-          | sort | uniq`
-    waitFor: ["-"]
-
   # 📦 Prepare Docker image -------------------------------------------------- #
 
   - id: docker-pull
@@ -198,6 +183,20 @@ steps:
       ]
     dir: "app"
     waitFor: ["docker-push"]
+
+  # 🗑️ Remove stopped App Engine versions ------------------------------------ #
+
+  - id: housekeeping
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        gcloud app versions list \
+          --format="value(id)" \
+          --filter="version.createTime<-P1h AND version.servingStatus:STOPPED" \
+        | sort | uniq | xargs -I {} gcloud app versions delete {}
+    waitFor: ["gae-standard", "gae-flexible"]
 
 # ⚙️ Configuration ----------------------------------------------------------- #
 
