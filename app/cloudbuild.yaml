@@ -229,6 +229,6 @@ substitutions:
   _GRADIENT: ""
   _FONT: ""
   _ASCII_FONT: ""
-  _VERSION: $SHORT_SHA
+  _VERSION: "${SHORT_SHA}"
 tags: ["app"]
 timeout: 3600s
