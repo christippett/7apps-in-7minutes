@@ -86,9 +86,10 @@ steps:
           GRADIENT: "${_GRADIENT}"
           FONT: "${_FONT}"
           ASCII_FONT: "${_ASCII_FONT}"
+          VERSION: "${_VERSION}"
 
         EOT
-        gcloud app deploy --version=${_VERSION}
+        gcloud app deploy --version=demo
     dir: "app/src"
     waitFor: ["python-setup"]
 
@@ -104,7 +105,7 @@ steps:
         "app",
         "deploy",
         "app.flex.yaml",
-        "--version=${_VERSION}",
+        "--version=demo",
         "--image-url=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION}",
       ]
     dir: "app"
@@ -183,20 +184,6 @@ steps:
       ]
     dir: "app"
     waitFor: ["docker-push"]
-
-  # 🗑️ Remove stopped App Engine versions ------------------------------------ #
-
-  - id: housekeeping
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: bash
-    args:
-      - "-c"
-      - |
-        gcloud app versions list \
-          --format="value(id)" \
-          --filter="version.createTime<-P1h AND version.servingStatus:STOPPED" \
-        | sort | uniq | xargs -I {} gcloud app versions delete {} || true
-    waitFor: ["app-engine-std", "app-engine-flex"]
 
 # ⚙️ Configuration ----------------------------------------------------------- #
 
