@@ -54,12 +54,15 @@
   /* Application Service ---------------------------------------------------- */
 
   class AppService {
-    constructor() {
+    constructor({ apps }) {
       this.subscriptions = new Array();
       this.latestVersion = null;
       this.lastUpdated = new Date(1990, 1, 1);
-      this._apps = new Map();
       this._activePolls = new Map();
+      this._apps = new Map();
+      apps.map((app) => {
+        this._apps.set(app.name, app);
+      });
     }
 
     get apps() {
@@ -68,12 +71,6 @@
           isLatestVersion: this.latestVersion === app.version,
           ...app,
         };
-      });
-    }
-
-    addApps({ apps }) {
-      apps.map((app) => {
-        this._apps.set(app.name, app);
       });
     }
 
@@ -95,7 +92,7 @@
       return { error: null, app };
     }
 
-    async refreshApp({ app, duration }) {
+    async refreshApp({ version, app, duration }) {
       // Rather than having every client poll each app separately, the backend
       // takes care of this for us and broadcasts a notification once an app has
       // been updated. This is the function that's triggered on the back of that
@@ -105,8 +102,8 @@
 
       //  Validate the latest version is newer than the last
       let updated = new Date(app.updated);
-      if (updated > this.lastUpdated) {
-        this.latestVersion = app.version;
+      if (version != this.latestVersion && updated > this.lastUpdated) {
+        this.latestVersion = version;
         this.lastUpdated = updated;
       }
 
@@ -116,7 +113,7 @@
         return;
       }
 
-      console.log(`🚰 Refreshing ${app.title} (expecting version ${this.latestVersion})`);
+      console.log(`🚰 Refreshing ${app.title} (expecting version ${version})`);
       this._activePolls.set(app.name, true);
       const el = document.getElementById(app.name);
       const iframe = el.getElementsByTagName("iframe")[0];
@@ -124,7 +121,7 @@
 
       // You can never have too many emojis... I'm using these to provide a bit
       // of colour when logging to the console
-      const icons = ["😅", "🤔", "🤨", "😬", "🤢"];
+      const icons = ["😅", "😬", "🤢"];
 
       // Although the backend has confirmed the app is updated, it may take a
       // few attempts before the client sees the new version
@@ -149,7 +146,7 @@
 
         // Check whether the version returned by the client matches the latest
         // version sent by the backend
-        if (resp.app && resp.app.version === this.latestVersion) {
+        if (resp.app && resp.app.version === version) {
           this._activePolls.delete(app.name);
 
           // Update local copy of the app
@@ -160,12 +157,12 @@
           el.dataset.version = app.version;
           el.dataset.title = app.title;
           iframe.name = `${iframe.name.split("-")[0]}-${app.version}`;
-          iframe.src = `${app.url}?ts=${updated}`;
+          iframe.src = `${app.url}?ts=${updated.getTime()}`;
 
           // Send notification to client-side subscribers that the app has been
           // updated. This is used to update the SVG for the timeline and to
           // provide feedback to the user
-          this.subscriptions.forEach((callback) => callback({ app, duration }));
+          this.subscriptions.forEach((callback) => callback({ version, app, duration }));
 
           // Make the iframe jiggle
           el.classList.add("has-new-version");
@@ -177,10 +174,10 @@
         // If for whatever reason we can't reconcile the app's version after 6
         // attempts - we call it quits
         count++;
-        if (count >= 6) {
+        if (count >= 4) {
           this._activePolls.delete(app.name);
           console.error(
-            `🥵 Failed to get latest version for ${app.title} (expecting ${this.latestVersion}, got ${app.version})`
+            `🥵 Failed to get latest version for ${app.title} (currently ${resp.app.version}, expected ${version})`
           );
           return;
         }
@@ -190,14 +187,11 @@
       }
     }
 
-    async deployUpdate({ gradient, asciiFont, font }) {
-      // It's a Python backend, so snake-case rules
-      let payload = { gradient, font, ascii_font: asciiFont };
-
+    async deployUpdate({ theme }) {
       return await fetch("/deploy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(theme),
       });
     }
   }
@@ -273,7 +267,7 @@
       return id;
     }
 
-    queue({ messages = [], timeout = 12000, wait = 1000, style = "info" } = {}) {
+    queue({ messages = [], timeout = 12000, wait = 900, style = "info" } = {}) {
       var timer = timeout + wait;
       messages.forEach((msg, index) => {
         let tooltip = typeof msg === "string" ? { text: msg } : msg;
@@ -283,8 +277,7 @@
 
     close(tooltip) {
       tooltip.active = false;
-      setTimeout(() => this._tooltips.splice(this._tooltips.indexOf(tooltip), 1), 1000);
-      console.log();
+      // setTimeout(() => this._tooltips.splice(this._tooltips.indexOf(tooltip), 1), 1000);
     }
 
     reset() {
@@ -304,27 +297,48 @@
   }
 
   class AppBuilder {
-    constructor({ appService, logHandler, notifier, timeline }) {
+    constructor({ appService, notificationService, logHandler, timeline }) {
+      this.themes = [];
+      this.apps = [];
       this.activeBuild = null;
       this.appService = appService;
+      this.notificationService = notificationService;
       this.logHandler = logHandler;
-      this.notifier = notifier;
       this.timeline = timeline;
 
-      // Create skeleton timeline
+      // Create timeline skeleton
       this.timeline.create();
 
       // When there's an active build in-progress, the backend will send log
       // messages that will be processed by the `LogHandler` and added to the
       // DOM
-      this.notifier.addSubscription("log", (message) =>
+      this.notificationService.addSubscription("log", (message) =>
         this.logHandler.createLogRecord(message.data)
       );
+
+      // The backend is responsible for polling each app to check if and when
+      // they're updated to a new version. When a new version is detected, the
+      // backend sends a message to every client so they can refresh and show the
+      // new version
+      this.notificationService.addSubscription("refresh-app", (message) =>
+        this.appService.refreshApp(message.data)
+      );
+    }
+
+    get theme() {
+      return this.themes[this.themeOpt];
+    }
+
+    get previewUrl() {
+      let font = encodeURIComponent(this.theme.font);
+      let asciiFont = encodeURIComponent(this.theme.ascii_font);
+      let gradient = encodeURIComponent(this.theme.gradient.name);
+      return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
     }
 
     init({ externalRef }) {
       Object.assign(this, externalRef);
-      WebFont.load({ google: { families: this.fonts } });
+      WebFont.load({ google: { families: this.themes.map((t) => t.font) } });
       this.tooltip.add({
         text:
           "Pick a theme, click <span class='is-fancy'>Deploy</span> and then sit back, relax and let <strong>Cloud Build</strong> do the rest.",
@@ -334,9 +348,9 @@
 
     addUpdateHandler() {
       console.log("🗞️ Subscribing to app update events");
-      this.notifier.addSubscription("refresh-app", (message) => {
+      this.appService.addSubscription((message) => {
         let app = message.data.app;
-        let build = message.data.build;
+        let duration = message.data.duration;
 
         console.log(`🕹️ ${app.title} has been updated to version ${app.version}`);
         this.tooltip.add({
@@ -353,34 +367,18 @@
           theme: app.theme,
           value: duration,
         });
-
-        // Because App Engine: Flexible takes such a long time to update,
-        // there's a period of time where there's no new logs. This can be a
-        // little disconverting, so we add a bit of commentary to set
-        // expectations.
-        let oldApps = this.appService.apps.filter((app) => !app.isLatestVersion);
-        if (oldApps.length == 1 && oldApps.map((a) => a.name).includes("flex")) {
-          let messages = [
-            "Just waiting on <span class='is-fancy'>App Engine: Flexible</span> now. For whatever reason, it takes <strong><em>significantly</em></strong> longer to update than any other service.",
-            {
-              text:
-                "We'll be waiting awhile. Don't be alarmed if no new logs show up, we won't see anything for a few minutes until the deployment completes.",
-              style: "warning",
-            },
-          ];
-          setTimeout(() => this.tooltip.queue({ messages, style: "danger" }), 20000);
-        }
       });
     }
 
     addBuildEventHandler() {
       console.log("🗞️ Subscribing to build events");
-      this.notifier.addSubscription("build", (message) => {
+      this.notificationService.addSubscription("build", (message) => {
         let status = message.data.status;
         if (status === "started") {
+          this.logHandler.flushLogs();
         } else if (status === "finished") {
           this.tooltip.add({
-            text: `All seven services have been updated updated. That's a wrap!`,
+            text: `All seven apps have been updated updated. That's a wrap!`,
             style: "primary",
             wait: 2000,
             timeout: 0,
@@ -393,7 +391,7 @@
       });
     }
 
-    async deploy(themeOpt = 0) {
+    async deploy() {
       console.debug(`🏗️ Starting Cloud Build deployment`);
       this.isLoading = true;
       this.tooltip.reset();
@@ -404,42 +402,55 @@
       this.addBuildEventHandler();
 
       // Trigger build from backend
-      let resp = await this.appService.deployUpdate({
-        gradient: this.gradients[themeOpt].name,
-        asciiFont: this.asciiFonts[themeOpt],
-        font: this.fonts[themeOpt],
-      });
+      let resp = await this.appService.deployUpdate({ theme: this.theme });
       let data = await resp.json();
 
       // Queue some messages to show a commentary when the build is
       // in-progress
-      let messages = [
-        "The build logs from Cloud Build are streaming live below. You can make the output larger by clicking anywhere below.",
-        {
-          text:
-            "Special shoutout to my wife for her careful consideration for what emojis to use for these tooltips ❤️",
-          style: "primary",
-          wait: 12000,
-        },
-      ];
+
+      let logging_comment =
+        "<p>The stream of text you see below are the live logs from Cloud Build.</p><p>You can check out its config on <a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><strong>GitHub</strong></a>.</p>";
 
       // A status code of 409 means another build is in progress
-      if (resp.status == 409) {
-        messages.unshift({
-          text:
-            "It seems a deployment is already in progress. Let's take a peek at the logs...",
-          style: "danger",
-        });
-      } else if (!resp.ok) {
+      if (!resp.ok && resp.status != 409) {
         this.tooltip.add({ text: data.detail, style: "danger" });
         this.isLoading = false;
         return;
+      } else if (resp.status == 409) {
+        let messages = [
+          {
+            text:
+              "Opps, it seems a another deployment is already in progress. Give it a minute or two (or seven) and try again.",
+            style: "danger",
+          },
+          {
+            text: `<p>In the meantime, let's check out what's happening with the current deployment.</p>${logging_comment}`,
+            style: "warning",
+          },
+        ];
+        this.tooltip.queue({ messages });
       } else {
-        messages.unshift(
-          "Nice one! You just triggered a new <strong>Cloud Build</strong> job, it's going to deploy a new version of the app to each service."
-        );
+        let messages = [
+          `<p>Congratulations, you just triggered a new <strong>Cloud Build</strong> job!</p><p>The apps on this page will refresh automatically when they're finished updating. Keep a look out for the version <span class="is-family-monospace">${data.version}</span>, that's yours!</p>`,
+          {
+            text: `The theme you selected includes the font <strong><em>${
+              this.theme.font
+            }</em></strong> from <strong><a href="https://fonts.google.com/specimen/${encodeURIComponent(
+              this.theme.font
+            )}">Google Fonts</a></strong> and the background is using a gradient named <strong><em>${
+              this.theme.gradient.name
+            }</em></strong> from <strong><a href='https://uigradients.com'>uiGradients</a></strong>.`,
+            style: "link",
+          },
+          {
+            text:
+              "Also, a special shoutout to my wife for her considered input into which emojis to use for these messages (and being so patient with me as I spent many a late night over-engineering this thing).",
+            style: "primary",
+            wait: 15000,
+          },
+        ];
+        setTimeout(() => this.tooltip.queue({ messages, style: "success" }), 1500);
       }
-      this.tooltip.queue({ messages });
       this.activeBuild = data;
       this.isLoading = false;
     }

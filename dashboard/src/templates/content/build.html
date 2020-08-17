@@ -1,7 +1,7 @@
 <div
   @click="isFullscreen = !isFullscreen"
   class="build-container column is-half is-relative"
-  :class="{ 'is-fullscreen': isFullscreen, 'is-active': builder.activeBuild !== null }"
+  :class="{ 'is-fullscreen': isFullscreen, 'is-loading': builder.isLoading, 'is-active': builder.activeBuild !== null }"
   x-data="data()"
   x-init="init"
 >
@@ -12,21 +12,21 @@
 
   <div class="is-relative" style="flex: 1">
     <div class="tooltips">
-    <template x-for="tip in tooltips" :key="tip.id">
+    <template x-for="message in tooltips" :key="message.id">
         <div
-          @click.stop="tip.active = false"
-          x-show.transition.duration.1000ms="tip.active"
           class="is-tooltip"
-          :class="tooltip.getClass(tip)"
-          :data-icon="tip.icon"
+          :class="tooltip.getClass(message)"
+          :data-icon="message.icon"
+          @click.stop="message.active = false"
+          x-show.transition.duration.900ms="message.active"
         >
-          <span x-html="tip.text"></span>
+          <span x-html="message.text"></span>
         </div>
       </template>
     </div>
     <div class="box is-relative is-unselectable px-0 py-0">
-      <div id="logs" class="logs is-overlay" x-show.transition.duration.200ms="builder.activeBuild !== null" ></div>
-      <div id="build" class="build-form is-overlay" x-show.transition.duration.200ms="builder.activeBuild === null" >
+      <div id="logs" class="logs is-overlay" x-show.transition.duration.500ms="builder.activeBuild !== null" ></div>
+      <div id="build" class="build-form is-overlay" x-show.transition.duration.500ms="builder.activeBuild === null" >
 
         <div class="preview-frame is-overlay" :style="themeStyle('preview')">
           <div class="title" :style="themeStyle('title')">Demo</div>
@@ -39,7 +39,7 @@
             {% include "misc/right.svg" %}
           </button>
         </nav>
-        <button @click.stop="builder.deploy(themeOpt)" class="deploy button is-light" :class="{ 'is-loading': builder.isLoading }">
+        <button @click.stop="builder.deploy()" class="deploy button is-light" :class="{ 'is-loading': builder.isLoading }">
           <span class="icon">
             {% include "misc/touch.svg" %}
           </span>

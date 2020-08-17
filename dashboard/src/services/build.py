@@ -6,18 +6,21 @@ import sys
 from asyncio.futures import Future
 from collections import deque
 from dataclasses import dataclass
+from enum import Enum
 from typing import Callable, Deque, Dict, List, Optional, Tuple
-from uuid import uuid4
 
 import yaml
 from google.auth.transport.requests import AuthorizedSession
-from pyfiglet import Figlet
+from pyfiglet import figlet_format
 from requests.exceptions import HTTPError
 
 from config import settings
+from models import Message
 from models.build import BuildRef
 
 logger = logging.getLogger(__name__)
+
+Status = Enum("Status", "ACTIVE INACTIVE UNKNOWN")
 
 
 class CloudBuildService:
@@ -34,16 +37,14 @@ class CloudBuildService:
 
         return logs.CloudBuildClient()
 
-    def generate_config(self, build_ref: BuildRef) -> str:
+    def generate_config(self, build: BuildRef) -> str:
         config = {
-            "steps": [s.dict(exclude_unset=True) for s in build_ref.steps],
-            "substitutions": build_ref.substitutions,
+            "steps": [s.dict(exclude_unset=True) for s in build.steps],
+            "substitutions": build.substitutions,
         }
         return yaml.dump(config, default_flow_style=False, sort_keys=False) or ""
 
     async def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
-        version = uuid4().hex[:7] + "-custom"
-        substitutions.update({"_VERSION": version})
         source = {
             "repoName": settings.github_repo,
             "branchName": settings.github_branch,
@@ -86,21 +87,19 @@ class CloudBuildService:
             active_builds = self.get_active_builds()
         return active_builds
 
-    async def send_log(self, text: Optional[str] = None, **extra):
-        data = {"text": text}
-        data.update(extra)
-        await self.notifier.send(topic="log", data=data)
+    async def send_log(self, text: str, **data):
+        message = Message("log", text=text, **data)
+        await self.notifier.send(message=message)
 
-    async def start_log_stream(self, build_ref: BuildRef):
-        if any(map(lambda b: b.id == build_ref.id, self.active_builds())):
+    async def start_log_stream(self, build: BuildRef):
+        if any(map(lambda b: b.id == build.id, self.active_builds())):
             logger.info("Build already accounted for - skipping logs")
             return
         logger.info("Getting Cloud Build logs")
-        self.notifier.purge_history("log")
-        log_future = asyncio.ensure_future(self.stream_logs(build_ref))
-        self._active_builds.append((build_ref, log_future))
+        log_future = asyncio.ensure_future(self.stream_logs(build))
+        self._active_builds.append((build, log_future))
 
-    async def stream_logs(self, build_ref: BuildRef):
+    async def stream_logs(self, build: BuildRef):
         @dataclass
         class _LogWriter:
             logger: Callable
@@ -113,14 +112,14 @@ class CloudBuildService:
                         self.logger(**self.parser(t)), loop=loop
                     )
 
-        fmt = Figlet(font="slant")
-        await self.send_log(fmt.renderText("Cloud Build") + "Logs to follow...\n\n")
+        header = figlet_format(text="Cloud Build", font="slant")
+        await self.send_log(header + "Starting log stream...\n\n")
 
         client = self._googlesdk_cloudbuild_client()
         loop = asyncio.get_event_loop()
         log_writer = _LogWriter(self.send_log, self.parse_log_text)
-        await loop.run_in_executor(None, client.Stream, build_ref, log_writer)
-        await self.send_log(fmt.renderText("Done!"))
+        await loop.run_in_executor(None, client.Stream, build, log_writer)
+        await self.send_log(figlet_format(text="Done!", font="straight"))
 
     def parse_log_text(self, text):
         rec = {"text": text}

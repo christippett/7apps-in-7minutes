@@ -1,4 +1,4 @@
-{% for id, app in app_service.apps.items() %}
+{% for app in props.apps %}
 <div
   class="column is-half"
   data-url="{{ app.url }}"
@@ -6,16 +6,16 @@
   data-title="{{ app.title }}"
   data-version="{{ app.version }}123"
 >
-  <div id="{{ id }}" class="box is-relative is-clipped is-unselectable">
+  <div id="{{ app.name }}" class="box is-relative is-clipped is-unselectable">
     <div class="frame-label">
-      <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
+      <span class="emoji">🔎</span><a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
     </div>
     <div class="mask is-overlay is-hidden">
       <p class="title is-5 is-fancy has-text-grey-dark"><span class="emoji">🛑</span> {{ app.title }}</p>
       <p class="notice has-text-weight-medium has-text-grey-dark">Error loading application</p>
     </div>
     <iframe
-      name="{{ id }}-{{ app.version }}"
+      name="{{ app.name }}-{{ app.version }}"
       src="{{ app.url }}?ts={{ unix_timestamp }}"
       importance="high"
       scrolling="no"

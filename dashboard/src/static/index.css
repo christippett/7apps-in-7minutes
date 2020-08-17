@@ -44,8 +44,8 @@ footer {
 }
 
 .emoji {
-  font-size: 0.9em;
-  padding: 0 0.5em;
+  font-size: 0.8em;
+  padding-right: 0.75rem;
 }
 
 .google-logo {
@@ -142,6 +142,10 @@ footer {
   margin-right: 1em;
   flex: 1;
   font-size: 1.4em;
+}
+
+.is-tooltip p:not(:last-child) {
+  margin-bottom: 0.3rem;
 }
 
 /* Special thanks to my wife for her careful consideration for what
@@ -305,7 +309,7 @@ iframe.app-frame {
   display: flex;
   flex-direction: column;
   font-size: 1.1rem;
-  margin: 25% 1%;
+  margin: 10% 1%;
   z-index: 999;
 }
 
@@ -471,16 +475,17 @@ iframe.app-frame {
   filter: none;
 }
 .logs > p[data-type="finished"] .lg-text::before {
-  content: " ✨  ";
+  content: "✨  ";
 }
 .logs > p[data-type="starting"] .lg-text::before {
-  content: " 🏁  ";
+  content: "🏁  ";
 }
 
 .logs > p .lg-id {
-  display: inline-flex;
-  min-width: 85px;
+  display: none;
+  min-width: 95px;
   align-items: center;
+  margin-right: 5px;
 }
 .logs > p:not([data-type="linebreak"]) .lg-id:after {
   content: "➤";
@@ -500,16 +505,14 @@ iframe.app-frame {
   filter: brightness(1) saturate(0.5);
 }
 .logs > p .lg-step {
-  display: none;
-}
-.logs > p .lg-id {
-  margin-right: 5px;
+  display: inline-block;
 }
 .logs > p .lg-step:after {
   content: "";
   margin-right: 5px;
 }
 .is-fullscreen .logs > p .lg-id {
+  display: inline-flex;
   min-width: 100px;
 }
 .is-fullscreen .logs > p .lg-id:after {
@@ -520,10 +523,10 @@ iframe.app-frame {
   height: 2px;
 }
 
-.logs > p[data-id="appengine-flex"] {
+.logs > p[data-id="app-engine-flex"] {
   color: #ffa96f;
 }
-.logs > p[data-id="appengine-std"] {
+.logs > p[data-id="app-engine-std"] {
   color: #ae9fe2;
 }
 .logs > p[data-id="function"] {
@@ -574,26 +577,21 @@ iframe.app-frame {
   .build-container.is-fullscreen {
     font-size: 1.2rem;
   }
-  .is-fullscreen .logs > p .lg-step {
-    display: inline-block;
-  }
   .is-fullscreen .logs > p .lg-id {
+    display: inline-flex;
     min-width: 120px;
   }
 }
 
 @media (min-width: 768px) {
-  .box {
-    min-height: none;
-  }
   .iframe-container {
     --columnGap: 5rem !important;
   }
-  .build-container:not(.is-active):not(.is-fullscreen) {
+  .build-container:not(.is-active):not(.is-loading):not(.is-fullscreen) {
     opacity: 0.1;
     filter: grayscale(1);
   }
-  .build-container:not(.is-active):hover {
+  .build-container:not(.is-active):not(.is-loading):hover:not(.is-fullscreen) {
     opacity: 1;
     filter: none;
   }

@@ -1,240 +1,129 @@
 import asyncio
 import logging
-import random
-from collections import defaultdict, deque
+import re
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Union, cast
+from typing import List, Tuple, cast
+from uuid import uuid4
 
 import aiohttp
-import requests
 import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
-from colour import Color
-from pyfiglet import FigletFont, figlet_format
 
-from config import settings
-from models import App, AppList, AppTheme
+from models import App, AppList, AppTheme, Message
 from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
 
 logger = logging.getLogger(__name__)
 
-Status = Enum("Status", "ACTIVE INACTIVE UNKNOWN")
-
 
 class AppService:
-    def __init__(self, notifier: Notifier = None, **apps: App):
-        self.apps = apps
+    def __init__(self, apps: List[App], notifier: Notifier = None):
+        self.apps = AppList(__root__=apps)
         self.notifier = notifier
         self.build = CloudBuildService(notifier=notifier)
-        self._history = defaultdict(lambda: deque(maxlen=5))
-        self._current_version = None
-        self._build_future = None
-        self._theme_limit = 20
+        self._active_monitor = None
 
     @classmethod
     def load_from_config(cls, path, notifier: Notifier = None):
         with open(path) as fp:
             config = yaml.safe_load(fp)
-        apps = {app["name"]: App.parse_obj(app) for app in config["apps"]}
-        return cls(notifier=notifier, **apps)
+        apps = [App.parse_obj(app) for app in config["apps"]]
+        return cls(apps=apps, notifier=notifier)
 
-    def get_gradients(self) -> List[Dict[str, Any]]:
-        resp = requests.get(
-            "https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json"
-        )
-        data = resp.json()
-        for gradient in data:
-            try:
-                colors = [Color(c) for c in gradient["colors"]]
-                gradient["vibrant"] = (
-                    min([c.get_saturation() for c in colors]) > 0.8
-                    and min([c.get_luminance() for c in colors]) < 0.5
-                )
-            except ValueError:
-                gradient["vibrant"] = False
-        return data
-
-    def get_ascii_fonts(self, max_height=15) -> List[str]:
-        fonts = FigletFont.getFonts()
-        return [
-            f
-            for f in fonts
-            if len(figlet_format("7Apps", font=f).split("\n")) <= max_height
-        ]
-
-    def get_google_fonts(self) -> List[str]:
-        resp = requests.get(
-            "https://www.googleapis.com/webfonts/v1/webfonts",
-            params={
-                "key": settings.google_api_key,
-                "fields": "items.family,items.category",
-                "sort": "popularity",
-            },
-            headers={"Referer": "7apps.cloud"},
-        )
-        data = resp.json()
-        if not resp.ok:
-            logger.error("Unable to get Google Fonts (%s)", resp.status_code)
-            return ["Permanent Marker", "Staatliches", "Luckiest Guy"]
-        return [
-            f["family"]
-            for f in data["items"]
-            if f["category"] in ["handwriting", "display"]
-        ]
-
-    @property
-    def gradients(self):
-        if not hasattr(self, "_gradients"):
-            gradients = list(filter(lambda g: g["vibrant"], self.get_gradients()))
-            self._gradients = random.choices(gradients, k=self._theme_limit)
-        return self._gradients
-
-    @property
-    def google_fonts(self):
-        if not hasattr(self, "_google_fonts"):
-            self._google_fonts = random.choices(
-                self.get_google_fonts(), k=self._theme_limit
-            )
-        return self._google_fonts
-
-    @property
-    def ascii_fonts(self):
-        if not hasattr(self, "_ascii_fonts"):
-            self._ascii_fonts = random.choices(
-                self.get_ascii_fonts(), k=self._theme_limit
-            )
-        return self._ascii_fonts
-
-    @property
-    def app_names(self) -> List[str]:
-        return [app.name for app in self.apps.values()]
-
-    def json(self) -> str:
-        return AppList(__root__=list(self.apps.values())).json()
-
-    def latest_version(self):
-        return list(sorted(self.apps.values(), key=lambda app: app.updated))[0].version
-
-    async def start_deployment(self, theme: AppTheme):
+    async def deploy(self, theme: AppTheme) -> Tuple[str, BuildRef]:
         active_builds = self.build.active_builds(refresh=True)
         if len(active_builds) > 0:
             logger.warning(
-                "Skipping new deployment, %s build(s) already in progress",
+                "Skipping deployment: %s build(s) already in progress",
                 len(active_builds),
             )
-            build_ref = active_builds[0]
-            self.build.start_log_stream(build_ref)
+            build = active_builds[0]
+            version = build.substitutions.get("_VERSION") or ""
+            await self.build.start_log_stream(build)
         else:
-            logger.info("Triggering new deployment with payload: %s", theme.json())
-            build_ref = await self.build.trigger_build(theme.get_build_substitutions())
-        return build_ref
+            version = (
+                re.sub(r"[^\w]+", "-", theme.gradient.name).lower()
+                + "-"
+                + uuid4().hex[:7]
+            )
+            substitutions = {
+                "_GRADIENT": theme.gradient.name,
+                "_FONT": theme.font or "",
+                "_ASCII_FONT": theme.ascii_font or "",
+                "_VERSION": version,
+            }
+            logger.info("Deploying new version: %s", version)
+            build = await self.build.trigger_build(substitutions)
+        return version, build
 
-    async def request_app(self, app: App, session: ClientSession) -> App:
+    async def fetch_app(self, app: App, session: ClientSession) -> App:
         async with session.get(app.url) as response:
+            response.raise_for_status()
             data = await response.json()
             app_copy = app.copy(update=data)
             app_copy.updated = datetime.utcnow()
             return app_copy
 
-    async def get_latest_app_data(self) -> Dict[str, App]:
+    async def update_apps(self):
         headers = cast(LooseHeaders, {"Accept": "application/json"})
         tasks = []
         async with aiohttp.ClientSession(headers=headers) as session:
-            for app in self.apps.values():
-                task = self.request_app(app, session)
+            for current_app in self.apps:
+                task = self.fetch_app(current_app, session)
                 tasks.append(asyncio.ensure_future(task))
-            latest = await asyncio.gather(*tasks, return_exceptions=True)
-        apps = dict(zip(self.apps.keys(), latest))
-        return {name: app for name, app in apps.items() if isinstance(app, App)}
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        for app in [r for r in results if isinstance(r, App)]:
+            self.apps.replace(app)
 
-    async def refresh_app_data(self):
-        self.apps.update(await self.get_latest_app_data())
+    async def start_monitor(self, version: str):
+        if self._active_monitor is not None and not self._active_monitor.done():
+            return
+        self._active_monitor = asyncio.ensure_future(self._monitor(version))
+        return self._active_monitor
 
-    async def poll_apps(self, build_ref: BuildRef, interval=10):
-        await self.refresh_app_data()
+    async def _monitor(self, version: str):
+        logger.info("👀 Starting application monitor")
+        await self.notifier.send(Message("build", status="started", version=version))
         start_time = datetime.utcnow()
-        current_apps = list(self.apps.values())
-        current_version = self.latest_version()
+        interval = 10
+        timeout = 600
+        old_apps = self.apps.copy(deep=True)
         while True:
             timer = int((datetime.utcnow() - start_time).total_seconds())
-            if timer > 600:
-                logging.error("Application monitor timed out")
-                break
-            latest_apps = await self.get_latest_app_data()
-            latest_versions = set([app.version or "" for app in latest_apps.values()])
-            latest_version = next(iter(latest_versions))
-            logger.debug(
-                "%s -vs- %s (⏳ %ss)", latest_version, ", ".join(latest_versions), timer
-            )
-            for app in current_apps:
-                latest_app = latest_apps.get(app.name)
-                logger.debug("[%s] %s", app.name, app.version)
-                if (
-                    latest_app is not None
-                    and app.version is not None
-                    and app.version != latest_app.version
-                    and latest_app.version != current_version
-                    and latest_app.updated > start_time
-                ):
-                    logger.info(
-                        "[%s] Update complete (%s -> %s)",
-                        app.name,
-                        app.version,
-                        latest_app.version,
-                    )
-                    self.apps[app.name] = latest_app
-                    self._history[app.name].appendleft(app)
-                    current_apps.remove(app)  # remove app from poll rotation
-                    await self.notifier.send(
-                        topic="refresh-app",
-                        data={
-                            "build": build_ref.dict(),
-                            "app": latest_app.dict(),
-                            "duration": timer,
-                        },
-                    )
-            if len(latest_versions) == 1 and latest_version != current_version:
+            await self.update_apps()
+
+            # Limit logs to once every 30s
+            if timer % 30 < interval:
+                logger.info("⏳ Polling applications (%ss elapsed)", timer)
+                for v, apps in self.apps.versions().items():
+                    logger.info("[%s]: %s", v, ", ".join(map(str, apps)))
+
+            # Process updated app(s)
+            for app in old_apps:
+                latest_app = self.apps.get(app.name)
+                if latest_app.version != version:
+                    continue
                 logger.info(
-                    "All applications updated (%s -> %s)",
-                    current_version,
-                    latest_version,
+                    "✨ %s updated after %ss (%s -> %s)",
+                    app,
+                    timer,
+                    app.version,
+                    version,
                 )
+                message = Message(
+                    "refresh-app", version=version, app=latest_app, duration=timer,
+                )
+                await self.notifier.send(message=message)
+                old_apps.remove(app)  # remove from poll rotation
+
+            # Should we keep polling?
+            if all(map(lambda a: a.version == version, self.apps)):
+                logger.info("🎉 All applications updated (%s)", version)
                 break
-            elif self.build.active_builds() == 0:
-                logger.warning(
-                    "Stopping monitor early (%s)", ", ".join(latest_versions)
-                )
+            elif timer > timeout or self.build.active_builds() == 0:
+                logging.warning("⌛ Stopping monitor after %ss", timeout)
                 break
             await asyncio.sleep(interval)
-        await self.stop_build_monitor()
-
-    def deployment_status(self, as_string=False) -> Union[str, Status]:
-        if self._build_future is None:
-            status = Status.INACTIVE
-        else:
-            status = Status.INACTIVE if self._build_future.done() else Status.ACTIVE
-        return status.name if as_string else status
-
-    async def start_build_monitor(self, build_ref: BuildRef):
-        if self.deployment_status() == Status.INACTIVE:
-            logging.info("Starting build monitor")
-            await self.notifier.send(
-                topic="build", data={"status": "starting"},
-            )
-            self._build_future = asyncio.ensure_future(self.poll_apps(build_ref))
-        else:
-            logger.warning("Build monitor already active")
-
-    async def stop_build_monitor(self):
-        if self.deployment_status() == Status.ACTIVE:
-            logger.info("Stopping build monitor")
-            await self.notifier.send(
-                topic="build", data={"status": "finished"},
-            )
-            self._build_future.cancel()
-        else:
-            logging.warning("No active build monitor to stop")
+        await self.notifier.send(Message("build", status="finished", version=version))

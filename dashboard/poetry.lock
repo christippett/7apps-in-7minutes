@@ -136,6 +136,17 @@ version = "0.1.5"
 test = ["nose"]
 
 [[package]]
+category = "dev"
+description = "Python's missing debug print command and other development tools."
+name = "devtools"
+optional = false
+python-versions = ">=3.6"
+version = "0.6"
+
+[package.extras]
+pygments = ["Pygments (>=2.2.0)"]
+
+[[package]]
 category = "main"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 name = "fastapi"
@@ -410,6 +421,14 @@ python-versions = "*"
 version = "0.8.post1"
 
 [[package]]
+category = "dev"
+description = "Pygments is a syntax highlighting package written in Python."
+name = "pygments"
+optional = false
+python-versions = ">=3.5"
+version = "2.6.1"
+
+[[package]]
 category = "main"
 description = "🐫  Convert strings (and dictionary keys) between snake case, camel case and pascal case in Python. Inspired by Humps for Node"
 name = "pyhumps"
@@ -636,7 +655,7 @@ multidict = ">=4.0"
 typing-extensions = ">=3.7.4"
 
 [metadata]
-content-hash = "28f6da0fe86e67d33765bcaaa95acd1078849a4129b87442537f6b5d6a7ac756"
+content-hash = "d5f1fc3fb1675ee44c10a53604664b224c6c3d46a6e6602eceab72785d329db3"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -702,6 +721,10 @@ colorama = [
 colour = [
     {file = "colour-0.1.5-py2.py3-none-any.whl", hash = "sha256:33f6db9d564fadc16e59921a56999b79571160ce09916303d35346dddc17978c"},
     {file = "colour-0.1.5.tar.gz", hash = "sha256:af20120fefd2afede8b001fbef2ea9da70ad7d49fafdb6489025dae8745c3aee"},
+]
+devtools = [
+    {file = "devtools-0.6-py3-none-any.whl", hash = "sha256:bba4886df5adbcedafa2ec0e5fb2c255a82ce94ec822a12aa16f1f104e9eed36"},
+    {file = "devtools-0.6.tar.gz", hash = "sha256:3f2d4eb2de2a8501c41330524414b495d7bbf3066384b3cec5fa784a0d07099b"},
 ]
 fastapi = [
     {file = "fastapi-0.60.1-py3-none-any.whl", hash = "sha256:96f964c3d9da8183f824857ad67c16c00ff3297e7bbca6748f60bd8485ded38c"},
@@ -931,6 +954,10 @@ pydantic = [
 pyfiglet = [
     {file = "pyfiglet-0.8.post1-py2.py3-none-any.whl", hash = "sha256:d555bcea17fbeaf70eaefa48bb119352487e629c9b56f30f383e2c62dd67a01c"},
     {file = "pyfiglet-0.8.post1.tar.gz", hash = "sha256:c6c2321755d09267b438ec7b936825a4910fec696292139e664ca8670e103639"},
+]
+pygments = [
+    {file = "Pygments-2.6.1-py3-none-any.whl", hash = "sha256:ff7a40b4860b727ab48fad6360eb351cc1b33cbf9b15a0f689ca5353e9463324"},
+    {file = "Pygments-2.6.1.tar.gz", hash = "sha256:647344a061c249a3b74e230c739f434d7ea4d8b1d5f3721bc0f3558049b38f44"},
 ]
 pyhumps = [
     {file = "pyhumps-1.6.1-py3-none-any.whl", hash = "sha256:58b367b73c57b64e32d211dc769addabd68ff6db07ce64b2e6565f7d5a12291f"},

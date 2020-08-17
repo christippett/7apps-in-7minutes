@@ -24,6 +24,8 @@ colour = "^0.1.5"
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.3"
 black = "^19.10b0"
+pygments = "^2.6.1"
+devtools = "^0.6"
 
 [tool.isort]
 profile = "black"

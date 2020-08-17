@@ -11,6 +11,7 @@ from fastapi import (
     Response,
     WebSocket,
 )
+from fastapi.encoders import jsonable_encoder
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from requests.exceptions import HTTPError
@@ -35,11 +36,14 @@ app_service = AppService.load_from_config("apps.yaml", notifier=notifier)
 
 @app.get("/")
 async def index(request: Request):
+    props = {"themes": AppTheme.random(20), "apps": app_service.apps}
     return templates.TemplateResponse(
         name="index.html",
         context={
             "request": request,
-            "app_service": app_service,
+            "props": jsonable_encoder(
+                props, by_alias=False, exclude_unset=True, exclude_none=True
+            ),
             "debug": app.debug,
             "unix_timestamp": int(time.time()),
         },
@@ -57,14 +61,14 @@ async def deploy(
         response.status_code = (
             409 if app_service.build.active_builds(refresh=True) else 200
         )
-        build_ref = await app_service.start_deployment(theme)
-        background_tasks.add_task(app_service.build.start_log_stream, build_ref)
-        background_tasks.add_task(app_service.start_build_monitor, build_ref)
+        version, build = await app_service.deploy(theme)
+        background_tasks.add_task(app_service.start_monitor, version)
+        background_tasks.add_task(app_service.build.start_log_stream, build)
     except HTTPError as e:
         logger.exception(e)
         code = e.response.status_code
         raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
-    return {"id": build_ref.id}
+    return {"id": build.id, "version": version}
 
 
 @app.get("/build/{id}")
@@ -75,11 +79,9 @@ def build(id: str):
 
 @app.on_event("startup")
 async def startup():
-    await app_service.refresh_app_data()
-
-    # prime generators (https://stackoverflow.com/a/19892334)
-    notifier.save_file_generator.send(None)
+    # prime generator: https://stackoverflow.com/a/19892334
     await notifier.notification_generator.asend(None)
+    await app_service.update_apps()
 
 
 @app.websocket("/ws")

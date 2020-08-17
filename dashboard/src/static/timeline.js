@@ -64,8 +64,8 @@
         fontSize: "0.8rem",
         fontFace: item.theme.font,
       });
-      item.frame = d3.select(`#${d.data.id}`);
-      item.height = frame.node().getBoundingClientRect().height;
+      item.frame = d3.select(`#${item.id}`);
+      item.height = item.frame.node().getBoundingClientRect().height;
       item.width = textMetrics.width;
       this.nodeMap.set(
         item.id,
@@ -77,8 +77,8 @@
     refresh() {
       let nodes = Array.from(this.nodeMap.values());
       let force = new labella.Force(this.options.labella.force).nodes(nodes).compute();
-      // this.drawNodes({ nodes: force.nodes() });
-      this.drawNodes({ nodes });
+      this.drawNodes({ nodes: force.nodes() });
+      // this.drawNodes({ nodes });
     }
 
     drawTimeline() {
@@ -144,12 +144,17 @@
     }
 
     drawNodes({ nodes }) {
+      console.log("Nodes before renderer:");
+      console.log(nodes);
       let renderer = new labella.Renderer({
         // nodeHeight: nodes[0].width,
         nodeHeight: "200",
         ...this.options.labella.renderer,
       });
       renderer.layout(nodes); // adds x,y,dx,dy to nodes
+
+      console.log("Nodes after renderer:");
+      console.log(nodes);
 
       // Create themed gradient filter for each item
       const gradientOffset = (colors) =>

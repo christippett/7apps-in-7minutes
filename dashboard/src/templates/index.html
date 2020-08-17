@@ -57,7 +57,7 @@ endif %}
   <script src="/static/utils.js{{ asset_suffix }}"></script>
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
-    {%- include "props.js" -%}
+    var props = {{ props|safe }};
   </script>
   <script>
     const timelineOptions = {
@@ -78,9 +78,9 @@ endif %}
         tooltips: [],
         tooltip: new Tooltip({ collection: this.tooltips }),
         builder: new AppBuilder({
-          appService: new AppService(),
+          appService: new AppService({ apps: props.apps }),
+          notificationService: new NotificationService(),
           logHandler: new LogHandler(document.getElementById("logs")),
-          notifier: new NotificationService(),
           timeline: new Timeline({ opts: timelineOptions, el: "#timeline" }),
         }),
         init() {
@@ -88,7 +88,7 @@ endif %}
           this.builder.init({ externalRef: { ...this, ...props } });
         },
         selectTheme(opt) {
-          let themeCount = props.fonts.length - 1;
+          let themeCount = props.themes.length - 1;
           if (opt > themeCount) {
             this.themeOpt = 0;
           } else if (opt < 0) {
@@ -98,22 +98,16 @@ endif %}
           }
         },
         themeStyle(scope) {
-          let colors = props.gradients[this.themeOpt].colors;
-          let primaryColor = colors[0];
+          let theme = props.themes[this.themeOpt];
+          let colors = theme.gradient.colors;
           if (scope === "preview") {
             return [
-              `background: ${primaryColor};`,
+              `background: ${colors[0]};`,
               `background: linear-gradient(45deg,${colors.join(",")}) 0% 0% / 400% 400%;`,
             ].join(" ");
           } else if (scope === "title") {
-            return `font-family: '${props.fonts[this.themeOpt]}';`;
+            return `font-family: '${theme.font}';`;
           }
-        },
-        previewUrl() {
-          let font = encodeURIComponent(props.fonts[this.themeOpt]);
-          let asciiFont = encodeURIComponent(props.asciiFonts[this.themeOpt]);
-          let gradient = encodeURIComponent(props.gradients[this.themeOpt].name);
-          return `https://function.7apps.cloud/?font=${font}&ascii_font=${asciiFont}&gradient=${gradient}`;
         },
       };
     }
