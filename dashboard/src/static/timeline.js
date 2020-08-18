@@ -2,133 +2,114 @@
   "use strict";
   class Timeline {
     constructor({ parent }) {
+      this.parent = parent;
       this.apps = new Map();
       this.timer;
       this.maxValue = 7 * 60; // max seconds
       this.tickValue = 30;
-      this.el = d3.select(parent);
+      this._animationActive = false;
+      this._animationTimer = 0;
+      this.create();
+
+      // The timeline is hidden on mobile (<768px). If the browser is resized
+      // from a starting viewport size where the timeline is hidden, it will
+      // fail to render. This is because when the timeline was initially
+      // created, it would have been unable to calculate the absolute
+      // positioning of various elements required to draw and position the
+      // timeline.
+
+      // To get around this (albiet niche) issue, we remove the SVG element
+      // completely and re-draw it every time the browser is resized.
+      let ro = new ResizeObserver(() => this.create());
+      ro.observe(document.body);
+    }
+
+    create() {
+      this.el = d3.select(this.parent);
       this.bbox = this.el.node().getBoundingClientRect();
       this.height = this.bbox.height;
       this.width = this.bbox.width;
       this.margin = { left: this.width / 2, right: 0, top: 0, bottom: 0 };
       this.innerWidth = this.width - this.margin.left - this.margin.right;
       this.innerHeight = this.height - this.margin.top - this.margin.bottom;
-      this._animationActive = false;
-      this._animationTimer = 0;
+
+      // Create SVG element and attach to DOM, replacing any existing SVG
+      // elements if necessary
+      this.svg = this.drawSvg();
+      this.el.node().innerHTML = "";
+      this.el.node().appendChild(this.svg.node());
     }
 
-    get timelineScale() {
-      let maxValue = this.maxValue;
-      let maxLength = this.innerHeight;
-      // return d3.scaleLog().domain([45, maxValue]).range([0, maxLength]);
-      return d3.scaleLinear().domain([0, maxValue]).range([0, maxLength]);
+    push({ app, value }) {
+      if (this.apps.has(app.name)) return;
+      let el = d3.select(`#${app.name}`);
+      let bbox = el.node().getBoundingClientRect();
+      let target = {
+        y: bbox.y + bbox.height / 2 - this.bbox.y,
+        x: this.bbox.x >= bbox.x ? 0 : this.width,
+      };
+      let props = {
+        el,
+        value,
+        sourcePosition: [this.margin.left, this.timelineScale(value)],
+        targetPosition: [target.x, target.y],
+      };
+      let linkGenerator = d3
+        .linkHorizontal()
+        .source((d) => d.props.sourcePosition)
+        .target((d) => d.props.targetPosition);
+      let item = {
+        id: app.name,
+        app,
+        props,
+        linkGenerator,
+      };
+      this.apps.set(app.name, item);
+      this.renderTimelineData();
     }
 
-    get axis() {
-      let axis = d3.create("svg:g").classed("axis", true);
+    /* Show countdown during deployment ------------------------------------- */
 
-      axis.append("line").attr("y2", this.innerHeight);
-      axis
-        .selectAll("circle.origin")
-        .data([0, this.innerHeight])
-        .enter()
-        .append("circle")
-        .classed("origin", (d) => d == 0)
-        .attr("data-value", (d) => d)
-        .attr("cy", (d) => d)
-        .attr("r", 3);
-
-      // Add labels to axis at 30 minute intervals
-      let tickData = Array.from(Array(this.maxValue / this.tickValue + 1), (_, i) => {
-        let tick = i * this.tickValue;
-        return {
-          tick,
-          y: this.timelineScale(tick),
-          isMajor: tick % 60 == 0 && tick > 0,
-          isMinor: tick % 60 != 0,
-        };
-      });
-
-      // Add mask to hide part of the axis behind ticks/labels
-      let mask = axis.append("g").classed("mask", true);
-      mask
-        .selectAll("rect.minor")
-        .data(tickData.filter((d) => d.isMinor))
-        .enter()
-        .append("circle")
-        .classed("minor", true)
-        .attr("data-value", (d) => d.tick)
-        .attr("cx", 0)
-        .attr("cy", (d) => d.y)
-        .attr("r", 4);
-      mask
-        .selectAll("rect.major")
-        .data(tickData.filter((d) => d.isMajor))
-        .enter()
-        .append("rect")
-        .classed("major", true)
-        .attr("data-value", (d) => d.tick)
-        .attr("x", (d) => d.x)
-        .attr("y", (d) => d.y)
-        .attr("width", 44)
-        .attr("height", 18)
-        .attr("rx", 4)
-        .attr("ry", 4)
-        .attr("transform", "translate(-22, -10)");
-
-      // Create separate axis to overlay countdown
-      axis.append(() => this.countdown);
-
-      // Add ticks
-      let ticks = axis.append("g").classed("ticks", true);
-      ticks
-        .selectAll("circle.tick")
-        .data(tickData.filter((d) => d.isMinor))
-        .enter()
-        .append("circle")
-        .classed("tick", true)
-        .classed("minor", true)
-        .attr("data-value", (d) => d.tick)
-        .attr("cx", 0)
-        .attr("cy", (d) => d.y)
-        .attr("r", 2);
-
-      ticks
-        .selectAll("text.tick")
-        .data(tickData.filter((d) => d.isMajor))
-        .enter()
-        .append("text")
-        .classed("tick", true)
-        .classed("major", true)
-        .attr("data-value", (d) => d.tick)
-        .attr("x", 0)
-        .attr("y", (d) => d.y)
-        .attr("transform", "translate(0, 3)")
-        .attr("text-anchor", "middle")
-        .text((d) => `${d.tick / 60} min`);
-
-      return axis.node();
+    startCountdown() {
+      this.svg.classed("is-counting", true);
+      this.timer = d3.interval((ms) => this.countdownHandler(ms), 100);
+      d3.timeout(this.stopCountdown, 7 * 60000);
     }
 
-    get countdown() {
-      let countdown = d3.create("svg:g").classed("countdown", true);
-      countdown
-        .append("line")
-        .classed("leader", true)
-        .attr({ x1: 0, y1: 0, x2: 0, y2: 0 });
-      countdown.append("circle").classed("leader", true).attr("r", 2).attr("cy", 0);
-      countdown
-        .append("text")
-        .classed("clock", true)
-        .attr("x", 0)
-        .attr("y", 0)
-        .attr("transform", "translate(0, -30)")
-        .attr("text-anchor", "middle")
-        .text("00:00");
-      return countdown.node();
+    stopCountdown() {
+      this.timer.stop();
+      this.svg.classed("is-counting", false);
+      d3.select(".countdown .axis line").attr("y2", 0);
+      d3.select(".countdown .axis circle").attr("cy", 0);
     }
 
-    createSvg() {
+    countdownHandler(ms) {
+      let value = Math.floor(this.timelineScale(ms / 1000));
+      let totalSeconds = Math.floor(ms / 1000);
+
+      // Update countdown clock
+      let minutePart = Math.floor(ms / 1000 / 60)
+        .toString()
+        .padStart(2, "0");
+      let secondPart = Math.round((ms / 1000) % 60)
+        .toString()
+        .padStart(2, "0");
+      d3.select("text.clock").text(`${minutePart}:${secondPart}`);
+
+      // Increment axis progress tracker
+      d3.select(".countdown line.leader").attr("y2", value);
+      d3.select(".countdown circle.leader").attr("cy", value);
+
+      d3.selectAll(".tick")
+        .filter(function () {
+          return parseInt(this.dataset.value) <= totalSeconds + 5;
+        })
+        .classed("active", true);
+    }
+
+    /* Generate base SVG container ------------------------------------------- */
+
+    drawSvg() {
       let svg = d3
         .create("svg")
         .attr("viewBox", `0 0 ${this.width} ${this.height}`)
@@ -169,121 +150,9 @@
       return svg;
     }
 
-    create() {
-      this.svg = this.createSvg();
-      this.el.append(() => this.svg.node());
-      this.startCountdown();
-    }
+    /* Render Timeline data ----------------------------------------------------- */
 
-    push({ app, value }) {
-      if (this.apps.has(app.name)) return;
-      let el = d3.select(`#${app.name}`);
-      let bbox = el.node().getBoundingClientRect();
-      let target = {
-        y: bbox.y + bbox.height / 2 - this.bbox.y,
-        x: this.bbox.x >= bbox.x ? 0 : this.width,
-      };
-      let props = {
-        el,
-        value,
-        sourcePosition: [this.margin.left, this.timelineScale(value)],
-        targetPosition: [target.x, target.y],
-      };
-      let linkGenerator = d3
-        .linkHorizontal()
-        .source((d) => d.props.sourcePosition)
-        .target((d) => d.props.targetPosition);
-      let item = {
-        id: app.name,
-        app,
-        props,
-        linkGenerator,
-      };
-      this.apps.set(app.name, item);
-      this.refresh();
-    }
-
-    remove() {
-      this.el.remove();
-    }
-
-    startCountdown() {
-      this.svg.classed("is-counting", true);
-      this.timer = d3.interval((ms) => this.countdownHandler(ms), 100);
-      d3.timeout(this.stopCountdown, 7 * 60000);
-    }
-
-    stopCountdown() {
-      this.timer.stop();
-      this.svg.classed("is-counting", false);
-      d3.select(".countdown .axis line").attr("y2", 0);
-      d3.select(".countdown .axis circle").attr("cy", 0);
-    }
-
-    countdownHandler(ms) {
-      let value = Math.floor(this.timelineScale(ms / 1000));
-      let timer = {
-        ms,
-        seconds: Math.floor(ms / 1000),
-      };
-
-      // Update countdown clock
-      let minutePart = Math.floor(ms / 1000 / 60)
-        .toString()
-        .padStart(2, "0");
-      let secondPart = Math.round((ms / 1000) % 60)
-        .toString()
-        .padStart(2, "0");
-      d3.select("text.clock").text(`${minutePart}:${secondPart}`);
-
-      // Increment axis progress tracker
-      let tracker = {
-        line: d3.select(".countdown line.leader").attr("y2", value),
-        circle: d3.select(".countdown circle.leader").attr("cy", value),
-      };
-
-      let animateLeader = () => {
-        console.log("starting animation");
-        if (!this._animationActive) {
-          this._animationTimer = elapsed;
-        }
-        this._animationActive = true;
-        leaderPoint
-          .transition()
-          .duration(300)
-          .attr("r", 4)
-          .transition()
-          .duration(300)
-          .attr("r", 2)
-          .on("end", () => {
-            console.log(elapsed - this._animationTimer);
-            if (elapsed - this._animationTimer <= 5) {
-              animateLeader();
-            } else {
-              this._animationActive = false;
-            }
-          });
-      };
-
-      // if (ms > 15 && (ms % 30 > 27.5 || ms % 30 < 2.5)) {
-      //   console.log(`${rounded} | ${rounded % 30}`);
-      //   console.log(`${this._animationActive} | ${elapsed - this._animationTimer}`);
-      //   if (!this._animationActive && elapsed - this._animationTimer > 10) {
-      //     console.log("animating leading point");
-      //     animateLeader();
-      //   }
-      //   axis
-      //     .select(".countdown")
-      //     .selectAll("text.tick")
-      //     .filter(function () {
-      //       console.log(`${this.dataset.value} <= ${elapsed}`);
-      //       return this.dataset.value <= elapsed;
-      //     })
-      //     .classed("elapsed", true);
-      // }
-    }
-
-    refresh() {
+    renderTimelineData() {
       let nodes = Array.from(this.apps.values());
 
       // Create themed gradient filter for each item
@@ -314,8 +183,8 @@
           });
         });
 
+      // Helper function for updating data nodes
       const update = ({ parent, tag, nodes }) => {
-        // Helper function for updating data nodes
         let [tagName, className] = tag.split(".");
         let u = this.svg
           .select(parent)
@@ -348,6 +217,121 @@
         .attr("cx", (d) => d.props.targetPosition[0])
         .attr("cy", (d) => d.props.targetPosition[1])
         .attr("r", 4);
+    }
+
+    /* Timeline D3 Components ------------------------------------------------ */
+
+    get axis() {
+      let axis = d3.create("svg:g").classed("axis", true);
+      axis.append("line").attr("y2", this.innerHeight);
+      axis
+        .selectAll("circle.edge")
+        .data([0, this.innerHeight])
+        .enter()
+        .append("circle")
+        .classed("edge", true)
+        .classed("origin", (d) => d == 0)
+        .classed("end", (d) => d == this.innerHeight)
+        .attr("data-value", (d) => d)
+        .attr("cy", (d) => d)
+        .attr("r", 3);
+
+      // Add labels to axis at 30 minute intervals
+      let tickData = Array.from(Array(this.maxValue / this.tickValue + 1), (_, i) => {
+        let tick = i * this.tickValue;
+        return {
+          tick,
+          y: this.timelineScale(tick),
+          isMajor: tick % 60 == 0,
+          isMinor: tick % 60 != 0,
+        };
+      });
+
+      // Add mask to hide part of the axis behind ticks/labels
+      let mask = axis.append("g").classed("mask", true);
+      mask
+        .selectAll("rect.minor")
+        .data(tickData.filter((d) => d.isMinor))
+        .enter()
+        .append("circle")
+        .classed("tick", true)
+        .classed("minor", true)
+        .attr("data-value", (d) => d.tick)
+        .attr("cx", 0)
+        .attr("cy", (d) => d.y)
+        .attr("r", 4);
+      mask
+        .selectAll("rect.major")
+        .data(tickData.filter((d) => d.isMajor))
+        .enter()
+        .append("rect")
+        .classed("tick", true)
+        .classed("major", true)
+        .attr("data-value", (d) => d.tick)
+        .attr("x", (d) => d.x)
+        .attr("y", (d) => d.y)
+        .attr("width", 44)
+        .attr("height", 18)
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .attr("transform", "translate(-22, -10)");
+
+      // Create separate axis to overlay countdown
+      axis.append(() => this.countdown);
+
+      // Add ticks
+      let ticks = axis.append("g").classed("ticks", true);
+      ticks
+        .selectAll("circle.tick")
+        .data(tickData.filter((d) => d.isMinor))
+        .enter()
+        .append("circle")
+        .classed("tick", true)
+        .classed("minor", true)
+        .attr("data-value", (d) => d.tick)
+        .attr("cx", 0)
+        .attr("cy", (d) => d.y)
+        .attr("r", 3);
+
+      ticks
+        .selectAll("text.tick")
+        .data(tickData.filter((d) => d.isMajor))
+        .enter()
+        .append("text")
+        .classed("tick", true)
+        .classed("major", true)
+        .attr("data-value", (d) => d.tick)
+        .attr("x", 0)
+        .attr("y", (d) => d.y)
+        .attr("transform", "translate(0, 3)")
+        .attr("text-anchor", "middle")
+        .text((d) => `${d.tick / 60} min`);
+
+      return axis.node();
+    }
+
+    get countdown() {
+      let countdown = d3.create("svg:g").classed("countdown", true);
+      countdown
+        .append("line")
+        .classed("leader", true)
+        .attr({ x1: 0, y1: 0, x2: 0, y2: 0 });
+      countdown.append("circle").classed("leader", true).attr("r", 2).attr("cy", 0);
+      countdown
+        .append("text")
+        .classed("clock", true)
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("transform", "translate(0, -25)")
+        .attr("text-anchor", "middle")
+        .text("00:00");
+      return countdown.node();
+    }
+
+    get timelineScale() {
+      let maxValue = this.maxValue;
+      let maxLength = this.innerHeight;
+      return d3.scaleLinear().domain([0, maxValue]).range([0, maxLength]);
     }
   }
 

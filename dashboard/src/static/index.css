@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fugaz One&family=Inter:wght@400;500;600&family=Roboto+Mono:ital,wght@0,400;1,400;1,600;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fugaz One&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap");
 
 html,
 body {
@@ -29,7 +29,7 @@ footer {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 200px;
+  min-height: 150px;
   padding: 0;
 }
 
@@ -38,9 +38,8 @@ footer {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: 3rem 1.5rem;
   max-width: 1200px;
-  padding-top: 10rem;
 }
 
 .emoji {
@@ -65,8 +64,9 @@ footer {
 .is-fancy {
   font-family: "Fugaz One", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  padding: 0 2px;
+  font-weight: 400 !important;
   font-size: 1.05em;
+  padding: 0 2px;
 }
 
 /* Tooltips ----------------------------------------------------------------- */
@@ -98,7 +98,7 @@ footer {
 .is-fullscreen .tooltips {
   margin-bottom: -3rem;
 }
-.build-container:hover .tooltips {
+.demo-container:hover .tooltips {
   opacity: 1;
 }
 
@@ -175,7 +175,7 @@ emojis to use */
 .timeline-container {
   margin: auto;
   width: 10rem;
-  height: 75%;
+  height: 80%;
   display: flex;
   /* z-index: 1; */
 }
@@ -187,14 +187,17 @@ svg.timeline {
 
 /* Axis */
 .axis > line {
-  stroke-width: 2px;
+  stroke-width: 2;
   stroke: #d6d5da;
 }
-.axis > circle {
-  fill: #d6d5da;
+
+.axis > circle.edge {
+  fill: #f5f6fa;
+  stroke: #d6d5da;
+  stroke-width: 1;
 }
 
-.axis > .mask {
+.mask {
   fill: #f5f6fa;
 }
 
@@ -203,7 +206,7 @@ svg.timeline {
 .countdown > text.clock,
 .ticks > text.major {
   font-size: 0.75rem;
-  fill: #7a7a7a;
+  fill: #5c5c5c;
   letter-spacing: 1px;
   word-spacing: -0.4rem;
   font-family: "Roboto Mono";
@@ -212,6 +215,11 @@ svg.timeline {
 
 .ticks > .minor {
   fill: #b3b1bd;
+  stroke: #f5f6fa;
+  stroke-width: 1;
+}
+.tick {
+  transition: all 1s ease-in;
 }
 
 /* Links */
@@ -223,18 +231,39 @@ svg.timeline {
 }
 
 /* Countdown  */
-
-.countdown > text.clock {
-  font-size: 0.9rem;
-  font-weight: semibold;
+.countdown,
+.is-counting .tick[data-value="0"] {
+  opacity: 0;
+  transition: opacity 0.5s ease-in;
+}
+.is-counting .countdown {
+  opacity: 1;
 }
 
-.is-counting .ticks > .has-elapsed,
-.is-counting .axis > circle.origin,
+.countdown > text.clock {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mask > rect.major.active,
+.countdown > circle.leader,
+.countdown > line.leader,
+.is-counting .axis > circle.origin {
+  fill: #2c2928;
+  stroke: #2c2928;
+}
+
+.is-counting .ticks > circle.minor.active {
+  fill: #f5f6fa;
+  stroke: #2c2928;
+  stroke-width: 2;
+}
 .countdown > circle.leader,
 .countdown > line.leader {
-  fill: #e41811;
-  stroke: #e41811;
+  stroke-width: 3;
+}
+.is-counting .ticks > text.active {
+  fill: #f5f6fa;
 }
 
 /* --------------------------------- IFrames -------------------------------- */
@@ -307,28 +336,34 @@ iframe.app-frame {
 
 /* ------------------------------- App Builder ------------------------------ */
 
-.build-container {
+.demo-container {
   background: none;
   /* order: -1; */
   cursor: zoom-in;
   transition: opacity 0.2s ease-in, filter 0.2s ease-in;
 }
 
-.build-container.is-fullscreen {
+.demo-container.is-fullscreen {
   cursor: zoom-out;
 }
 
-.build-container .box {
+.demo-container .box {
   transition: transform 0.2s ease;
   overflow: hidden;
 }
 
-.build-container.is-fullscreen .box {
+.demo-container.is-fullscreen .box {
   transition-duration: 0s;
 }
 
-.build-container.is-active:not(.is-fullscreen) .box:hover {
+.demo-container.is-active:not(.is-fullscreen) .box:hover {
   transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .demo-container .box {
+    min-height: 300px;
+  }
 }
 
 /* Fullscreen --------------------------------------------------------------- */
@@ -364,7 +399,7 @@ iframe.app-frame {
 
 /* Build Form --------------------------------------------------------------- */
 
-.build-form {
+.demo-interface {
   height: 100%;
   padding: 1.5rem;
   display: flex;
@@ -375,12 +410,7 @@ iframe.app-frame {
   z-index: 1;
 }
 
-.is-fullscreen .build-form {
-  padding: 2em;
-  font-size: 2rem;
-}
-
-.build-form .button {
+.demo-interface .button {
   background: rgb(245 245 245 / 90%) !important;
   box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
   font-size: 0.8rem;
@@ -389,7 +419,7 @@ iframe.app-frame {
   z-index: 100;
 }
 
-.build-form .button:hover {
+.demo-interface .button:hover {
   opacity: 0.8;
 }
 
@@ -400,33 +430,64 @@ iframe.app-frame {
   margin-bottom: 0;
 }
 
+.demo-interface .button svg {
+  fill: currentColor;
+}
+
+.is-fullscreen .demo-interface {
+  padding: 2em;
+  font-size: 2rem;
+}
+
 .is-fullscreen .deploy.button {
   font-size: 1rem;
 }
 
-.build-form .button svg {
-  fill: currentColor;
-}
-
 /* previous/next theme navigation */
 
-.build-form nav {
+.demo-interface nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
 }
 
-.is-fullscreen .build-form nav {
-  padding: 1em;
-  font-size: 1.25rem;
-}
-
-.build-form nav .button {
+.demo-interface nav .button {
   border-radius: 50%;
   height: 2em;
   width: 2em;
   padding: 2px;
+}
+
+.is-fullscreen .demo-interface nav {
+  padding: 1em;
+  font-size: 1.25rem;
+}
+
+/* Media queries */
+
+@media (min-width: 1024px) {
+  .demo-container.is-fullscreen {
+    font-size: 1.2rem;
+  }
+  .is-fullscreen .logs > p .lg-id {
+    display: inline-flex;
+    min-width: 120px;
+  }
+}
+
+@media (min-width: 768px) {
+  .iframe-container {
+    --columnGap: 5rem !important;
+  }
+  .demo-container:not(.is-active):not(.is-loading):not(.is-fullscreen) {
+    opacity: 0.25;
+    filter: grayscale(1);
+  }
+  .demo-container:not(.is-active):not(.is-loading):hover:not(.is-fullscreen) {
+    opacity: 1;
+    filter: none;
+  }
 }
 
 /* Preview Container -------------------------------------------------------- */
@@ -594,35 +655,6 @@ iframe.app-frame {
 }
 .logs::-webkit-scrollbar-track {
   overflow: hidden;
-}
-
-/* Media Queries ------------------------------------------------------------ */
-
-@media (min-width: 1024px) {
-  .iframe-container {
-    margin-left: 2rem;
-  }
-  .build-container.is-fullscreen {
-    font-size: 1.2rem;
-  }
-  .is-fullscreen .logs > p .lg-id {
-    display: inline-flex;
-    min-width: 120px;
-  }
-}
-
-@media (min-width: 768px) {
-  .iframe-container {
-    --columnGap: 5rem !important;
-  }
-  .build-container:not(.is-active):not(.is-loading):not(.is-fullscreen) {
-    opacity: 0.25;
-    filter: grayscale(1);
-  }
-  .build-container:not(.is-active):not(.is-loading):hover:not(.is-fullscreen) {
-    opacity: 1;
-    filter: none;
-  }
 }
 
 /* -------------------------------- Animation ------------------------------- */

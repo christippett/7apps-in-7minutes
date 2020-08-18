@@ -1,13 +1,13 @@
 <div
   @click="isFullscreen = !isFullscreen"
-  class="build-container column is-half is-relative"
+  class="demo-container column is-half is-relative"
   :class="{ 'is-fullscreen': isFullscreen, 'is-loading': builder.isLoading, 'is-active': builder.activeBuild !== null }"
   x-data="data()"
   x-init="init"
 >
   <div class="is-hidden-tablet my-4">
-    <p class="title is-5">Interactive demo</p>
-    <p class="subtitle is-italic is-6">May the demo gods ever be in your favour</p>
+    <p class="title is-5">Deploy <span class="is-fancy">7-Apps-in-7-minutes</span></p>
+    <p class="subtitle is-italic is-7">May the demo gods smile upon you with favour 🤞</p>
   </div>
 
   <div class="is-relative" style="flex: 1">
@@ -26,10 +26,11 @@
     </div>
     <div class="box is-relative is-unselectable px-0 py-0">
       <div id="logs" class="logs is-overlay" x-show.transition.duration.500ms="builder.activeBuild !== null" ></div>
-      <div id="build" class="build-form is-overlay" x-show.transition.duration.500ms="builder.activeBuild === null" >
+      <div id="build" class="demo-interface is-overlay" x-show.transition.duration.500ms="builder.activeBuild === null" >
 
         <div class="preview-frame is-overlay" :style="themeStyle('preview')">
-          <div class="title" :style="themeStyle('title')">Demo</div>
+          <p class="title" :style="themeStyle('title')">Demo</p>
+          <p class="has-text-white">Hi</p>
         </div>
         <nav class="is-overlay">
           <button @click.stop="selectTheme(themeOpt - 1)" class="button is-light">

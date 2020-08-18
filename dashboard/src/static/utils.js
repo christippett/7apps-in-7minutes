@@ -306,9 +306,6 @@
       this.logHandler = logHandler;
       this.timeline = timeline;
 
-      // Create timeline skeleton
-      this.timeline.create();
-
       // When there's an active build in-progress, the backend will send log
       // messages that will be processed by the `LogHandler` and added to the
       // DOM
