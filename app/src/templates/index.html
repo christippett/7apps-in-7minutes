@@ -108,7 +108,7 @@
       <div class="ascii">{{ app.header }}</div>
       <div class="app">{{ app.title }}</div>
       {% if app.version %}
-      <div class="version"> <span class="emoji">💾</span> {{ app.version }} </div>
+      <div id="version" data-version="{{ app.version }}" class="version"> <span class="emoji">💾</span> {{ app.version }} </div>
       {% endif %}
     </div>
   </body>
