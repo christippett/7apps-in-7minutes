@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from asyncio.futures import Future
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Deque, Dict, List, Optional, Tuple
@@ -27,6 +27,7 @@ class CloudBuildService:
     def __init__(self, notifier=None):
         self.notifier = notifier
         self.session = AuthorizedSession(settings.google_credentials)
+        self._logs = defaultdict(list)
         self._active_builds: Deque[Tuple[BuildRef, Future]] = deque(maxlen=10)
 
     def _googlesdk_cloudbuild_client(self):
@@ -100,24 +101,26 @@ class CloudBuildService:
         self._active_builds.append((build, log_future))
 
     async def stream_logs(self, build: BuildRef):
+        log_parser = self.parse_log_text
+        log_store = self._logs
+        send_log = self.send_log
+
         @dataclass
         class _LogWriter:
-            logger: Callable
-            parser: Callable
-
-            # gcloud sdk expects a `Print` method
+            # The gcloud SDK invokes a `Print` method internally to write its
+            # output
             def Print(self, text):
                 for t in text.split("\n"):
-                    asyncio.run_coroutine_threadsafe(
-                        self.logger(**self.parser(t)), loop=loop
-                    )
+                    log = log_parser(t)
+                    log_store[build.id].append(log)
+                    asyncio.run_coroutine_threadsafe(send_log(**log), loop=loop)
 
         header = figlet_format(text="Cloud Build", font="slant")
         await self.send_log(header + "Starting log stream...\n\n")
 
         client = self._googlesdk_cloudbuild_client()
         loop = asyncio.get_event_loop()
-        log_writer = _LogWriter(self.send_log, self.parse_log_text)
+        log_writer = _LogWriter()
         await loop.run_in_executor(None, client.Stream, build, log_writer)
         await self.send_log(figlet_format(text="Done!", font="straight"))
 

@@ -40,7 +40,7 @@ footer {
   align-items: center;
   /* width: -webkit-fill-available; */
   padding: 2rem;
-  max-width: 1100px;
+  max-width: 1200px;
 }
 
 .emoji {
@@ -173,11 +173,24 @@ emojis to use */
 /* -------------------------------- Timeline -------------------------------- */
 
 .timeline-container {
-  margin: 0 auto;
-  width: 12rem;
-  height: 100%;
+  margin: auto;
+  width: 10rem;
+  height: 80%;
   display: flex;
+  /* z-index: 1; */
 }
+/* .timeline-container:before,
+.timeline-container:after {
+  content: "";
+  position: absolute;
+  right: 0;
+  left: 0;
+}
+.timeline-container:before {
+  top: 0;
+  height: 10rem;
+  background-image: linear-gradient(0deg, #f5f6fa 25%, rgb(0 0 0 / 0%));
+} */
 
 svg.timeline {
   overflow: visible;
@@ -185,28 +198,33 @@ svg.timeline {
 }
 .axis line {
   stroke-width: 2px;
-  stroke: #dbdbdb;
+  stroke: rgb(122 122 122 / 0.25);
 }
 .axis circle {
-  fill: #dbdbdb;
+  fill: rgba(36, 36, 36, 0.1);
 }
 .axis text {
   font-size: 0.75rem;
-  fill: #b1b1b1;
+  fill: #7a7a7a;
   letter-spacing: 1px;
+  word-spacing: -0.4rem;
+  font-family: "Roboto Mono";
+  line-height: 0;
 }
-text.label {
-  font-size: 1.4rem;
-  /* text-shadow: 1px 1px 1px rgb(0 0 0 / 50%); */
-}
-rect.label {
-  fill-opacity: 0;
-  /* filter: url(#shadow); */
-}
-path.label {
+path.link {
   stroke-width: 2;
   opacity: 0.6;
   fill: none;
+}
+g.major-ticks rect {
+  fill: #f5f6fa;
+  /* fill: red; */
+}
+g.minor-ticks rect {
+  fill: #f5f6fa;
+}
+circle.target {
+  fill: black;
 }
 
 /* --------------------------------- IFrames -------------------------------- */

@@ -57,19 +57,9 @@ endif %}
   <script src="/static/utils.js{{ asset_suffix }}"></script>
   <script src="/static/timeline.js{{ asset_suffix }}"></script>
   <script>
-    var props = {{ props|safe }};
+    var props = {{ props|tojson }};
   </script>
   <script>
-    const timelineOptions = {
-      margin: { left: 40, right: 0, top: 50, bottom: 50 },
-      maxValue: 10 * 60, // max seconds
-      tickValue: 30,
-      labella: {
-        renderer: { layerGap: 50, direction: "right" },
-        force: { minPos: -10, nodeSpacing: 10 },
-      },
-    };
-
     function data() {
       return {
         isFullscreen: false,
@@ -81,7 +71,7 @@ endif %}
           appService: new AppService({ apps: props.apps }),
           notificationService: new NotificationService(),
           logHandler: new LogHandler(document.getElementById("logs")),
-          timeline: new Timeline({ opts: timelineOptions, el: "#timeline" }),
+          timeline: new Timeline({ parent: "#timeline" }),
         }),
         init() {
           this.tooltip._tooltips = this.tooltips;

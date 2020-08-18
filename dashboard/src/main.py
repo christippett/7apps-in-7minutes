@@ -36,14 +36,24 @@ app_service = AppService.load_from_config("apps.yaml", notifier=notifier)
 
 @app.get("/")
 async def index(request: Request):
-    props = {"themes": AppTheme.random(20), "apps": app_service.apps}
+    display_order = [
+        "kubernetes",
+        "run",
+        "run-anthos",
+        "compute-engine",
+        "function",
+        "standard",
+        "flex",
+    ]
+    props = {
+        "themes": AppTheme.random(20),
+        "apps": sorted(app_service.apps, key=lambda v: display_order.index(v.name)),
+    }
     return templates.TemplateResponse(
         name="index.html",
         context={
             "request": request,
-            "props": jsonable_encoder(
-                props, by_alias=False, exclude_unset=True, exclude_none=True
-            ),
+            "props": jsonable_encoder(props),
             "debug": app.debug,
             "unix_timestamp": int(time.time()),
         },

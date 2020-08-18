@@ -348,10 +348,7 @@
 
     addUpdateHandler() {
       console.log("🗞️ Subscribing to app update events");
-      this.appService.addSubscription((message) => {
-        let app = message.data.app;
-        let duration = message.data.duration;
-
+      this.appService.addSubscription(({ app, version, duration }) => {
         console.log(`🕹️ ${app.title} has been updated to version ${app.version}`);
         this.tooltip.add({
           text: `<span class='is-fancy'>${app.title}</span> has been updated to version <span class="is-family-monospace">${app.version}</span>`,
@@ -361,12 +358,7 @@
 
         // Add the updated application to the timeline
         console.log(`📈 Adding ${app.name} to timeline`);
-        this.timeline.push({
-          id: app.name,
-          label: app.title,
-          theme: app.theme,
-          value: duration,
-        });
+        this.timeline.push({ app, value: duration });
       });
     }
 
@@ -377,16 +369,22 @@
         if (status === "started") {
           this.logHandler.flushLogs();
         } else if (status === "finished") {
-          this.tooltip.add({
-            text: `All seven apps have been updated updated. That's a wrap!`,
-            style: "primary",
-            wait: 2000,
-            timeout: 0,
-          });
+          let messages = [
+            {
+              text: `<span class="is-fancy">Done!</span> That's all seven apps updated in just <strong>2 minutes and 32 seconds</strong>.`,
+              style: "danger",
+            },
+            {
+              text:
+                "A special thanks to my wife for her considered input into which emojis to use for these messages (and her patience as I spent many a late night over-engineering this thing).",
+              style: "warning",
+            },
+            { text: "That's a wrap! See you next time.", style: "success" },
+          ];
           setTimeout(() => {
             this.activeBuild = null;
             this.tooltip.reset();
-          }, 30000);
+          }, 20000);
         }
       });
     }
@@ -409,7 +407,7 @@
       // in-progress
 
       let logging_comment =
-        "<p>The stream of text you see below are the live logs from Cloud Build.</p><p>You can check out its config on <a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><strong>GitHub</strong></a>.</p>";
+        "<p>The stream of text you see below are the live logs from Cloud Build.</p><p>You can check out its config along with the source code for everything else on <a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><strong>GitHub</strong></a>.</p>";
 
       // A status code of 409 means another build is in progress
       if (!resp.ok && resp.status != 409) {
@@ -431,22 +429,20 @@
         this.tooltip.queue({ messages });
       } else {
         let messages = [
-          `<p>Congratulations, you just triggered a new <strong>Cloud Build</strong> job!</p><p>The apps on this page will refresh automatically when they're finished updating. Keep a look out for the version <span class="is-family-monospace">${data.version}</span>, that's yours!</p>`,
+          `<p><span class="is-fancy">Woohoo!</span> You just triggered a new <strong>Cloud Build</strong> job!</p><p>Keep an eye out for the version <span class="is-family-monospace">${data.version}</span>, that's yours!</p><p>The apps on this page will refresh automatically when they're finished updating.</p>`,
           {
-            text: `The theme you selected includes the font <strong><em>${
-              this.theme.font
-            }</em></strong> from <strong><a href="https://fonts.google.com/specimen/${encodeURIComponent(
-              this.theme.font
-            )}">Google Fonts</a></strong> and the background is using a gradient named <strong><em>${
-              this.theme.gradient.name
-            }</em></strong> from <strong><a href='https://uigradients.com'>uiGradients</a></strong>.`,
-            style: "link",
+            text: logging_comment,
+            style: "warning",
           },
           {
-            text:
-              "Also, a special shoutout to my wife for her considered input into which emojis to use for these messages (and being so patient with me as I spent many a late night over-engineering this thing).",
-            style: "primary",
-            wait: 15000,
+            text: `<p>The theme you chose includes the font <span class="has-text-weight-semibold is-italic">${
+              this.theme.font
+            }</span> from <span class="has-text-weight-medium"><a href="https://fonts.google.com/specimen/${encodeURIComponent(
+              this.theme.font
+            )}">Google Fonts</a></span> and the background is a gradient named <span class="has-text-weight-semibold is-italic">${
+              this.theme.gradient.name
+            }</span> from <span class="has-text-weight-medium"><a href='https://uigradients.com'>uiGradients</a></span>.</p><p>Who knows what sort of ASCII header you'll get...</p>`,
+            style: "link",
           },
         ];
         setTimeout(() => this.tooltip.queue({ messages, style: "success" }), 1500);

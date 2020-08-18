@@ -108,8 +108,7 @@ class AppList(BaseModel):
     __root__: List[App]
 
     def __iter__(self):
-        for app in self.__root__:
-            yield app
+        return iter(self.__root__)
 
     def __contains__(self, key: str) -> bool:
         return self.get(key) is not None
