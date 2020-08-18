@@ -38,9 +38,9 @@ footer {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  /* width: -webkit-fill-available; */
   padding: 2rem;
   max-width: 1200px;
+  padding-top: 10rem;
 }
 
 .emoji {
@@ -175,35 +175,33 @@ emojis to use */
 .timeline-container {
   margin: auto;
   width: 10rem;
-  height: 80%;
+  height: 75%;
   display: flex;
   /* z-index: 1; */
 }
-/* .timeline-container:before,
-.timeline-container:after {
-  content: "";
-  position: absolute;
-  right: 0;
-  left: 0;
-}
-.timeline-container:before {
-  top: 0;
-  height: 10rem;
-  background-image: linear-gradient(0deg, #f5f6fa 25%, rgb(0 0 0 / 0%));
-} */
 
 svg.timeline {
   overflow: visible;
   margin: 0 auto;
 }
-.axis line {
+
+/* Axis */
+.axis > line {
   stroke-width: 2px;
-  stroke: rgb(122 122 122 / 0.25);
+  stroke: #d6d5da;
 }
-.axis circle {
-  fill: rgba(36, 36, 36, 0.1);
+.axis > circle {
+  fill: #d6d5da;
 }
-.axis text {
+
+.axis > .mask {
+  fill: #f5f6fa;
+}
+
+/* Ticks  */
+
+.countdown > text.clock,
+.ticks > text.major {
   font-size: 0.75rem;
   fill: #7a7a7a;
   letter-spacing: 1px;
@@ -211,20 +209,32 @@ svg.timeline {
   font-family: "Roboto Mono";
   line-height: 0;
 }
-path.link {
+
+.ticks > .minor {
+  fill: #b3b1bd;
+}
+
+/* Links */
+
+.links > .link {
   stroke-width: 2;
-  opacity: 0.6;
+  opacity: 0.5;
   fill: none;
 }
-g.major-ticks rect {
-  fill: #f5f6fa;
-  /* fill: red; */
+
+/* Countdown  */
+
+.countdown > text.clock {
+  font-size: 0.9rem;
+  font-weight: semibold;
 }
-g.minor-ticks rect {
-  fill: #f5f6fa;
-}
-circle.target {
-  fill: black;
+
+.is-counting .ticks > .has-elapsed,
+.is-counting .axis > circle.origin,
+.countdown > circle.leader,
+.countdown > line.leader {
+  fill: #e41811;
+  stroke: #e41811;
 }
 
 /* --------------------------------- IFrames -------------------------------- */
@@ -299,7 +309,7 @@ iframe.app-frame {
 
 .build-container {
   background: none;
-  order: -1;
+  /* order: -1; */
   cursor: zoom-in;
   transition: opacity 0.2s ease-in, filter 0.2s ease-in;
 }
@@ -606,7 +616,7 @@ iframe.app-frame {
     --columnGap: 5rem !important;
   }
   .build-container:not(.is-active):not(.is-loading):not(.is-fullscreen) {
-    opacity: 0.1;
+    opacity: 0.25;
     filter: grayscale(1);
   }
   .build-container:not(.is-active):not(.is-loading):hover:not(.is-fullscreen) {

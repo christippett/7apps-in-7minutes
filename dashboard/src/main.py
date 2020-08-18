@@ -37,13 +37,13 @@ app_service = AppService.load_from_config("apps.yaml", notifier=notifier)
 @app.get("/")
 async def index(request: Request):
     display_order = [
-        "kubernetes",
         "run",
         "run-anthos",
+        "kubernetes",
         "compute-engine",
-        "function",
         "standard",
         "flex",
+        "function",
     ]
     props = {
         "themes": AppTheme.random(20),

@@ -435,13 +435,7 @@
             style: "warning",
           },
           {
-            text: `<p>The theme you chose includes the font <span class="has-text-weight-semibold is-italic">${
-              this.theme.font
-            }</span> from <span class="has-text-weight-medium"><a href="https://fonts.google.com/specimen/${encodeURIComponent(
-              this.theme.font
-            )}">Google Fonts</a></span> and the background is a gradient named <span class="has-text-weight-semibold is-italic">${
-              this.theme.gradient.name
-            }</span> from <span class="has-text-weight-medium"><a href='https://uigradients.com'>uiGradients</a></span>.</p><p>Who knows what sort of ASCII header you'll get...</p>`,
+            text: `<p>The theme you chose uses the font <span class="has-text-weight-semibold is-italic">${this.theme.font}</span> and the background is a gradient named <span class="has-text-weight-semibold is-italic">${this.theme.gradient.name}</span> from <span class="has-text-weight-medium"><a href='https://uigradients.com'>uiGradients</a></span>.</p><p>Who knows what sort of ASCII header you'll get...</p>`,
             style: "link",
           },
         ];
