@@ -2,7 +2,7 @@
   @click="isFullscreen = !isFullscreen"
   class="demo-container column is-half is-relative"
   :class="{ 'is-fullscreen': isFullscreen, 'is-loading': builder.isLoading, 'is-active': builder.activeBuild !== null }"
-  x-data="data()"
+  x-data="demo()"
   x-init="init"
 >
   <div class="is-hidden-tablet my-4">
@@ -11,19 +11,7 @@
   </div>
 
   <div class="is-relative" style="flex: 1">
-    <div class="tooltips">
-    <template x-for="message in tooltips" :key="message.id">
-        <div
-          class="is-tooltip"
-          :class="tooltip.getClass(message)"
-          :data-icon="message.icon"
-          @click.stop="message.active = false"
-          x-show.transition.duration.900ms="message.active"
-        >
-          <span x-html="message.text"></span>
-        </div>
-      </template>
-    </div>
+    <div class="tooltips"></div>
     <div class="box is-relative is-unselectable px-0 py-0">
       <div id="logs" class="logs is-overlay" x-show.transition.duration.500ms="builder.activeBuild !== null" ></div>
       <div id="build" class="demo-interface is-overlay" x-show.transition.duration.500ms="builder.activeBuild === null" >

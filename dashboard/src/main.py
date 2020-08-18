@@ -72,7 +72,7 @@ async def deploy(
             409 if app_service.build.active_builds(refresh=True) else 200
         )
         version, build = await app_service.deploy(theme)
-        background_tasks.add_task(app_service.start_monitor, version)
+        background_tasks.add_task(app_service.start_monitor, version, build)
         background_tasks.add_task(app_service.build.start_log_stream, build)
     except HTTPError as e:
         logger.exception(e)

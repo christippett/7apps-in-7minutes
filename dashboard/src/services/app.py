@@ -9,6 +9,7 @@ import aiohttp
 import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
+from pytz import utc
 
 from models import App, AppList, AppTheme, Message
 from models.build import BuildRef
@@ -77,16 +78,18 @@ class AppService:
         for app in [r for r in results if isinstance(r, App)]:
             self.apps.replace(app)
 
-    async def start_monitor(self, version: str):
+    async def start_monitor(self, version: str, build: BuildRef):
         if self._active_monitor is not None and not self._active_monitor.done():
             return
-        self._active_monitor = asyncio.ensure_future(self._monitor(version))
+        self._active_monitor = asyncio.ensure_future(self._monitor(version, build))
         return self._active_monitor
 
-    async def _monitor(self, version: str):
+    async def _monitor(self, version: str, build: BuildRef):
         logger.info("👀 Starting application monitor")
         await self.notifier.send(Message("build", status="started", version=version))
-        start_time = datetime.utcnow()
+
+        # Use Cloud Build's creation time for calculating app's update duration
+        start_time = build.createTime.replace(tzinfo=utc)
         interval = 10
         timeout = 600
         old_apps = self.apps.copy(deep=True)
@@ -126,4 +129,6 @@ class AppService:
                 logging.warning("⌛ Stopping monitor after %ss", timeout)
                 break
             await asyncio.sleep(interval)
-        await self.notifier.send(Message("build", status="finished", version=version))
+        await self.notifier.send(
+            Message("build", status="finished", version=version, duration=timer)
+        )

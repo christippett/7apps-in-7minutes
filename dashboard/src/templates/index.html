@@ -11,11 +11,7 @@ endif %}
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
     />
-    <link href="/static/index.css{{ asset_suffix }}" rel="stylesheet" />
-    <script
-      src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"
-      defer
-    ></script>
+    <link href="/static/index.css" rel="stylesheet" />
   </head>
 
   <body>
@@ -43,64 +39,12 @@ endif %}
       </div>
     </footer>
   </body>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/labella/1.1.4/labella.min.js"
-    integrity="sha512-CvciuHWpGI0ygZhWN/t/zqiiDI26Zclrsqcd77VDLYN5MyfyyPvy18eFwWZZUdUgofBi/vbOKUAqPRIJ7GyO0g=="
-    crossorigin="anonymous"
-  ></script>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"
-    integrity="sha512-FHsFVKQ/T1KWJDGSbrUhTJyS1ph3eRrxI228ND0EGaEp6v4a/vGwPWd3Dtd/+9cI7ccofZvl/wulICEurHN1pg=="
-    crossorigin="anonymous"
-  ></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
-  <script src="/static/utils.js{{ asset_suffix }}"></script>
-  <script src="/static/timeline.js{{ asset_suffix }}"></script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
   <script>
-    var props = {{ props|tojson }};
+    window.props = {{ props|tojson }};
+    WebFont.load({ google: { families: window.props.themes.map((t) => t.font) } });
   </script>
-  <script>
-    function data() {
-      return {
-        isFullscreen: false,
-        isLoading: false,
-        themeOpt: 0,
-        tooltips: [],
-        tooltip: new Tooltip({ collection: this.tooltips }),
-        builder: new AppBuilder({
-          appService: new AppService({ apps: props.apps }),
-          notificationService: new NotificationService(),
-          logHandler: new LogHandler(document.getElementById("logs")),
-          timeline: new Timeline({ parent: "#timeline" }),
-        }),
-        init() {
-          this.tooltip._tooltips = this.tooltips;
-          this.builder.init({ externalRef: { ...this, ...props } });
-        },
-        selectTheme(opt) {
-          let themeCount = props.themes.length - 1;
-          if (opt > themeCount) {
-            this.themeOpt = 0;
-          } else if (opt < 0) {
-            this.themeOpt = themeCount;
-          } else {
-            this.themeOpt = opt;
-          }
-        },
-        themeStyle(scope) {
-          let theme = props.themes[this.themeOpt];
-          let colors = theme.gradient.colors;
-          if (scope === "preview") {
-            return [
-              `background: ${colors[0]};`,
-              `background: linear-gradient(45deg,${colors.join(",")}) 0% 0% / 400% 400%;`,
-            ].join(" ");
-          } else if (scope === "title") {
-            return `font-family: '${theme.font}';`;
-          }
-        },
-      };
-    }
-  </script>
+  <script type="module" src="/static/js/index.js"></script>
 </html>
 {% endwith %}

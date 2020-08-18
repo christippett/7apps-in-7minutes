@@ -219,7 +219,7 @@ svg.timeline {
   stroke-width: 1;
 }
 .tick {
-  transition: all 1s ease-in;
+  transition: all 1.2s ease-in;
 }
 
 /* Links */
