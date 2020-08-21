@@ -33,6 +33,10 @@ resource "google_cloudbuild_trigger" "deploy" {
 
 /* Secrets Manager ---------------------------------------------------------- */
 
+data "google_compute_default_service_account" "default" {
+  project = var.project_id
+}
+
 resource "google_secret_manager_secret" "cloud_build_trigger_id" {
   project = var.project_id
   secret_id = "CLOUD_BUILD_TRIGGER_ID"
@@ -42,6 +46,21 @@ resource "google_secret_manager_secret" "cloud_build_trigger_id" {
 resource "google_secret_manager_secret_version" "cloud_build_trigger_id" {
   secret = google_secret_manager_secret.cloud_build_trigger_id.id
   secret_data = google_cloudbuild_trigger.deploy.id
+}
+
+locals {
+  secrets = [
+    "projects/${data.google_project.project.number}/secrets/GOOGLE_FONTS_API_KEY",
+    google_secret_manager_secret.cloud_build_trigger_id.id
+  ]
+}
+
+resource "google_secret_manager_secret_iam_member" "secret_access" {
+  count = length(local.secrets)
+  project = var.project_id
+  secret_id = local.secrets[count.index]
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${data.google_compute_default_service_account.default.email}"
 }
 
 /* Cloud Scheduler ---------------------------------------------------------- */

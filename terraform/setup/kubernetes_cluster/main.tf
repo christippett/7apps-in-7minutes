@@ -61,11 +61,11 @@ resource "google_container_node_pool" "preemptible_nodes" {
   name       = "preemptible-pool"
   location   = var.zone
   cluster    = google_container_cluster.gke.name
-  node_count = 4
+  node_count = 2
 
   node_config {
     preemptible  = true
-    machine_type = "n2-standard-2"
+    machine_type = "n2-standard-4"
 
     tags = ["ssh", "https-server", "http-server"]
 
@@ -78,6 +78,7 @@ resource "google_container_node_pool" "preemptible_nodes" {
     }
 
     oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
       "https://www.googleapis.com/auth/devstorage.read_only",
@@ -144,16 +145,11 @@ resource "google_project_iam_member" "default" {
 # configure kubernetes service account
 # https://cloud.google.com/run/docs/gke/setup#workload-identity
 
-locals {
-  kubernetes_namespace       = "default"
-  kubernetes_service_account = "default"
-}
-
 resource "google_service_account_iam_member" "kubernetes" {
   service_account_id = data.google_compute_default_service_account.default.name
 
   role   = "roles/iam.workloadIdentityUser"
-  member = "serviceAccount:${var.project_id}.svc.id.goog[${local.kubernetes_namespace}/${local.kubernetes_service_account}]"
+  member = "serviceAccount:${var.project_id}.svc.id.goog[default/default]"
 
   depends_on = [
     google_container_cluster.gke,
@@ -166,15 +162,6 @@ resource "google_service_account_iam_member" "kubernetes" {
 }
 
 /* Traefik Ingress Controller ----------------------------------------------- */
-
-provider "helm" {
-  kubernetes {
-    load_config_file       = false
-    token                  = data.google_client_config.default.access_token
-    host                   = google_container_cluster.gke.endpoint
-    cluster_ca_certificate = base64decode(google_container_cluster.gke.master_auth.0.cluster_ca_certificate)
-  }
-}
 
 resource "helm_release" "traefik" {
   repository = "https://containous.github.io/traefik-helm-chart"
