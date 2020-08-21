@@ -1,26 +1,23 @@
 {% for app in props.apps %}
-<div
-  class="column is-half"
-  data-url="{{ app.url }}"
-  data-name="{{ app.name }}"
-  data-title="{{ app.title }}"
-  data-version="{{ app.version }}123"
->
-  <div id="{{ app.name }}" class="box is-relative is-clipped is-unselectable">
-    <div class="frame-label">
+<div class="column is-half">
+  <div id="{{ app.name }}" data-title="{{ app.title }}" data-version="{{ app.version }}"
+    class="app box is-clipped is-unselectable">
+    <div class="app-url">
       <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
     </div>
-    <div class="mask is-overlay is-hidden">
-      <p class="title is-5 is-fancy has-text-grey-dark"><span class="emoji">🛑</span> {{ app.title }}</p>
-      <p class="notice has-text-weight-medium has-text-grey-dark">Error loading application</p>
+    <div class="error is-overlay">
+      <div class="notice is-overlay">
+        <p class="is-fancy has-text-shadow" data-title="{{ app.title }}"></p>
+        <p class="is-family-monospace has-text-shadow" data-notice="Error loading application"></p>
+      </div>
+      <div class="broadcast-error"></div>
+      <div class="static-overlay">
+        <div></div>
+      </div>
+      <div class="scan-overlay"></div>
     </div>
-    <iframe
-      name="{{ app.name }}-{{ app.version }}"
-      src="{{ app.url }}?ts={{ unix_timestamp }}"
-      importance="high"
-      scrolling="no"
-      class="app-frame"
-    >
+    <iframe name="{{ app.name }}-{{ app.version }}" src="{{ app.url }}?ts={{ unix_timestamp }}" importance="high"
+      scrolling="no" class="app-frame">
     </iframe>
   </div>
 </div>

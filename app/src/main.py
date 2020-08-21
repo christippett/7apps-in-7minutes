@@ -86,19 +86,19 @@ theme = AppTheme(font=FONT, ascii_font=ASCII_FONT, gradient=GRADIENT)
 @app.route("/")
 @cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
-    app_info = App(title=title, version=VERSION, theme=theme)
+    app_data = App(title=title, version=VERSION, theme=theme)
 
     # Override theme properties from request parameters
     if request.args and all([a in AppTheme.__dataclass_fields__ for a in request.args]):
-        app_info.theme = AppTheme(**request.args)
-        app_info.title = "Preview"
-        app_info.version = None
+        app_data.theme = AppTheme(**request.args)
+        app_data.title = "Preview"
+        app_data.version = None
 
     # Return machine-readable app info (used by dashboard)
     if request.headers.get("Accept") == "application/json":
-        return jsonify(dataclasses.asdict(app_info))
+        return jsonify(dataclasses.asdict(app_data))
 
-    return render_template("index.html", app=app_info)
+    return render_template("index.html", app=app_data)
 
 
 if __name__ == "__main__":

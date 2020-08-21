@@ -89,7 +89,7 @@ class AppService:
         await self.notifier.send(Message("build", status="started", version=version))
 
         # Use Cloud Build's creation time for calculating app's update duration
-        start_time = build.createTime.replace(tzinfo=utc)
+        start_time = build.createTime.replace(tzinfo=None)
         interval = 10
         timeout = 600
         old_apps = self.apps.copy(deep=True)

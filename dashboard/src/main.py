@@ -31,19 +31,20 @@ app = FastAPI(debug=settings.debug)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 notifier = Notifier()
-app_service = AppService.load_from_config("apps.yaml", notifier=notifier)
+app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier)
 
 
 @app.get("/")
 async def index(request: Request):
     display_order = [
+        "compute-engine",
+        "kubernetes",
         "run",
         "run-anthos",
-        "kubernetes",
-        "compute-engine",
         "standard",
         "flex",
         "function",
+        "localhost",
     ]
     props = {
         "themes": AppTheme.random(20),
@@ -78,7 +79,7 @@ async def deploy(
         logger.exception(e)
         code = e.response.status_code
         raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
-    return {"id": build.id, "version": version}
+    return {"id": build.id, "version": version, "started": build.createTime}
 
 
 @app.get("/build/{id}")

@@ -31,6 +31,19 @@ resource "google_cloudbuild_trigger" "deploy" {
   }
 }
 
+/* Secrets Manager ---------------------------------------------------------- */
+
+resource "google_secret_manager_secret" "cloud_build_trigger_id" {
+  project = var.project_id
+  secret_id = "CLOUD_BUILD_TRIGGER_ID"
+  replication { automatic = true }
+}
+
+resource "google_secret_manager_secret_version" "cloud_build_trigger_id" {
+  secret = google_secret_manager_secret.cloud_build_trigger_id.id
+  secret_data = google_cloudbuild_trigger.deploy.id
+}
+
 /* Cloud Scheduler ---------------------------------------------------------- */
 
 # Reset the app every half-hour

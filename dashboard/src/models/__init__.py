@@ -76,7 +76,7 @@ class AppTheme(BaseModel):
             resp = requests.get(
                 "https://www.googleapis.com/webfonts/v1/webfonts",
                 params={
-                    "key": settings.google_api_key,
+                    "key": settings.google_fonts_api_key,
                     "fields": "items.family,items.category",
                     "sort": "popularity",
                 },

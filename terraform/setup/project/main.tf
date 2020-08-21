@@ -15,6 +15,7 @@ module "project_services" {
     "run.googleapis.com",
     "iap.googleapis.com",
     "webfonts.googleapis.com",
+    "secretmanager.googleapis.com",
 
     # These services are required by Cloud Run (Anthos)
     "cloudresourcemanager.googleapis.com",
@@ -36,15 +37,4 @@ module "project_services" {
 resource "google_app_engine_application" "app" {
   project     = var.project_id
   location_id = var.region
-}
-
-
-/* OAuth credentials -------------------------------------------------------- */
-
-resource "google_secret_manager_secret" "secret-basic" {
-  secret_id = "oauth"
-
-  replication {
-    automatic = true
-  }
 }

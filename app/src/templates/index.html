@@ -5,10 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="This '7-App' app is a demonstration of an application deployed and running on Google Cloud."
-    />
+    <meta name="description" content="Deploying 7-Apps in 7-Minutes on Google Cloud." />
     <title>{{ app.title }} — 7Apps</title>
     <link
       href="https://fonts.googleapis.com/css2?family={{ font }}&display=swap"
@@ -47,7 +44,7 @@
         justify-content: center;
         flex: 1;
         max-height: 300px;
-        max-width: 400px;
+        max-width: 500px;
         padding: 2rem;
         text-shadow: 1px 1px 1px rgb(50 50 50 / 30%);
         line-height: 1;
@@ -62,7 +59,7 @@
         font-size: 0.4rem;
         white-space: pre;
         font-weight: 800;
-        line-height: 0.9
+        line-height: 1;
 
       }
 
@@ -108,7 +105,9 @@
       <div class="ascii">{{ app.header }}</div>
       <div class="app">{{ app.title }}</div>
       {% if app.version %}
-      <div id="version" data-version="{{ app.version }}" class="version"> <span class="emoji">💾</span> {{ app.version }} </div>
+      <div id="version" data-version="{{ app.version }}" class="version">
+        <span class="emoji">💾</span> {{ app.version }}
+      </div>
       {% endif %}
     </div>
   </body>
