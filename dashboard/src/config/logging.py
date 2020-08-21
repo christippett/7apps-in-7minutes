@@ -13,5 +13,6 @@ LOGGING_CONFIG = {
     "loggers": {
         "services": {"handlers": ["default"], "level": "DEBUG", "propagate": False},
         "models": {"handlers": ["default"], "level": "DEBUG", "propagate": False},
+        "main": {"handlers": ["default"], "level": "DEBUG", "propagate": False},
     },
 }

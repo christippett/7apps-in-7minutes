@@ -23,6 +23,10 @@ const app = new ApplicationService({
   notificationService
 })
 
+// Debug WebSocket
+notificationService.subscribe('echo', message =>
+  comment.add({ text: message.data.text })
+)
 ;(() => {
   window.demo = function () {
     const data = {

@@ -19,7 +19,7 @@ class Gradient(BaseModel):
 
 
 class AppTheme(BaseModel):
-    """ Application configuration that mostly impacts its visual style """
+    """ Theme properties that modify the application's visual style """
 
     gradient: Gradient
     ascii_font: Optional[str]

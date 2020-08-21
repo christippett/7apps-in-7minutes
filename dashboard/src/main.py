@@ -19,8 +19,8 @@ from starlette.responses import FileResponse
 from starlette.websockets import WebSocketDisconnect
 
 from config import settings
-from models import AppTheme
-from services import AppService, CloudBuildService, Notifier
+from models import AppTheme, Message
+from services import AppService, Notifier
 
 logging.config.dictConfig(settings.logging_config)
 logger = logging.getLogger("main")
@@ -66,7 +66,7 @@ async def deploy(
     theme: AppTheme, background_tasks: BackgroundTasks, response: Response
 ):
     """
-    Trigger a Cloud Build job to deploy a new app version.
+    Trigger Cloud Build deployment job.
     """
     try:
         response.status_code = (
@@ -82,12 +82,6 @@ async def deploy(
     return {"id": build.id, "version": version, "started": build.createTime}
 
 
-@app.get("/build/{id}")
-def build(id: str):
-    cb = CloudBuildService()
-    return cb.get_build(id)
-
-
 @app.on_event("startup")
 async def startup():
     # prime generator: https://stackoverflow.com/a/19892334
@@ -101,7 +95,9 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            await websocket.send_text(f"Message text was: {data}")
+            logger.debug(f"{websocket.client.host}: {data}")
+            await notifier.send(Message("echo", text=data))
+            # await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
         notifier.disconnect(websocket)
 
