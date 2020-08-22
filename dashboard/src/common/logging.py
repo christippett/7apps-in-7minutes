@@ -46,7 +46,7 @@ def setup_stackdriver_logging():
     handler.setFormatter(formatter)
     logger = logging.getLogger("dashboard")
     logger.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
+    logger.handlers = [handler]
     logger.propagate = False
 
 
