@@ -154,3 +154,9 @@ class Message(BaseModel):
         metadata = kwargs.pop("metadata", {})
         metadata.update({"timestamp": datetime.utcnow()})
         super().__init__(topic=topic, metadata=metadata, data=kwargs)
+
+
+class DeployResponse(BaseModel):
+    id: str
+    version: str
+    started: datetime

@@ -12,6 +12,7 @@ from fastapi import (
     WebSocket,
 )
 from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -19,10 +20,11 @@ from fastapi.websockets import WebSocketDisconnect
 from google.cloud import error_reporting
 from google.cloud.error_reporting import HTTPContext
 from requests.exceptions import HTTPError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from config import LOGGING_CONFIG, settings
 from config.logging import setup_stackdriver_logging
-from models import AppTheme, Message
+from models import AppTheme, DeployResponse, Message
 from services import AppService, Notifier
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -42,8 +44,8 @@ notifier = Notifier()
 app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier)
 
 
-@app.exception_handler(Exception)
-async def unicorn_exception_handler(request: Request, exc: Exception):
+@app.exception_handler(StarletteHTTPException)
+async def unicorn_exception_handler(request: Request, exc: StarletteHTTPException):
     if settings.enable_stackdriver_logging:
         context = HTTPContext(
             method=request.method,
@@ -53,9 +55,7 @@ async def unicorn_exception_handler(request: Request, exc: Exception):
             response_status_code=500,
         )
         error_client.report_exception(http_context=context)
-    return JSONResponse(
-        status_code=500, content={"message": "Danger Will Robinson! 🤖"},
-    )
+    return http_exception_handler(request, exc)
 
 
 @app.get("/")
@@ -85,7 +85,7 @@ async def index(request: Request):
     )
 
 
-@app.post("/deploy")
+@app.post("/deploy", response_model=DeployResponse, responses={409: {"model": DeployResponse}})
 async def deploy(
     theme: AppTheme, background_tasks: BackgroundTasks, response: Response
 ):
@@ -103,7 +103,7 @@ async def deploy(
         logger.exception(e)
         code = e.response.status_code
         raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
-    return {"id": build.id, "version": version, "started": build.createTime}
+    return DeployResponse(id=build.id, version=version, started=build.createTime)
 
 
 @app.on_event("startup")
