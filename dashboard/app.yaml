@@ -27,7 +27,7 @@ spec:
             - name: GITHUB_BRANCH
               value: demo
             - name: ENABLE_STACKDRIVER_LOGGING
-              value: 1
+              value: "1"
           ports:
             - containerPort: 80
               protocol: TCP
