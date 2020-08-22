@@ -29,7 +29,7 @@ export class ApplicationService {
     try {
       return doc.getElementById('version').dataset.version
     } catch {
-      app.el.setAttribute('data-error', true)
+      // app.el.setAttribute('data-error', true)
       console.log(
         `😬 Unable to find version within IFrame document for ${app.title}`
       )

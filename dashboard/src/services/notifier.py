@@ -1,7 +1,10 @@
+import json
 import logging
 from typing import Any, List
 
 from fastapi import WebSocket
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 
 from models import Message
 
@@ -12,6 +15,15 @@ class Notifier:
     def __init__(self):
         self.connections: List[WebSocket] = list()
         self.notification_generator = self.get_notification_generator()
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.connections.append(websocket)
+        logger.debug("Websocket connected (%s)", websocket.client.host, icon="🔌")
+
+    def disconnect(self, websocket: WebSocket):
+        self.connections.remove(websocket)
+        logger.debug("Websocket disconnected (%s)", websocket.client.host, icon="🔌")
 
     async def get_notification_generator(self):
         while True:
@@ -29,15 +41,21 @@ class Notifier:
             living_connections.append(websocket)
         self.connections = living_connections
 
-    async def send(self, message: Message = None, **data: Any):
-        if message is None:
-            message = Message.parse_obj(data)
-        await self.notification_generator.asend(message.json())
+    async def send(self, topic: str, model: BaseModel = None, **kwargs: Any):
+        if isinstance(model, Message):
+            message = model
+            message.topic = topic
+        elif model is not None:
+            message = Message(topic=topic, data=model.dict(by_alias=True))
+        else:
+            data = kwargs.pop("data", {})
+            if isinstance(data, str):
+                data = {"text": data}
+            data.update(kwargs)
+            message = Message(topic=topic, data=data)
 
-    async def connect(self, websocket: WebSocket):
-        logger.debug("New websocket connection from %s", websocket.client.host)
-        await websocket.accept()
-        self.connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.connections.remove(websocket)
+        try:
+            message_data = jsonable_encoder(message)
+            await self.notification_generator.asend(json.dumps(message_data))
+        except Exception:
+            logger.exception("Error sending message")

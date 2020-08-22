@@ -40,16 +40,7 @@ def get_secret_value(secret, version="latest"):
 
 class Settings(BaseSettings):
     debug: bool = False
-    gcloud_dir: str = Field(env="CLOUDSDK_HOME")
-    google_project: str = Field(
-        default=project,
-        env=[
-            "CLOUDSDK_CORE_PROJECT",
-            "GCLOUD_PROJECT",
-            "GCP_PROJECT",
-            "GOOGLE_CLOUD_PROJECT",
-        ],
-    )
+    google_project = project
     google_credentials = credentials
     google_fonts_api_key: str = Field(default=get_secret_value("GOOGLE_FONTS_API_KEY"))
     github_repo: str

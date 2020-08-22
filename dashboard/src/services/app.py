@@ -34,7 +34,7 @@ class AppService:
         return cls(apps=apps, notifier=notifier)
 
     async def deploy(self, theme: AppTheme) -> Tuple[str, BuildRef]:
-        active_builds = self.build.active_builds(refresh=True)
+        active_builds = self.build.get_active_builds()
         if len(active_builds) > 0:
             logger.warning(
                 "Skipping deployment: %s build(s) already in progress",
@@ -42,7 +42,6 @@ class AppService:
             )
             build = active_builds[0]
             version = build.substitutions.get("_VERSION") or ""
-            await self.build.start_log_stream(build)
         else:
             version = (
                 re.sub(r"[^\w]+", "-", theme.gradient.name).lower()
@@ -86,8 +85,8 @@ class AppService:
         return self._active_monitor
 
     async def _monitor(self, version: str, build: BuildRef):
-        logger.info("👀 Starting application monitor")
-        await self.notifier.send(Message("build", status="started", version=version))
+        logger.info("Starting application monitor", icon="👀")
+        await self.notifier.send("build", status="started", version=version)
 
         # Use Cloud Build's creation time for calculating app's update duration
         start_time = build.createTime.replace(tzinfo=None)
@@ -100,7 +99,7 @@ class AppService:
 
             # Limit logs to once every 30s
             if timer % 30 < interval:
-                logger.info("⏳ Polling applications (%ss elapsed)", timer)
+                logger.info("Polling applications (%ss elapsed)", timer, icon="⏳")
                 for v, apps in self.apps.versions().items():
                     logger.info("[%s]: %s", v, ", ".join(map(str, apps)))
 
@@ -110,26 +109,27 @@ class AppService:
                 if latest_app.version != version:
                     continue
                 logger.info(
-                    "✨ %s updated after %ss (%s -> %s)",
+                    "%s updated after %ss (%s -> %s)",
                     app,
                     timer,
                     app.version,
                     version,
+                    icon="✨",
                 )
-                message = Message(
-                    "refresh-app", version=version, app=latest_app, duration=timer,
+
+                await self.notifier.send(
+                    "refresh-app", version=version, app=latest_app, duration=timer
                 )
-                await self.notifier.send(message=message)
                 old_apps.remove(app)  # remove from poll rotation
 
             # Should we keep polling?
             if all(map(lambda a: a.version == version, self.apps)):
-                logger.info("🎉 All applications updated (%s)", version)
+                logger.info("All applications updated (%s)", version, icon="🎉")
                 break
-            elif timer > timeout or self.build.active_builds() == 0:
-                logging.warning("⌛ Stopping monitor after %ss", timeout)
+            elif timer > timeout or self.build.get_active_builds() == 0:
+                logging.warning("Stopping monitor after %ss", timeout, icon="⏳")
                 break
             await asyncio.sleep(interval)
         await self.notifier.send(
-            Message("build", status="finished", version=version, duration=timer)
+            "build", status="finished", version=version, duration=timer
         )

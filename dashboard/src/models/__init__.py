@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 from colour import Color
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pydantic.color import Color as ColorField
 from pydantic.fields import Field
 from pyfiglet import FigletFont, figlet_format
@@ -150,10 +150,10 @@ class Message(BaseModel):
     class Config:
         extra = "allow"
 
-    def __init__(self, topic: str, **kwargs: Any):
-        metadata = kwargs.pop("metadata", {})
-        metadata.update({"timestamp": datetime.utcnow()})
-        super().__init__(topic=topic, metadata=metadata, data=kwargs)
+    @validator("metadata", always=True)
+    def record_timestamp(cls, v):
+        v["timestamp"] = datetime.utcnow()
+        return v
 
 
 class DeploymentJob(BaseModel):

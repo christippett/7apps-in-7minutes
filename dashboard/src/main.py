@@ -24,12 +24,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from common.config import LOGGING_CONFIG, settings
 from common.logging import setup_stackdriver_logging
-from models import AppTheme, DeploymentJob, Message
+from models import AppTheme, DeploymentJob
 from services import AppService, Notifier
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("dashboard.main")
-
 if settings.enable_stackdriver_logging:
     logger.debug("Enabling Stackdriver logging")
     setup_stackdriver_logging()
@@ -43,26 +42,24 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+error = error_reporting.Client()
+
 notifier = Notifier()
 app_service = AppService.load_from_config("7apps.yaml", notifier=notifier)
-
-error_client = error_reporting.Client()
 
 
 @app.exception_handler(StarletteHTTPException)
 async def unicorn_exception_handler(request: Request, exc: StarletteHTTPException):
-    if settings.enable_stackdriver_logging:
-        logger.debug("Sending exception report")
-        context = HTTPContext(
-            method=request.method,
-            url=str(request.url),
-            user_agent=request.headers.get("User-Agent"),
-            referrer=request.headers.get("Referrer"),
-            remote_ip=request.client.host,
-            response_status_code=500,
-        )
-        error_client.report_exception(http_context=context)
-    return http_exception_handler(request, exc)
+    context = HTTPContext(
+        method=request.method,
+        url=str(request.url),
+        user_agent=request.headers.get("User-Agent"),
+        referrer=request.headers.get("Referrer"),
+        remote_ip=request.client.host,
+        response_status_code=500,
+    )
+    error.report_exception(http_context=context)
+    return await http_exception_handler(request, exc)
 
 
 @app.get("/")
@@ -86,8 +83,7 @@ async def index(request: Request):
         context={
             "request": request,
             "props": jsonable_encoder(props),
-            "debug": app.debug,
-            "unix_timestamp": int(time.time()),
+            "timestamp": int(time.time()),
         },
     )
 
@@ -110,12 +106,10 @@ async def deploy(
     Create new Deployment Job
     """
     try:
-        response.status_code = (
-            409 if app_service.build.active_builds(refresh=True) else 200
-        )
+        response.status_code = 409 if app_service.build.get_active_builds() else 200
         version, build = await app_service.deploy(theme)
         background_tasks.add_task(app_service.start_monitor, version, build)
-        background_tasks.add_task(app_service.build.start_log_stream, build)
+        background_tasks.add_task(app_service.build.stream_logs, build)
     except RequestsHTTPError as e:
         logger.exception(e)
         code = e.response.status_code
@@ -137,7 +131,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             logger.debug(f"{websocket.client.host}: {data}")
-            await notifier.send(Message("echo", text=data))
+            await notifier.send("echo", data=data)
             # await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
         notifier.disconnect(websocket)
