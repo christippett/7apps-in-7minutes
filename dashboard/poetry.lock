@@ -206,6 +206,46 @@ version = ">=3.1.4,<5"
 
 [[package]]
 category = "main"
+description = "Google Cloud API client core library"
+name = "google-cloud-core"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+version = "1.4.1"
+
+[package.dependencies]
+google-api-core = ">=1.19.0,<2.0.0dev"
+
+[package.extras]
+grpc = ["grpcio (>=1.8.2,<2.0dev)"]
+
+[[package]]
+category = "main"
+description = "Stackdriver Error Reporting API client library"
+name = "google-cloud-error-reporting"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+version = "0.34.0"
+
+[package.dependencies]
+google-cloud-logging = ">=1.14.0,<2.0dev"
+
+[[package]]
+category = "main"
+description = "Stackdriver Logging API client library"
+name = "google-cloud-logging"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+version = "1.15.1"
+
+[package.dependencies]
+google-cloud-core = ">=1.1.0,<2.0dev"
+
+[package.dependencies.google-api-core]
+extras = ["grpc"]
+version = ">=1.15.0,<2.0.0dev"
+
+[[package]]
+category = "main"
 description = "Google Cloud Pub/Sub API client library"
 name = "google-cloud-pubsub"
 optional = false
@@ -666,7 +706,7 @@ multidict = ">=4.0"
 typing-extensions = ">=3.7.4"
 
 [metadata]
-content-hash = "dd18694958524109d851180374d45c5ad832e376ec0e2bff8abf98b83e9bfee8"
+content-hash = "7857545e612528d6854f1cf97af1363f3df5614af6236d9aa3e270035f7c3703"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -748,6 +788,18 @@ google-api-core = [
 google-auth = [
     {file = "google-auth-1.19.2.tar.gz", hash = "sha256:f404448f3d3c91944b1d907427d4a0c48f465898e9dbacf1bdebf95c5fe03273"},
     {file = "google_auth-1.19.2-py2.py3-none-any.whl", hash = "sha256:15b42d57d6c3d868d318e8273c06b2692fc5aad1bc45989a4f68f1fee05d41b2"},
+]
+google-cloud-core = [
+    {file = "google-cloud-core-1.4.1.tar.gz", hash = "sha256:613e56f164b6bee487dd34f606083a0130f66f42f7b10f99730afdf1630df507"},
+    {file = "google_cloud_core-1.4.1-py2.py3-none-any.whl", hash = "sha256:4c9e457fcfc026fdde2e492228f04417d4c717fb0f29f070122fb0ab89e34ebd"},
+]
+google-cloud-error-reporting = [
+    {file = "google-cloud-error-reporting-0.34.0.tar.gz", hash = "sha256:34edd11601b17c87a89c2e1cefdc27d975e1e9243a88ba3c0c48bfe6a05c404f"},
+    {file = "google_cloud_error_reporting-0.34.0-py2.py3-none-any.whl", hash = "sha256:63a3db083ba0e877ba2b524d9e98314a5d6438cd409aea84dcf4fb645a49c46c"},
+]
+google-cloud-logging = [
+    {file = "google-cloud-logging-1.15.1.tar.gz", hash = "sha256:cb0d4af9d684eb8a416f14c39d9fa6314be3adf41db2dd8ee8e30db9e8853d90"},
+    {file = "google_cloud_logging-1.15.1-py2.py3-none-any.whl", hash = "sha256:20c7557fd170891eab1a5e428338ad646203ddc519bc2fc57fd59bef14cd3602"},
 ]
 google-cloud-pubsub = [
     {file = "google-cloud-pubsub-1.7.0.tar.gz", hash = "sha256:c8d098ebd208d00c8f3bb55eefecd8553e7391d59700426a97d35125f0dcb248"},

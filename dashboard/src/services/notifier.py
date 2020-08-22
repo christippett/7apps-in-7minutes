@@ -5,7 +5,7 @@ from fastapi import WebSocket
 
 from models import Message
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dashboard." + __name__)
 
 
 class Notifier:

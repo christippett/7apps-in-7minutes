@@ -21,6 +21,13 @@ spec:
       containers:
         - image: gcr.io/servian-labs-7apps/7apps-dashboard:latest
           name: dashboard
+          env:
+            - name: GITHUB_REPO
+              value: servian-labs-7apps
+            - name: GITHUB_BRANCH
+              value: demo
+            - name: ENABLE_STACKDRIVER_LOGGING
+              value: 1
           ports:
             - containerPort: 80
               protocol: TCP

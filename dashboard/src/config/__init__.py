@@ -1,11 +1,30 @@
-from typing import Any, Dict
-
 import google.auth
-from google.auth.credentials import Credentials
 from google.cloud import secretmanager
 from pydantic import BaseSettings, Field, HttpUrl
 
-from .logging import LOGGING_CONFIG
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "icon": {
+            "class": "config.logging.ColourFormatter",
+            "format": "%(icon)s %(message)s %(name)s",
+        }
+    },
+    "filters": {"icon": {"()": "config.logging.IconFilter"}},
+    "handlers": {
+        "default": {
+            "level": "DEBUG",
+            "formatter": "icon",
+            "filters": ["icon"],
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        }
+    },
+    "loggers": {
+        "dashboard": {"handlers": ["default"], "level": "DEBUG", "propagate": False}
+    },
+}
 
 credentials, project = google.auth.default(
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
@@ -29,17 +48,19 @@ class Settings(BaseSettings):
             "GCLOUD_PROJECT",
             "GCP_PROJECT",
             "GOOGLE_CLOUD_PROJECT",
-        ]
+        ],
     )
-    google_credentials: Credentials = credentials
+    google_credentials = credentials
     google_fonts_api_key: str = Field(default=get_secret_value("GOOGLE_FONTS_API_KEY"))
     github_repo: str
     github_branch: str
     cloud_build_api_url: HttpUrl = Field(default="https://cloudbuild.googleapis.com/v1")
-    cloud_build_trigger_id: str = Field(default=get_secret_value("CLOUD_BUILD_TRIGGER_ID"))
-    logging_config: Dict[str, Any] = LOGGING_CONFIG
+    cloud_build_trigger_id: str = Field(
+        default=get_secret_value("CLOUD_BUILD_TRIGGER_ID")
+    )
+    enable_stackdriver_logging: bool = False
 
 
-settings = Settings(github_repo="7apps-google-cloud", github_branch="demo")
+settings = Settings()
 
-__ALL__ = [settings]
+__ALL__ = [settings, LOGGING_CONFIG]

@@ -21,6 +21,8 @@ pyhumps = "^1.6.1"
 pyfiglet = "^0.8.post1"
 colour = "^0.1.5"
 google-cloud-secret-manager = "^1.0.0"
+google-cloud-logging = "^1.15.1"
+google-cloud-error-reporting = "^0.34.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.3"

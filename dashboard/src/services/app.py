@@ -16,7 +16,7 @@ from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dashboard." + __name__)
 
 
 class AppService:

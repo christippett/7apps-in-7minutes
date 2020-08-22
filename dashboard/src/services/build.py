@@ -18,7 +18,7 @@ from config import settings
 from models import Message
 from models.build import BuildRef
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dashboard." + __name__)
 
 Status = Enum("Status", "ACTIVE INACTIVE UNKNOWN")
 

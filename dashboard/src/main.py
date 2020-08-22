@@ -12,26 +12,50 @@ from fastapi import (
     WebSocket,
 )
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.websockets import WebSocketDisconnect
+from google.cloud import error_reporting
+from google.cloud.error_reporting import HTTPContext
 from requests.exceptions import HTTPError
-from starlette.responses import FileResponse
-from starlette.websockets import WebSocketDisconnect
 
-from config import settings
+from config import LOGGING_CONFIG, settings
+from config.logging import setup_stackdriver_logging
 from models import AppTheme, Message
 from services import AppService, Notifier
 
-logging.config.dictConfig(settings.logging_config)
-logger = logging.getLogger("main")
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("dashboard.main")
+if settings.enable_stackdriver_logging:
+    logger.debug("Enabling Stackdriver logging")
+    setup_stackdriver_logging()
 
-templates = Jinja2Templates(directory="templates")
 
 app = FastAPI(debug=settings.debug)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+error_client = error_reporting.Client()
 
 notifier = Notifier()
 app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier)
+
+
+@app.exception_handler(Exception)
+async def unicorn_exception_handler(request: Request, exc: Exception):
+    if settings.enable_stackdriver_logging:
+        context = HTTPContext(
+            method=request.method,
+            url=request.url,
+            user_agent=request.headers.get("User-Agent"),
+            remote_ip=request.client.host,
+            response_status_code=500,
+        )
+        error_client.report_exception(http_context=context)
+    return JSONResponse(
+        status_code=500, content={"message": "Danger Will Robinson! 🤖"},
+    )
 
 
 @app.get("/")
