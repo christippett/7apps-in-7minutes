@@ -13,13 +13,12 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.websockets import WebSocketDisconnect
 from google.cloud import error_reporting
 from google.cloud.error_reporting import HTTPContext
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError as RequestsHTTPError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from config import LOGGING_CONFIG, settings
@@ -85,7 +84,9 @@ async def index(request: Request):
     )
 
 
-@app.post("/deploy", response_model=DeployResponse, responses={409: {"model": DeployResponse}})
+@app.post(
+    "/deploy", response_model=DeployResponse, responses={409: {"model": DeployResponse}}
+)
 async def deploy(
     theme: AppTheme, background_tasks: BackgroundTasks, response: Response
 ):
@@ -99,7 +100,7 @@ async def deploy(
         version, build = await app_service.deploy(theme)
         background_tasks.add_task(app_service.start_monitor, version, build)
         background_tasks.add_task(app_service.build.start_log_stream, build)
-    except HTTPError as e:
+    except RequestsHTTPError as e:
         logger.exception(e)
         code = e.response.status_code
         raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
