@@ -29,7 +29,9 @@ from services import AppService, Notifier
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("dashboard.main")
+
 if settings.enable_stackdriver_logging:
+    error_client = error_reporting.Client()
     logger.debug("Enabling Stackdriver logging")
     setup_stackdriver_logging()
 
@@ -42,8 +44,6 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-error_client = error_reporting.Client()
-
 notifier = Notifier()
 app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier)
 
@@ -51,10 +51,12 @@ app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier
 @app.exception_handler(StarletteHTTPException)
 async def unicorn_exception_handler(request: Request, exc: StarletteHTTPException):
     if settings.enable_stackdriver_logging:
+        logger.debug("Sending exception report")
         context = HTTPContext(
             method=request.method,
-            url=request.url,
+            url=str(request.url),
             user_agent=request.headers.get("User-Agent"),
+            referrer=request.headers.get("Referrer"),
             remote_ip=request.client.host,
             response_status_code=500,
         )
