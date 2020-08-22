@@ -13,8 +13,7 @@ from pyfiglet import figlet_format
 from requests.exceptions import HTTPError
 
 from common.config import settings
-from models import AppTheme
-from models.build import BuildRef, LogRecord, LogSection
+from models.build import BuildRef, LogRecord, LogSection, LogType
 from services.notifier import Notifier
 
 logger = logging.getLogger("dashboard." + __name__)
@@ -42,18 +41,18 @@ class CloudBuildLogger:
         return self.build.status in ("WORKING", "QUEUED")
 
     async def stream_logs(self):
-        separator = "-" * 120
+        separator = LogRecord(text="-" * 120, section=LogSection.Header)
 
         # Send header
-        ascii_header = figlet_format(
-            "Cloud Build", font=random.choices(AppTheme.get_ascii_fonts(), k=1)[0]
-        ).lstrip("\n")
-        for text in [ascii_header, "Streaming Cloud Build logs...", separator]:
-            yield LogRecord(text=text, section=LogSection.Header)
+        header = figlet_format("Cloud Build", font="colossal").strip("\n")
+        yield LogRecord(text=header, type=LogType.AsciiArt, section=LogSection.Header)
+        yield LogRecord(text="Streaming Cloud Build logs", section=LogSection.Header)
+        yield separator
 
         # Poll Cloud Storage for logs
         is_active = self.build_is_active()
         is_final = False
+        await asyncio.sleep(1)
         while is_active or is_final:
             async for log in self.get_logs():
                 yield log
@@ -64,11 +63,10 @@ class CloudBuildLogger:
             is_final = not is_active
 
         # Send footer
-        ascii_footer = figlet_format(
-            "Done!", font=random.choices(AppTheme.get_ascii_fonts(), k=1)[0]
-        ).lstrip("\n")
-        for text in [separator, ascii_footer]:
-            yield LogRecord(text=text, section=LogSection.Footer)
+        footer = figlet_format("Done!", font="cosmic").strip("\n")
+        yield separator
+        yield LogRecord(text=footer, type=LogType.AsciiArt, section=LogSection.Footer)
+        yield LogRecord(text="Deployment complete!", section=LogSection.Footer)
 
     async def get_logs(self):
         try:
@@ -127,7 +125,7 @@ class CloudBuildService:
             logger.debug("Log stream already in-progress for build: %s", build.id)
             return
         logger.info("Starting streaming logs for build: %s", build.id, icon="🚿")
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.5)
         cloudbuild_logger = CloudBuildLogger(build, self)
         async for log in cloudbuild_logger.stream_logs():
             self.logs_history[build.id].append(log)

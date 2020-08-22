@@ -100,8 +100,11 @@ class AppService:
             # Limit logs to once every 30s
             if timer % 30 < interval:
                 logger.info("Polling applications (%ss elapsed)", timer, icon="⏳")
+                sep = "\n    - "
                 for v, apps in self.apps.versions().items():
-                    logger.info("[%s]: %s", v, ", ".join(map(str, apps)))
+                    logger.info(
+                        "%s:" + sep + "%s", v, sep.join(map(str, apps)), icon="💾"
+                    )
 
             # Process updated app(s)
             for app in old_apps:

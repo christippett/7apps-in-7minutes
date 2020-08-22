@@ -14,7 +14,6 @@ export class NotificationService {
     const websocket = new window.WebSocket(uri)
     websocket.onopen = () => {
       console.log('🔌 Websocket connected')
-      websocket.send('Can you hear me, Major Tom?')
     }
     websocket.onerror = () => console.error('💥 Error connecting to websocket')
     websocket.onclose = () => {

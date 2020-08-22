@@ -8,9 +8,6 @@ export class LogService {
       if (status === 'finished' && this.activeSubscription !== null) {
         setTimeout(() => {
           this.notifier.unsubscribe(this.activeSubscription)
-          console.log(
-            `🗞️ Unsubscribed from log stream: ${this.activeSubscription}`
-          )
           this.activeSubscription = null
         }, 30000)
       }

@@ -378,24 +378,18 @@ iframe.app-frame {
 
 .demo-container {
   background: none;
-  transition: opacity 0.2s ease-in, filter 0.2s ease-in;
+  transition: opacity 0.5s ease-in, filter 0.2s ease-in;
 }
 
 .demo-container .box {
   transition: transform 0.2s ease;
   overflow: hidden;
   background: transparent;
+  cursor: zoom-in;
 }
 
 .demo-container.is-fullscreen .box {
   transition-duration: 0s;
-}
-
-.demo-container.is-active .box {
-  cursor: zoom-in;
-}
-
-.demo-container.is-active.is-fullscreen .box {
   cursor: zoom-out;
 }
 
@@ -566,12 +560,9 @@ iframe.app-frame {
 .logs > p[data-type="section-header"],
 .logs > p[data-type="separator"] {
   padding: 0.75rem 0 0.5rem;
-  filter: none;
 }
 
-.logs > p[data-section="header"] .lg-text,
-.logs > p[data-section="footer"] .lg-text {
-  font-size: 1.1em;
+.logs > p[data-type="ascii"] .lg-text {
   line-height: 1;
   text-shadow: 2px 2px 1px rgb(0 0 0 / 0.25);
   background: linear-gradient(
@@ -586,7 +577,6 @@ iframe.app-frame {
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: grayscale(0.25);
 }
 .logs > p[data-type="separator"]:after {
   content: "";
@@ -605,6 +595,7 @@ iframe.app-frame {
 .logs > p[data-type="section-header"] .lg-text {
   font-weight: 700;
   font-style: italic;
+  filter: none;
 }
 
 .logs > p[data-type="step-status"] .lg-text::before {
@@ -758,6 +749,9 @@ iframe.app-frame {
   .demo-container:not(.is-active):not(.is-loading):hover:not(.is-fullscreen) {
     opacity: 1;
     filter: none;
+  }
+  .logs {
+    font-size: 0.5em;
   }
 }
 @media (min-width: 1024px) {

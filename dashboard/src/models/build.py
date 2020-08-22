@@ -81,6 +81,7 @@ class LogType(str, Enum):
     SectionHeader = "section-header"
     StepStatus = "step-status"
     Separator = "separator"
+    AsciiArt = "ascii"
 
 
 class LogSection(str, Enum):
