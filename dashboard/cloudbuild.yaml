@@ -24,7 +24,7 @@ steps:
     args:
       - "-c"
       - |
-        set -x; sed -i -E '/image: '$${IMAGE//\//\\\/}'/s#(.*):.*#\1:${SHORT_SHA}#' app.yaml; set +x
+        sed -i -E '/image: '$${IMAGE//\//\\\/}'/s#(.*):.*#\1:${SHORT_SHA}#' app.yaml
     env:
       - IMAGE=${_IMAGE}
 
