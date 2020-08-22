@@ -87,7 +87,6 @@ class AppService:
 
     async def _monitor(self, version: str, build: BuildRef):
         logger.info("👀 Starting application monitor")
-        raise Exception("test error")
         await self.notifier.send(Message("build", status="started", version=version))
 
         # Use Cloud Build's creation time for calculating app's update duration
