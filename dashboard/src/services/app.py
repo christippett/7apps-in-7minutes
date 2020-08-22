@@ -10,11 +10,11 @@ import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
 
+from common.utils import future_exception_handler
 from models import App, AppList, AppTheme, Message
 from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
-from utils import future_exception_handler
 
 logger = logging.getLogger("dashboard." + __name__)
 

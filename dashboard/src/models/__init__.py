@@ -10,7 +10,7 @@ from pydantic.color import Color as ColorField
 from pydantic.fields import Field
 from pyfiglet import FigletFont, figlet_format
 
-from config import settings
+from common.config import settings
 
 
 class Gradient(BaseModel):

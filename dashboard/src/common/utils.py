@@ -3,7 +3,7 @@ from asyncio import Future
 
 from google.cloud import error_reporting
 
-from config import settings
+from common.config import settings
 
 logger = logging.getLogger("dashboard." + __name__)
 

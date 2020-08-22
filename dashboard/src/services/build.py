@@ -14,10 +14,10 @@ from google.auth.transport.requests import AuthorizedSession
 from pyfiglet import figlet_format
 from requests.exceptions import HTTPError
 
-from config import settings
+from common.config import settings
+from common.utils import future_exception_handler
 from models import Message
 from models.build import BuildRef
-from utils import future_exception_handler
 
 logger = logging.getLogger("dashboard." + __name__)
 

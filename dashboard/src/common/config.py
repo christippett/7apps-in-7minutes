@@ -7,11 +7,11 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,
     "formatters": {
         "icon": {
-            "class": "config.logging.ColourFormatter",
-            "format": "%(icon)s %(message)s %(name)s",
+            "class": "common.logging.ColourFormatter",
+            "format": "%(icon)2s %(message)s %(name)s",
         }
     },
-    "filters": {"icon": {"()": "config.logging.IconFilter"}},
+    "filters": {"icon": {"()": "common.logging.IconFilter"}},
     "handlers": {
         "default": {
             "level": "DEBUG",

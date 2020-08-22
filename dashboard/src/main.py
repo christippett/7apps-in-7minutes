@@ -22,8 +22,8 @@ from google.cloud.error_reporting import HTTPContext
 from requests.exceptions import HTTPError as RequestsHTTPError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from config import LOGGING_CONFIG, settings
-from config.logging import setup_stackdriver_logging
+from common.config import LOGGING_CONFIG, settings
+from common.logging import setup_stackdriver_logging
 from models import AppTheme, DeploymentJob, Message
 from services import AppService, Notifier
 
@@ -44,7 +44,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 notifier = Notifier()
-app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier)
+app_service = AppService.load_from_config("7apps.yaml", notifier=notifier)
 
 error_client = error_reporting.Client()
 
