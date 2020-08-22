@@ -24,7 +24,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from config import LOGGING_CONFIG, settings
 from config.logging import setup_stackdriver_logging
-from models import AppTheme, DeployResponse, Message
+from models import AppTheme, DeploymentJob, Message
 from services import AppService, Notifier
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -34,7 +34,11 @@ if settings.enable_stackdriver_logging:
     setup_stackdriver_logging()
 
 
-app = FastAPI(debug=settings.debug)
+app = FastAPI(
+    title="7-Apps in 7-Minutes",
+    description="Dashboard and API for interacting with the 7-Apps demo application.",
+    debug=settings.debug,
+)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -86,13 +90,21 @@ async def index(request: Request):
 
 
 @app.post(
-    "/deploy", response_model=DeployResponse, responses={409: {"model": DeployResponse}}
+    "/deploy",
+    response_model=DeploymentJob,
+    responses={
+        200: {"description": "Deployment Job successfully created"},
+        409: {
+            "model": DeploymentJob,
+            "description": "Deployment Job already in-progress",
+        },
+    },
 )
 async def deploy(
     theme: AppTheme, background_tasks: BackgroundTasks, response: Response
 ):
     """
-    Trigger Cloud Build deployment job.
+    Create new Deployment Job
     """
     try:
         response.status_code = (
@@ -105,7 +117,7 @@ async def deploy(
         logger.exception(e)
         code = e.response.status_code
         raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
-    return DeployResponse(id=build.id, version=version, started=build.createTime)
+    return DeploymentJob(id=build.id, version=version, started=build.createTime)
 
 
 @app.on_event("startup")

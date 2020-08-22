@@ -156,7 +156,7 @@ class Message(BaseModel):
         super().__init__(topic=topic, metadata=metadata, data=kwargs)
 
 
-class DeployResponse(BaseModel):
+class DeploymentJob(BaseModel):
     id: str
     version: str
     started: datetime
