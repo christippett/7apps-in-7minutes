@@ -31,7 +31,6 @@ logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("dashboard.main")
 
 if settings.enable_stackdriver_logging:
-    error_client = error_reporting.Client()
     logger.debug("Enabling Stackdriver logging")
     setup_stackdriver_logging()
 
@@ -46,6 +45,8 @@ templates = Jinja2Templates(directory="templates")
 
 notifier = Notifier()
 app_service = AppService.load_from_config("config/7apps.yaml", notifier=notifier)
+
+error_client = error_reporting.Client()
 
 
 @app.exception_handler(StarletteHTTPException)

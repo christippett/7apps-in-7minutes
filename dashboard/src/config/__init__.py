@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     )
     enable_stackdriver_logging: bool = False
 
+    class Config:
+        case_sensitive = False
+
 
 settings = Settings()
 

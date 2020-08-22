@@ -9,12 +9,12 @@ import aiohttp
 import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
-from pytz import utc
 
 from models import App, AppList, AppTheme, Message
 from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
+from utils import future_exception_handler
 
 logger = logging.getLogger("dashboard." + __name__)
 
@@ -82,10 +82,12 @@ class AppService:
         if self._active_monitor is not None and not self._active_monitor.done():
             return
         self._active_monitor = asyncio.ensure_future(self._monitor(version, build))
+        self._active_monitor.add_done_callback(future_exception_handler)
         return self._active_monitor
 
     async def _monitor(self, version: str, build: BuildRef):
         logger.info("👀 Starting application monitor")
+        raise Exception("test error")
         await self.notifier.send(Message("build", status="started", version=version))
 
         # Use Cloud Build's creation time for calculating app's update duration

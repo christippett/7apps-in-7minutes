@@ -23,7 +23,7 @@ spec:
           name: dashboard
           env:
             - name: GITHUB_REPO
-              value: servian-labs-7apps
+              value: 7apps-google-cloud
             - name: GITHUB_BRANCH
               value: demo
             - name: ENABLE_STACKDRIVER_LOGGING

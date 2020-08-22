@@ -7,7 +7,7 @@ from asyncio.futures import Future
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Deque, Dict, List, Optional, Tuple
+from typing import Deque, Dict, List, Tuple
 
 import yaml
 from google.auth.transport.requests import AuthorizedSession
@@ -17,6 +17,7 @@ from requests.exceptions import HTTPError
 from config import settings
 from models import Message
 from models.build import BuildRef
+from utils import future_exception_handler
 
 logger = logging.getLogger("dashboard." + __name__)
 
@@ -98,6 +99,7 @@ class CloudBuildService:
             return
         logger.info("Getting Cloud Build logs")
         log_future = asyncio.ensure_future(self.stream_logs(build))
+        log_future.add_done_callback(future_exception_handler)
         self._active_builds.append((build, log_future))
 
     async def stream_logs(self, build: BuildRef):
