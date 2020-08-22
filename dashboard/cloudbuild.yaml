@@ -2,45 +2,46 @@ steps:
   - id: docker-pull
     name: gcr.io/cloud-builders/docker
     entrypoint: "bash"
-    args: ["-c", "docker pull -q gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest || exit 0"]
+    args: ["-c", "docker pull -q ${_IMAGE}:latest || exit 0"]
 
   - id: docker-build
     name: gcr.io/cloud-builders/docker
     args:
       - build
       - --quiet
-      - --cache-from=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest
-      - --tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
-      - --tag=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest
+      - --cache-from=${_IMAGE}:latest
+      - --tag=${_IMAGE}:$SHORT_SHA
+      - --tag=${_IMAGE}:latest
       - ./
 
   - id: docker-push
     name: gcr.io/cloud-builders/docker
-    args: ["push", "gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA"]
+    args: ["push", "${_IMAGE}:$SHORT_SHA"]
 
-  - id: gomplate-config
-    name: hairyhenderson/gomplate
-    args: ["-f", "app.tmpl", "-o", "app.yaml"]
+  - id: update-config
+    name: busybox
+    entrypoint: sh
+    args:
+      - "-c"
+      - |
+        set -x; sed -i -E '/image: '$${IMAGE//\//\\\/}'/s#(.*):.*#\1:${SHORT_SHA}#' app.yaml; set +x
+    env:
+      - IMAGE=${_IMAGE}
 
   - id: kubectl-apply
     name: gcr.io/cloud-builders/kubectl
     args: ["apply", "-f", "app.yaml"]
 
 images:
-  - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:latest
-  - gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
+  - ${_IMAGE}:latest
+  - ${_IMAGE}:$SHORT_SHA
 options:
   substitution_option: ALLOW_LOOSE
   env:
-    - IMAGE=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA
-    - APP=${_APP}
-    - DOMAIN=${_DOMAIN}
     - CLOUDSDK_CORE_DISABLE_PROMPTS=1
     - CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a
     - CLOUDSDK_CONTAINER_CLUSTER=gke-cluster
 substitutions:
-  _IMAGE_NAME: 7apps-dashboard
-  _DOMAIN: 7apps.cloud
-  _APP: dashboard
+  _IMAGE: gcr.io/servian-labs-7apps/7apps-dashboard
 tags: ["dashboard"]
 timeout: 3600s
