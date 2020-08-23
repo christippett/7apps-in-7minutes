@@ -112,19 +112,11 @@
   </body>
   <script>
     const app = {{ app|tojson }}
-    var lifeOnMars = false
     window.addEventListener(
-      "message",
-      (event) => {
-        if (!lifeOnMars) {
-          lifeOnMars = true
-          console.info(`🛰️ This is ${app.title} to Ground Control ➟ ${app.version}`);
-        }
-        const data = { ...event.data, app }
-        event.source.postMessage(data, event.origin);
-      },
+      'message',
+      event => event.source.postMessage({ ...event.data, app }, event.origin),
       false
-    );
+    )
   </script>
 </html>
 {% endwith %}
