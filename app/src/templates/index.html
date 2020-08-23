@@ -6,7 +6,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Deploying 7-Apps in 7-Minutes on Google Cloud." />
-    <title>{{ app.title }} — 7Apps</title>
+    <link rel="shortcut icon" href="https://7apps.cloud/favicon.ico" />
+    <title>7Apps — {{ app.title }}</title>
     <link
       href="https://fonts.googleapis.com/css2?family={{ font }}&display=swap"
       rel="stylesheet"
@@ -104,18 +105,20 @@
     <div class="container">
       <div class="ascii">{{ app.header }}</div>
       <div class="app">{{ app.title }}</div>
-      {% if app.version %}
       <div id="version" data-version="{{ app.version }}" class="version">
         <span class="emoji">💾</span> {{ app.version }}
       </div>
-      {% endif %}
     </div>
   </body>
   <script>
-    const appInfo = {{ app|tojson }};
+    const appInfo = {{ app|tojson }}
+    window.appInfo = appInfo;
     window.addEventListener(
       "message",
-      (event) => event.source.postMessage(appInfo, event.origin),
+      (event) => {
+        console.log(`${appInfo.title}: This is Major Tom to Ground Control. I'm stepping through the door...`);
+        event.source.postMessage(appInfo, event.origin);
+      },
       false
     );
   </script>
