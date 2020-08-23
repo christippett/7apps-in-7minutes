@@ -2,9 +2,8 @@
   :class="{ 'is-fullscreen': isFullscreen, 'is-active': isDeploying || isLoading }" x-data="demo()" x-init="init">
 
   <div class="box is-unselectable" @click="toggleFullscreen()">
-    <div id="logs" class="logs is-overlay" style="display:none;"
-      x-show.transition.duration.500ms="isDeploying && !isLoading"></div>
-    <div id="build" class="demo-interface is-overlay" x-show.transition.duration.500ms="!isDeploying || isLoading">
+    <div id="logs" class="logs is-overlay"></div>
+    <div id="build" class="demo-interface is-overlay" x-show.transition.duration.1000ms="!isDeploying || isLoading">
       <div class="preview-frame is-overlay" :style="themeGradient()">
         <p class="title" :style="`font-family: '${theme().font}`">Deploy 7-Apps</p>
       </div>

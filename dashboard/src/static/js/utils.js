@@ -9,6 +9,9 @@ const utils = {
         .toString()
         .padStart(2, '0')
     }
+  },
+  randomNumber: max => {
+    return Math.floor(Math.random() * Math.floor(max))
   }
 }
 

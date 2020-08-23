@@ -4,6 +4,7 @@ import * as selection from 'https://unpkg.com/d3-selection@1?module'
 import * as shape from 'https://unpkg.com/d3-shape@1?module'
 import * as timer from 'https://unpkg.com/d3-timer@1?module'
 import * as transition from 'https://unpkg.com/d3-transition@1?module'
+import utils from './utils.js'
 
 const d3 = {
   ...selection,
@@ -82,12 +83,14 @@ export class Timeline {
     this.updateTimeline()
   }
 
-  add ({ app, duration }) {
+  add ({ app, duration, color }) {
     console.log(`📈 Adding ${app.name} to timeline`)
     const timelineValue = Math.min(duration, this.countdownSeconds)
     const item = {
       id: app.name,
       app,
+      duration,
+      color,
       position: () => {
         const bbox = document
           .getElementById(`${app.name}`)
@@ -124,7 +127,13 @@ export class Timeline {
 
   stopCountdown () {
     this.countdownTimer.stop()
-    this.svg.node().classList.remove('is-counting')
+  }
+
+  resetCountdown () {
+    this.parentNode.classList.remove('is-counting')
+    d3.select('text.clock').text('00:00')
+    this.items.clear()
+    this.create()
   }
 
   countdownHandler (ms) {
@@ -133,13 +142,8 @@ export class Timeline {
     this.countdownSeconds = totalSeconds
 
     // Update countdown clock
-    const minutePart = Math.floor(ms / 1000 / 60)
-      .toString()
-      .padStart(2, '0')
-    const secondPart = Math.round((ms / 1000) % 60)
-      .toString()
-      .padStart(2, '0')
-    d3.select('text.clock').text(`${minutePart}:${secondPart}`)
+    const timePart = utils.timePart(ms)
+    d3.select('text.clock').text(`${timePart.minute}:${timePart.second}`)
 
     // Increment axis progress tracker
     d3.select('.countdown line.leader')
@@ -151,7 +155,7 @@ export class Timeline {
 
     d3.selectAll('.tick')
       .filter(function () {
-        return parseInt(this.dataset.value) <= totalSeconds + 5
+        return parseInt(this.dataset.value) <= (ms + 3000) / 1000
       })
       .classed('active', true)
   }
@@ -167,20 +171,37 @@ export class Timeline {
       .attr('height', '100%')
 
     // Drop-shadow filter
-    svg
+    const filter = svg
       .append('defs')
       .append('filter')
       .attr('id', 'shadow')
       .attr('width', '200%')
       .attr('height', '200%')
-      .attr('y', '-30%')
-      .attr('x', '-30%')
+      .attr('y', '-50%')
+      .attr('x', '-50%')
+    filter
+      .append('feDropShadow')
+      .attr('dx', -1)
+      .attr('dy', -1)
+      .attr('stdDeviation', 0)
+      .attr('flood-opacity', 1)
+      .attr('flood-color', '#ffffff')
+    filter
       .append('feDropShadow')
       .attr('dx', 1)
-      .attr('dy', 2)
-      .attr('stdDeviation', 3)
-      .attr('flood-opacity', 0.1)
-      .attr('flood-color', '#0a0a0a')
+      .attr('dy', 1)
+      .attr('stdDeviation', 0)
+      .attr('flood-opacity', 1)
+      .attr('flood-color', '#ffffff')
+
+    svg
+      .append('text')
+      .classed('clock', true)
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('transform', `translate(${this.margin.left}, -20)`)
+      .attr('text-anchor', 'middle')
+      .text('00:00')
 
     // Timeline axis (incl. countdown)
     svg
@@ -188,14 +209,8 @@ export class Timeline {
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
 
     // Paths that link axis markers to target IFrames
-    svg.append('g').classed('links', true)
-
-    // Markers
-    svg
-      .append('g')
-      .classed('markers', true)
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-    svg.append('g').classed('targets', true)
+    const items = svg.append('g').classed('items', true)
+    items.append('g').classed('background', true)
 
     return svg
   }
@@ -205,41 +220,10 @@ export class Timeline {
   updateTimeline () {
     const nodes = Array.from(this.items.values())
 
-    // Create themed gradient filter for each item
-    const gradientOffset = colors =>
-      d3
-        .scaleLinear()
-        .domain([0, colors.length])
-        .range([0, 100])
-
-    this.svg
-      .select('defs')
-      .selectAll('linearGradient.bg')
-      .data(nodes)
-      .enter()
-      .remove()
-      .append('linearGradient')
-      .classed('bg', true)
-      .attr('id', d => `bg-${d.app.name}`)
-      .attr('x1', -1.5)
-      .attr('x2', 1.5)
-      .attr('y1', -2)
-      .attr('y2', 2)
-      .attr('gradientTransform', 'rotate(-15)')
-      .each(function (d) {
-        d.app.theme.colors.forEach(c => {
-          const idx = d.app.theme.colors.indexOf(c)
-          d3.select(this)
-            .append('stop')
-            .attr('stop-color', c)
-            .attr('offset', gradientOffset(idx))
-        })
-      })
-
     // Helper function for updating data nodes
-    const update = ({ el, tag, nodes }) => {
+    const update = (root, { el, tag, nodes }) => {
       const [tagName, className] = tag.split('.')
-      const u = this.svg
+      const u = root
         .select(el)
         .selectAll(tag)
         .data(nodes, d => d.id)
@@ -251,25 +235,42 @@ export class Timeline {
       return enter.merge(u)
     }
 
-    // Link axis to IFrames
-    update({ el: 'g.links', tag: 'path.link', nodes })
-      .attr('data-app', d => d.app.name)
-      .attr('stroke', d => `url(#bg-${d.app.name})`)
-      .transition()
+    const itemGroup = update(this.svg, { el: 'g.items', tag: 'g.item', nodes })
+
+    // Background elements
+    const bg = itemGroup.append('g').classed('bg', true)
+    bg.append('path')
+      .classed('link', true)
       .attr('d', d => d.linkGenerator(d))
-
-    // Place markers on axis
-    update({ el: 'g.markers', tag: 'circle.source', nodes })
-      .attr('fill', d => `url(#bg-${d.app.name})`)
-      .attr('cy', d => d.position().source[1])
-      .attr('r', 4)
-
-    // Place markers on target
-    update({ el: 'g.targets', tag: 'circle.target', nodes })
-      .attr('fill', d => `url(#bg-${d.app.name})`)
+    bg.append('circle')
+      .classed('target', true)
       .attr('cx', d => d.position().target[0])
       .attr('cy', d => d.position().target[1])
+      .attr('r', 5)
+    bg.append('circle')
+      .classed('source', true)
+      .attr('cy', d => d.position().source[1])
       .attr('r', 4)
+      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+
+    // Foreground elements
+    const fg = itemGroup.append('g').classed('fg', true)
+    fg.append('circle')
+      .classed('target', true)
+      .attr('fill', d => d.color)
+      .attr('cx', d => d.position().target[0])
+      .attr('cy', d => d.position().target[1])
+      .attr('r', 5)
+    fg.append('circle')
+      .classed('source', true)
+      .attr('fill', d => d.color)
+      .attr('cy', d => d.position().source[1])
+      .attr('r', 4)
+      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+    fg.append('path')
+      .classed('link', true)
+      .attr('stroke', d => d.color)
+      .attr('d', d => d.linkGenerator(d))
   }
 
   /* Timeline D3 Components ------------------------------------------------ */
@@ -377,14 +378,6 @@ export class Timeline {
       .classed('leader', true)
       .attr('r', 2)
       .attr('cy', 0)
-    countdown
-      .append('text')
-      .classed('clock', true)
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('transform', 'translate(0, -40)')
-      .attr('text-anchor', 'middle')
-      .text('00:00')
     return countdown.node()
   }
 

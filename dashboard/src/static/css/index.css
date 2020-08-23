@@ -192,10 +192,9 @@ footer {
 /* -------------------------------- Timeline -------------------------------- */
 
 .timeline {
-  margin: auto;
+  margin: 0 auto;
   width: 6rem;
   height: 90%;
-  padding: 3rem 0;
   font-size: 0.8rem;
   display: none;
   z-index: 500;
@@ -205,93 +204,113 @@ footer {
   margin: 0 auto;
 }
 
+text.clock {
+  font-family: "Roboto Mono";
+  font-size: 2em;
+  font-weight: 500;
+  letter-spacing: 1px;
+  fill: #363636;
+}
+
 /* Axis */
-.axis > line {
+g.axis > line {
   stroke-width: 2;
   stroke: #dedeea;
 }
 
-.axis > circle.edge {
+g.axis > circle.edge {
   fill: #f5f6fa;
   stroke: #d6d5da;
   stroke-width: 1;
 }
 
-.mask {
+g.axis > g.mask rect {
   fill: #f5f6fa;
 }
 
 /* Ticks  */
+.tick {
+  transition: all 1s ease-in;
+}
+.tick[data-value="0"] {
+  display: none;
+}
 
-.countdown > text.clock,
-.ticks > text.major {
-  font-size: 0.9em;
-  fill: #5c5c5c;
+text.tick.major {
+  font-family: "Roboto Mono";
+  font-size: 0.95em;
+  fill: #8b8b8b;
   letter-spacing: 1px;
   word-spacing: -0.4rem;
-  font-family: "Roboto Mono";
   line-height: 0;
-  font-weight: 500;
 }
-
-.ticks > .minor {
+circle.tick.minor {
   fill: #c0c6ca;
   stroke: #f5f6fa;
-  stroke-width: 1;
-  transition-delay: 1.25s;
-}
-.tick {
-  transition: all 1.2s ease-in;
+  stroke-width: 2;
+  /* transition-delay: 1.25s; */
 }
 
 /* Links */
 
-.links > .link {
+g.item > g.fg > path.link {
   stroke-width: 3;
-  opacity: 0.75;
   fill: none;
+}
+g.item > g.bg > circle.source {
+  fill: white;
+  stroke: white;
+  stroke-width: 4;
+}
+g.item > g.bg > circle.target {
+  fill: white;
+  stroke: white;
+  stroke-width: 4;
+}
+g.item > g.bg > path.link {
+  fill: none;
+  stroke: white;
+  stroke-width: 6;
 }
 
 /* Countdown  */
+g.countdown,
+g.items,
+g.axis > circle.origin {
+  transition: all 0.75s ease-in;
+}
 
-.countdown,
-.is-counting .tick[data-value="0"] {
+g.countdown,
+g.items {
   opacity: 0;
-  transition: opacity 0.5s ease-in;
 }
-.countdown {
-  transition-delay: 1s;
-}
-.is-counting .countdown {
+
+g.axis > circle.origin,
+.is-counting g.items,
+.is-counting g.countdown {
   opacity: 1;
 }
 
-.countdown > text.clock {
-  font-size: 1.2em;
-  font-weight: 600;
-}
-
-.is-counting .mask > rect.major.active:not([data-value="0"]),
-.is-counting .axis > circle.origin,
-.countdown > circle.leader,
-.countdown > line.leader {
+.is-counting g.axis > circle.origin,
+g.countdown > circle.leader,
+g.countdown > line.leader {
   fill: #2c2928;
   stroke: #2c2928;
   stroke-width: 2px;
 }
 
-.is-counting .ticks > circle.minor.active {
+.is-counting g.ticks > circle.active.minor.tick {
   fill: #f5f6fa;
   stroke: #2c2928;
   stroke-width: 2;
 }
-.countdown > circle.leader,
-.countdown > line.leader {
+g.countdown > circle.leader,
+g.countdown > line.leader {
   stroke-width: 3;
 }
-.is-counting .ticks > text.active {
+/* .is-counting g.ticks > text.active.major.tick {
   fill: #f5f6fa;
-}
+} */
 
 /* --------------------------------- IFrames -------------------------------- */
 
@@ -313,7 +332,7 @@ iframe.app-frame {
 .app.has-new-version {
   animation: tada;
   animation-duration: 0.8s;
-  z-index: 500;
+  z-index: 250;
 }
 
 .app-url {
@@ -378,7 +397,8 @@ iframe.app-frame {
 
 .demo-container {
   background: none;
-  transition: opacity 0.5s ease-in, filter 0.2s ease-in;
+  transition: opacity 1s ease-in, filter 0.2s ease-in;
+  order: -1;
 }
 
 .demo-container .box {
@@ -437,8 +457,8 @@ iframe.app-frame {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  transition: color 2s ease-in;
-  z-index: 1;
+  transition: color 2s ease-in, opacity 2s ease-in;
+  z-index: 3;
 }
 
 .demo-interface .button {
@@ -529,6 +549,7 @@ iframe.app-frame {
 
 .is-fullscreen .logs {
   padding: 1.5rem 1rem;
+  font-size: 0.6em;
 }
 
 .is-active .logs {
@@ -739,6 +760,9 @@ iframe.app-frame {
   footer {
     padding: 0.5rem 1.5rem 1.5rem;
   }
+  .header {
+    margin-bottom: 3rem;
+  }
   .timeline {
     display: flex;
   }
@@ -778,7 +802,7 @@ iframe.app-frame {
     min-width: 120px;
   }
   .logs {
-    font-size: 0.6em;
+    font-size: 0.5em;
   }
 }
 
