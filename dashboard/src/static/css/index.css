@@ -193,7 +193,7 @@ footer {
 
 .timeline {
   margin: 0 auto;
-  width: 12rem;
+  width: 10rem;
   font-size: 0.8rem;
   display: none;
   z-index: 500;
@@ -859,7 +859,7 @@ iframe.app-frame {
     --columnGap: 3rem !important;
   }
   .timeline {
-    width: 15rem;
+    width: 12rem;
     font-size: 0.9rem;
   }
   .header {
