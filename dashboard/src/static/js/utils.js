@@ -7,7 +7,8 @@ const utils = {
         .padStart(2, '0'),
       second: Math.round((ms / 1000) % 60)
         .toString()
-        .padStart(2, '0')
+        .padStart(2, '0'),
+      totalSeconds: Math.floor(ms / 1000)
     }
   },
   randomNumber: max => {

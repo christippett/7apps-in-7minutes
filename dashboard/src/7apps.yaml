@@ -1,22 +1,25 @@
 apps:
-  - name: compute-engine
+  - id: localhost
+    title: "Localhost"
+    url: http://localhost:8080
+  - id: compute-engine
     title: "Compute Engine"
     url: https://compute.7apps.cloud
-  - name: kubernetes
+  - id: kubernetes
     title: "Kubernetes"
     url: https://gke.7apps.cloud
-  - name: function
+  - id: function
     title: "Cloud Function"
     url: https://function.7apps.cloud
-  - name: run
+  - id: run
     title: "Cloud Run"
     url: https://run.7apps.cloud
-  - name: run-anthos
+  - id: run-anthos
     title: "Cloud Run:Anthos"
     url: https://run-anthos.7apps.cloud
-  - name: standard
+  - id: standard
     title: "App Engine: Standard"
     url: https://standard.7apps.cloud
-  - name: flex
+  - id: flex
     title: "App Engine: Flexible"
     url: https://flex.7apps.cloud

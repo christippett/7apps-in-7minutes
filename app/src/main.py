@@ -2,7 +2,8 @@ import dataclasses
 import json
 import os
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import List, Optional
 
 from flask import Flask, jsonify, render_template, request
@@ -57,6 +58,7 @@ class App:
     theme: Theme
     title: Optional[str] = "7-Apps in 7-Minutes"
     version: Optional[str] = os.getenv("VERSION", "unknown")
+    updated: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
     @property
     def header(self) -> str:
@@ -79,9 +81,8 @@ class App:
         elif "GCE_APP" in os.environ:
             id, title = "compute-engine", "Compute Engine"
         else:
-            id = "other"
             title, _, _ = request.host.rpartition(":")
-        return cls(id=id, title=title.title(), **kwargs)
+        return cls(id=title.lower(), title=title.title(), **kwargs)
 
 
 app = Flask("7apps")

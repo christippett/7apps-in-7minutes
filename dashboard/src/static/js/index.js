@@ -24,6 +24,15 @@ const app = new ApplicationService({
   notificationService
 })
 
+// Receive messages sent from IFrames
+window.addEventListener(
+  'message',
+  function (event) {
+    app.iframeMessageHandler(event)
+  },
+  false
+)
+
 // Debug WebSocket
 notificationService.subscribe('echo', message =>
   comment.add({ text: message.data.text })
@@ -102,7 +111,7 @@ notificationService.subscribe('echo', message =>
               timeline.resetCountdown()
               this.isDeploying = false
               this.build = null
-            }, 90000)
+            }, 30000)
           }
         })
       },

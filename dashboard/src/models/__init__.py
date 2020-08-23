@@ -93,7 +93,7 @@ class AppTheme(BaseModel):
 
 
 class App(BaseModel):
-    name: str
+    id: str = Field(title="ID")
     title: str
     url: str
     version: Optional[str]
@@ -101,7 +101,7 @@ class App(BaseModel):
     updated: datetime = Field(default_factory=datetime.utcnow)
 
     def __str__(self):
-        return self.name
+        return self.id
 
 
 class AppList(BaseModel):
@@ -116,12 +116,12 @@ class AppList(BaseModel):
     def __getitem__(self, key):
         return self.__root__[key]
 
-    def get(self, name: str) -> Optional[App]:
-        f = list(filter(lambda v: v.name == name, self.__root__))
+    def get(self, id: str) -> Optional[App]:
+        f = list(filter(lambda v: v.id == id, self.__root__))
         return f[0] if f else None
 
     def replace(self, app: App):
-        current_app = self.get(app.name)
+        current_app = self.get(app.id)
         if current_app:
             self.__root__.remove(current_app)
         self.__root__.append(app)

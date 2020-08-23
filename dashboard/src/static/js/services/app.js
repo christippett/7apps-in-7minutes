@@ -4,14 +4,13 @@ export class ApplicationService {
   constructor ({ apps, notificationService }) {
     this.activePolls = new Map()
     this.apps = new Map()
-    apps.map(app => {
-      const el = document.getElementById(app.name)
+    apps.map(appInfo => {
+      const el = document.getElementById(appInfo.id)
       const iframe = el.getElementsByTagName('iframe')[0]
-      const appRef = { ...app, el, iframe }
+      const app = this.updateAppInfo({ ...appInfo, el, iframe })
       iframe.addEventListener('load', event =>
-        this.checkVersion({ iframe: event.target, app: appRef })
+        this.iframeEventHandler({ event, app })
       )
-      this.apps.set(app.name, appRef)
     })
 
     // The backend is responsible for polling each app to check if and when
@@ -24,16 +23,50 @@ export class ApplicationService {
     })
   }
 
-  checkVersion ({ iframe, app }) {
-    const doc = iframe.contentDocument
-    try {
-      return doc.getElementById('version').dataset.version
-    } catch {
-      // app.el.setAttribute('data-error', true)
-      console.log(
-        `😬 Unable to find version within IFrame document for ${app.title}`
-      )
+  iframeMessageHandler (event) {
+    const timeoutID = event.data.timeoutID
+    const app = event.data.app
+    if (timeoutID) {
+      window.clearTimeout(timeoutID)
     }
+    if (app) {
+      this.updateAppInfo(app)
+    }
+  }
+
+  iframeEventHandler ({ event, app }) {
+    // Mark app as unavailable if timeout not cleared in time
+    const timeoutID = setTimeout(() => {
+      app.el.dataset.error = true
+    }, 2000)
+    const iframe = event.target
+    const origin = new URL(iframe.src).origin
+    console.log(
+      `📡 Ground Control to '${app.title}'. Commencing countdown... engines on!`
+    )
+    iframe.contentWindow.postMessage({ timeoutID }, origin)
+  }
+
+  updateAppInfo (app) {
+    const id = app.id
+    const oldApp = this.apps.get(id)
+    if (oldApp) {
+      app = { ...oldApp, ...app }
+    }
+    // Use provided timestamp if available, otherwise set to now
+    app.updated = app.updated ? new Date(app.updated) : new Date()
+    this.apps.set(id, app)
+    app.el.removeAttribute('data-error')
+    app.el.setAttribute('data-version', app.version)
+    if (oldApp === undefined || app.version !== oldApp.version) {
+      app.iframe.setAttribute('name', `${app.id}-${app.version}`)
+      app.iframe.setAttribute('src', `${app.url}?ts=${app.updated.getTime()}`)
+      if (oldApp) {
+        app.el.classList.add('has-new-version')
+        setTimeout(() => app.el.classList.remove('has-new-version'), 3000)
+      }
+    }
+    return app
   }
 
   async refreshApp (event) {
@@ -43,23 +76,23 @@ export class ApplicationService {
     // notification.  The function checks the app to make sure it matches the
     // expected version and then refreshes its <iframe> container so the new
     // version is visible.
-    var app = this.apps.get(event.app.name)
+    var app = this.apps.get(event.app.id)
     const version = event.version
     const updateTime = new Date(event.app.updated)
     const icons = ['😅', '😬', '🤢']
 
     // Duplicate notifications may trigger this function more than once
-    if (this.activePolls.get(app.name)) {
+    if (this.activePolls.get(app.id)) {
       console.debug(`☝️ Refresh already in progress for ${app.title}`)
       return
     }
-    this.activePolls.set(app.name, true)
+    this.activePolls.set(app.id, true)
 
     // Although the backend has confirmed the app is updated, it may take a
     // few attempts before the client sees the new version
     console.log(`🚰 Refreshing ${app.title} (expecting version ${version})`)
     var count = 0
-    while (this.activePolls.get(app.name)) {
+    while (this.activePolls.get(app.id)) {
       // Get currrent app config as JSON
       const resp = await this.fetchApp(app.url)
 
@@ -67,24 +100,24 @@ export class ApplicationService {
       if (resp.app && resp.app.version === version) {
         console.log(`🕹️ ${app.title} has updated to version ${version}`)
         app = { ...app, ...event.app, ...resp.app, updated: updateTime }
-        this.apps.set(app.name, app)
+        this.apps.set(app.id, app)
 
         app.el.dataset.version = app.version
         app.el.dataset.title = app.title
-        app.iframe.name = `${app.name}-${app.version}`
+        app.iframe.name = `${app.id}-${app.version}`
         app.iframe.src = `${app.url}?ts=${updateTime.getTime()}`
 
         // Make the iframe jiggle
         app.el.classList.add('has-new-version')
         setTimeout(() => app.el.classList.remove('has-new-version'), 3000)
-        this.activePolls.delete(app.name)
+        this.activePolls.delete(app.id)
         return
       }
 
       // Call it quits if we can't reconcile the app's version after 4 attempts
       count++
       if (count >= 4) {
-        this.activePolls.delete(app.name)
+        this.activePolls.delete(app.id)
         console.error(
           `🥵 Failed to get latest version for ${app.title} (currently ${resp.app.version}, expected ${version})`
         )

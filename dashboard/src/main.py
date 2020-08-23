@@ -65,6 +65,7 @@ async def unicorn_exception_handler(request: Request, exc: StarletteHTTPExceptio
 @app.get("/")
 async def index(request: Request):
     display_order = [
+        "localhost",
         "compute-engine",
         "kubernetes",
         "run",
@@ -72,11 +73,10 @@ async def index(request: Request):
         "standard",
         "flex",
         "function",
-        "localhost",
     ]
     props = {
         "themes": AppTheme.random(20),
-        "apps": sorted(app_service.apps, key=lambda v: display_order.index(v.name)),
+        "apps": sorted(app_service.apps, key=lambda v: display_order.index(v.id)),
     }
     return templates.TemplateResponse(
         name="index.html",

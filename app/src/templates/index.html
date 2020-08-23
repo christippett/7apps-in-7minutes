@@ -116,8 +116,9 @@
     window.addEventListener(
       "message",
       (event) => {
-        console.log(`${appInfo.title}: This is Major Tom to Ground Control. I'm stepping through the door...`);
-        event.source.postMessage(appInfo, event.origin);
+        console.log(`🛰️ This is '${appInfo.title}' to Ground Control. I'm stepping through the door...`);
+        const data = { ...event.data, app: appInfo }
+        event.source.postMessage(data, event.origin);
       },
       false
     );

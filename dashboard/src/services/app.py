@@ -11,7 +11,7 @@ from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
 
 from common.utils import future_exception_handler
-from models import App, AppList, AppTheme, Message
+from models import App, AppList, AppTheme
 from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
@@ -20,17 +20,17 @@ logger = logging.getLogger("dashboard." + __name__)
 
 
 class AppService:
-    def __init__(self, apps: List[App], notifier: Notifier = None):
+    def __init__(self, apps: List[App], notifier: Notifier):
         self.apps = AppList(__root__=apps)
         self.notifier = notifier
         self.build = CloudBuildService(notifier=notifier)
         self._active_monitor = None
 
     @classmethod
-    def load_from_config(cls, path, notifier: Notifier = None):
+    def load_from_config(cls, path, notifier: Notifier):
         with open(path) as fp:
             config = yaml.safe_load(fp)
-        apps = [App.parse_obj(app) for app in config["apps"]]
+        apps = list(map(App.parse_obj, config["apps"]))
         return cls(apps=apps, notifier=notifier)
 
     async def deploy(self, theme: AppTheme) -> Tuple[str, BuildRef]:
@@ -108,7 +108,7 @@ class AppService:
 
             # Process updated app(s)
             for app in old_apps:
-                latest_app = self.apps.get(app.name)
+                latest_app = self.apps.get(app.id)
                 if latest_app.version != version:
                     continue
                 logger.info(
@@ -130,7 +130,7 @@ class AppService:
                 logger.info("All applications updated (%s)", version, icon="🎉")
                 break
             elif timer > timeout or self.build.get_active_builds() == 0:
-                logging.warning("Stopping monitor after %ss", timeout, icon="⏳")
+                logger.warning("Stopping monitor after %ss", timeout, icon="⏳")
                 break
             await asyncio.sleep(interval)
         await self.notifier.send(

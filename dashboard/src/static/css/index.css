@@ -224,19 +224,17 @@ g.axis > circle.edge {
   stroke-width: 1;
 }
 
-g.axis > g.mask rect {
+g.axis > g.masks {
   fill: #f5f6fa;
+  stroke: none;
 }
 
 /* Ticks  */
-.tick {
-  transition: all 1s ease-in;
-}
-.tick[data-value="0"] {
-  display: none;
+g.tick {
+  transition: all 0.75s ease-in;
 }
 
-text.tick.major {
+g.tick.major text {
   font-family: "Roboto Mono";
   font-size: 0.95em;
   fill: #8b8b8b;
@@ -244,11 +242,45 @@ text.tick.major {
   word-spacing: -0.4rem;
   line-height: 0;
 }
-circle.tick.minor {
+g.ticks > g.tick circle {
   fill: #c0c6ca;
   stroke: #f5f6fa;
+  stroke-width: 4;
+}
+
+g.tick.minor text,
+g.tick.minor rect,
+g.tick.major[data-value="0"] *,
+g.tick.major[data-value="0"],
+g.tick.major:not([data-value="0"]) circle {
+  display: none;
+}
+g.ticks > g.tick[data-value="0"] circle {
+  stroke-width: 1;
+  stroke: #c0c6ca;
+  fill: #f5f6fa;
+}
+
+g.ticks > g.tick.minor.active > circle,
+g.ticks > g.tick.minor.elapsed > circle {
+  fill: #2c2928;
+  stroke: #f5f6fa;
   stroke-width: 2;
-  /* transition-delay: 1.25s; */
+  animation: pulse 0.5s 2;
+}
+g.ticks > g.tick.major.active > circle,
+g.ticks > g.tick.major.elapsed > circle {
+  fill: #2c2928;
+  stroke: none;
+}
+
+g.ticks > g.tick.major.active > text,
+g.ticks > g.tick.minor.active > circle {
+  animation: pulse 0.65s infinite;
+}
+g.ticks > g.tick.major.elapsed > text {
+  color: #2c2928;
+  font-weight: 500;
 }
 
 /* Links */
@@ -274,6 +306,14 @@ g.item > g.bg > path.link {
 }
 
 /* Countdown  */
+.is-counting g.axis > circle.origin,
+g.countdown > circle.leader,
+g.countdown > line.leader {
+  fill: #2c2928;
+  stroke: #2c2928;
+  stroke-width: 3;
+}
+
 g.countdown,
 g.items,
 g.axis > circle.origin {
@@ -291,23 +331,10 @@ g.axis > circle.origin,
   opacity: 1;
 }
 
-.is-counting g.axis > circle.origin,
-g.countdown > circle.leader,
-g.countdown > line.leader {
-  fill: #2c2928;
-  stroke: #2c2928;
-  stroke-width: 2px;
-}
-
-.is-counting g.ticks > circle.active.minor.tick {
-  fill: #f5f6fa;
-  stroke: #2c2928;
-  stroke-width: 2;
-}
-g.countdown > circle.leader,
+/* g.countdown > circle.leader,
 g.countdown > line.leader {
   stroke-width: 3;
-}
+} */
 /* .is-counting g.ticks > text.active.major.tick {
   fill: #f5f6fa;
 } */
@@ -397,12 +424,22 @@ iframe.app-frame {
 
 .demo-container {
   background: none;
-  transition: opacity 1s ease-in, filter 0.2s ease-in;
+  transition: opacity 0.25s ease-in-out, filter 0.25s ease-in-out;
+  opacity: 0.25;
+  filter: grayscale(1);
   order: -1;
 }
 
+.demo-container:hover,
+.demo-container.is-active,
+.demo-container.is-loading,
+.demo-container.is-fullscreen {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
 .demo-container .box {
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
   overflow: hidden;
   background: transparent;
   cursor: zoom-in;
@@ -413,7 +450,7 @@ iframe.app-frame {
   cursor: zoom-out;
 }
 
-.demo-container.is-active:not(.is-fullscreen) .box:hover {
+.demo-container:not(.is-fullscreen):hover .box {
   transform: scale(1.05);
 }
 
@@ -444,10 +481,6 @@ iframe.app-frame {
   right: 0;
 }
 
-.is-fullscreen .is-hidden-tablet {
-  display: none;
-}
-
 /* Build Form --------------------------------------------------------------- */
 
 .demo-interface {
@@ -457,21 +490,17 @@ iframe.app-frame {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  transition: color 2s ease-in, opacity 2s ease-in;
+  transition: opacity 2s ease-in;
   z-index: 3;
 }
 
 .demo-interface .button {
-  background: rgb(245 245 245 / 90%) !important;
+  /* background: rgb(245 245 245 / 90%) !important; */
   box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
   font-size: 0.8rem;
   opacity: 1;
   transition: opacity 0.2s ease-in;
   z-index: 100;
-}
-
-.demo-interface .button:hover {
-  opacity: 0.8;
 }
 
 .deploy.button {
@@ -523,6 +552,7 @@ iframe.app-frame {
   align-items: center;
   justify-content: center;
   padding: 0 0.5rem 2.5rem;
+  border-radius: 6px;
 }
 
 .preview-frame .title {
@@ -766,14 +796,6 @@ iframe.app-frame {
   .timeline {
     display: flex;
   }
-  .demo-container:not(.is-active):not(.is-loading):not(.is-fullscreen) {
-    opacity: 0.25;
-    filter: grayscale(1);
-  }
-  .demo-container:not(.is-active):not(.is-loading):hover:not(.is-fullscreen) {
-    opacity: 1;
-    filter: none;
-  }
   .logs {
     font-size: 0.5em;
   }
@@ -871,5 +893,22 @@ iframe.app-frame {
   to {
     -webkit-transform: scaleX(1);
     transform: scaleX(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    font-size: 0.9em;
+    stroke-width: 4;
+  }
+
+  50% {
+    font-size: 1em;
+    stroke-width: 1;
+  }
+
+  100% {
+    font-size: 0.9em;
+    stroke-width: 4;
   }
 }

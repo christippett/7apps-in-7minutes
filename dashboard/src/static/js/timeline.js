@@ -79,21 +79,21 @@ export class Timeline {
     this.parentNode.innerHTML = ''
     this.svg = d3
       .select(this.parentNode)
-      .append(() => this.drawTimeline().node())
+      .append(() => this.renderTimeline().node())
     this.updateTimeline()
   }
 
   add ({ app, duration, color }) {
-    console.log(`📈 Adding ${app.name} to timeline`)
+    console.log(`📈 Adding ${app.title} to timeline`)
     const timelineValue = Math.min(duration, this.countdownSeconds)
     const item = {
-      id: app.name,
+      id: app.id,
       app,
       duration,
       color,
       position: () => {
         const bbox = document
-          .getElementById(`${app.name}`)
+          .getElementById(`${app.id}`)
           .getBoundingClientRect()
         return {
           source: [this.margin.left, this.timelineScale(timelineValue)],
@@ -108,7 +108,7 @@ export class Timeline {
         .source(d => d.position().source)
         .target(d => d.position().target)
     }
-    this.items.set(app.name, item)
+    this.items.set(app.id, item)
     this.updateTimeline()
   }
 
@@ -131,7 +131,7 @@ export class Timeline {
 
   resetCountdown () {
     this.parentNode.classList.remove('is-counting')
-    d3.select('text.clock').text('00:00')
+    this.setClock(0)
     this.items.clear()
     this.create()
   }
@@ -141,9 +141,8 @@ export class Timeline {
     const totalSeconds = Math.floor(ms / 1000)
     this.countdownSeconds = totalSeconds
 
-    // Update countdown clock
-    const timePart = utils.timePart(ms)
-    d3.select('text.clock').text(`${timePart.minute}:${timePart.second}`)
+    // Update clock
+    this.setClock(ms)
 
     // Increment axis progress tracker
     d3.select('.countdown line.leader')
@@ -154,15 +153,26 @@ export class Timeline {
       .attr('cy', value)
 
     d3.selectAll('.tick')
-      .filter(function () {
-        return parseInt(this.dataset.value) <= (ms + 3000) / 1000
+      .attr('data-cd', totalSeconds)
+      .classed('active', function () {
+        const tick = parseInt(this.dataset.value)
+        return tick - 5 <= totalSeconds && tick + 1 > totalSeconds
       })
-      .classed('active', true)
+      .classed('elapsed', function () {
+        const tick = parseInt(this.dataset.value)
+        return tick < totalSeconds
+      })
+  }
+
+  setClock (ms) {
+    // Update countdown clock
+    const timePart = utils.timePart(ms)
+    d3.select('text.clock').text(`${timePart.minute}:${timePart.second}`)
   }
 
   /* Generate base SVG container ------------------------------------------- */
 
-  drawTimeline () {
+  renderTimeline () {
     const svg = d3
       .create('svg')
       .attr('id', 'timeline')
@@ -194,6 +204,48 @@ export class Timeline {
       .attr('flood-opacity', 1)
       .attr('flood-color', '#ffffff')
 
+    const axis = svg
+      .append('g')
+      .classed('axis', true)
+      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+    axis.append('line').attr('y2', this.innerHeight)
+    axis
+      .selectAll('circle.edge')
+      .data([0, this.innerHeight])
+      .enter()
+      .append('circle')
+      .classed('edge', true)
+      .classed('origin', d => d === 0)
+      .classed('end', d => d === this.innerHeight)
+      .attr('data-value', d => d)
+      .attr('cy', d => d)
+      .attr('r', 3)
+    const tickMask = axis
+      .append('g')
+      .classed('masks', true)
+      .selectAll('g.tick')
+      .data(this.tickValues)
+      .enter()
+      .append('g')
+      .classed('tick', true)
+      .classed('minor', d => d.isMinor)
+      .classed('major', d => d.isMajor)
+      .attr('data-value', d => d.tick)
+    tickMask
+      .append('circle')
+      .attr('cx', 0)
+      .attr('cy', d => d.y)
+      .attr('r', 4)
+    tickMask
+      .append('rect')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y)
+      .attr('width', 44)
+      .attr('height', 18)
+      .attr('rx', 6)
+      .attr('ry', 6)
+      .attr('transform', 'translate(-22, -9)')
+
     svg
       .append('text')
       .classed('clock', true)
@@ -203,14 +255,18 @@ export class Timeline {
       .attr('text-anchor', 'middle')
       .text('00:00')
 
-    // Timeline axis (incl. countdown)
-    svg
-      .append(() => this.axis)
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+    this.renderAxisTicks(svg).attr(
+      'transform',
+      `translate(${this.margin.left}, ${this.margin.top})`
+    )
+
+    this.renderCountdown(svg).attr(
+      'transform',
+      `translate(${this.margin.left}, ${this.margin.top})`
+    )
 
     // Paths that link axis markers to target IFrames
-    const items = svg.append('g').classed('items', true)
-    items.append('g').classed('background', true)
+    svg.append('g').classed('items', true)
 
     return svg
   }
@@ -275,23 +331,53 @@ export class Timeline {
 
   /* Timeline D3 Components ------------------------------------------------ */
 
-  get axis () {
-    const axis = d3.create('svg:g').classed('axis', true)
-    axis.append('line').attr('y2', this.innerHeight)
-    axis
-      .selectAll('circle.edge')
-      .data([0, this.innerHeight])
-      .enter()
-      .append('circle')
-      .classed('edge', true)
-      .classed('origin', d => d === 0)
-      .classed('end', d => d === this.innerHeight)
-      .attr('data-value', d => d)
-      .attr('cy', d => d)
-      .attr('r', 3)
-
+  renderAxisTicks (parent) {
     // Add labels to axis at 30 minute intervals
-    const tickData = Array.from(
+
+    const axisTicks = parent
+      .append('g')
+      .classed('ticks', true)
+      .selectAll('g.tick')
+      .data(this.tickValues)
+      .enter()
+      .append('g')
+      .classed('tick', true)
+      .classed('minor', d => d.isMinor)
+      .classed('major', d => d.isMajor)
+      .attr('data-value', d => d.tick)
+
+    axisTicks
+      .append('circle')
+      .attr('cx', 0)
+      .attr('cy', d => d.y)
+      .attr('r', 4)
+
+    axisTicks
+      .append('text')
+      .attr('x', 0)
+      .attr('y', d => d.y)
+      .attr('transform', 'translate(0, 3)')
+      .attr('text-anchor', 'middle')
+      .text(d => `${d.tick / 60} min`)
+    return axisTicks
+  }
+
+  renderCountdown (parent) {
+    const countdown = parent.append('g').classed('countdown', true)
+    countdown
+      .append('line')
+      .classed('leader', true)
+      .attr({ x1: 0, y1: 0, x2: 0, y2: 0 })
+    countdown
+      .append('circle')
+      .classed('leader', true)
+      .attr('r', 2)
+      .attr('cy', 0)
+    return countdown
+  }
+
+  get tickValues () {
+    return Array.from(
       Array(this.opts.maxValue / this.opts.tickInterval + 1),
       (_, i) => {
         const tick = i * this.opts.tickInterval
@@ -303,82 +389,6 @@ export class Timeline {
         }
       }
     )
-
-    // Add mask to hide part of the axis behind ticks/labels
-    const mask = axis.append('g').classed('mask', true)
-    mask
-      .selectAll('rect.minor')
-      .data(tickData.filter(d => d.isMinor))
-      .enter()
-      .append('circle')
-      .classed('tick', true)
-      .classed('minor', true)
-      .attr('data-value', d => d.tick)
-      .attr('cx', 0)
-      .attr('cy', d => d.y)
-      .attr('r', 4)
-    mask
-      .selectAll('rect.major')
-      .data(tickData.filter(d => d.isMajor))
-      .enter()
-      .append('rect')
-      .classed('tick', true)
-      .classed('major', true)
-      .attr('data-value', d => d.tick)
-      .attr('x', d => d.x)
-      .attr('y', d => d.y)
-      .attr('width', 44)
-      .attr('height', 18)
-      .attr('rx', 6)
-      .attr('ry', 6)
-      .attr('transform', 'translate(-22, -10)')
-
-    // Create separate axis to overlay countdown
-    axis.append(() => this.countdown)
-
-    // Add ticks
-    const ticks = axis.append('g').classed('ticks', true)
-    ticks
-      .selectAll('circle.tick')
-      .data(tickData.filter(d => d.isMinor))
-      .enter()
-      .append('circle')
-      .classed('tick', true)
-      .classed('minor', true)
-      .attr('data-value', d => d.tick)
-      .attr('cx', 0)
-      .attr('cy', d => d.y)
-      .attr('r', 3)
-
-    ticks
-      .selectAll('text.tick')
-      .data(tickData.filter(d => d.isMajor))
-      .enter()
-      .append('text')
-      .classed('tick', true)
-      .classed('major', true)
-      .attr('data-value', d => d.tick)
-      .attr('x', 0)
-      .attr('y', d => d.y)
-      .attr('transform', 'translate(0, 3)')
-      .attr('text-anchor', 'middle')
-      .text(d => `${d.tick / 60} min`)
-
-    return axis.node()
-  }
-
-  get countdown () {
-    const countdown = d3.create('svg:g').classed('countdown', true)
-    countdown
-      .append('line')
-      .classed('leader', true)
-      .attr({ x1: 0, y1: 0, x2: 0, y2: 0 })
-    countdown
-      .append('circle')
-      .classed('leader', true)
-      .attr('r', 2)
-      .attr('cy', 0)
-    return countdown.node()
   }
 
   get timelineScale () {

@@ -11,6 +11,10 @@
   <link href="/static/css/error.css" rel="stylesheet" />
 </head>
 
+<script>window.props = {{ props | tojson }};</script>
+<script type="module" src="/static/js/index.js"></script>
+<script defer src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
+
 <body>
   <section class="container">
     <div class="header">
@@ -39,8 +43,5 @@
     </div>
   </footer>
 </body>
-<script>window.props = {{ props | tojson }};</script>
-<script type="module" src="/static/js/index.js"></script>
-<script defer src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
 
 </html>
