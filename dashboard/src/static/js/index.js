@@ -75,11 +75,11 @@ notificationService.subscribe('echo', message =>
       },
       randomColor () {
         const theme = this.themes[utils.randomNumber(this.themes.length)]
-        return theme.gradient.colors[0]
+        return theme.colors[0]
       },
       themeGradient () {
         const theme = this.theme()
-        const colors = theme.gradient.colors
+        const colors = theme.colors
         return [
           `background: ${colors[0]};`,
           `background: linear-gradient(45deg,${colors.join(

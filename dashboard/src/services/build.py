@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import random
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from enum import Enum

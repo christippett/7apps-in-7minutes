@@ -11,7 +11,7 @@ from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
 
 from common.utils import future_exception_handler
-from models import App, AppList, AppTheme
+from models.app import App, AppList, Theme
 from models.build import BuildRef
 from services.build import CloudBuildService
 from services.notifier import Notifier
@@ -33,7 +33,7 @@ class AppService:
         apps = list(map(App.parse_obj, config["apps"]))
         return cls(apps=apps, notifier=notifier)
 
-    async def deploy(self, theme: AppTheme) -> Tuple[str, BuildRef]:
+    async def deploy(self, theme: Theme) -> Tuple[str, BuildRef]:
         active_builds = self.build.get_active_builds()
         if len(active_builds) > 0:
             logger.warning(
@@ -44,12 +44,10 @@ class AppService:
             version = build.substitutions.get("_VERSION") or ""
         else:
             version = (
-                re.sub(r"[^\w]+", "-", theme.gradient.name).lower()
-                + "-"
-                + uuid4().hex[:7]
+                re.sub(r"[^\w]+", "-", theme.gradient).lower() + "-" + uuid4().hex[:7]
             )
             substitutions = {
-                "_GRADIENT": theme.gradient.name,
+                "_GRADIENT": theme.gradient,
                 "_FONT": theme.font or "",
                 "_ASCII_FONT": theme.ascii_font or "",
                 "_VERSION": version,

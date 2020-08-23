@@ -4,14 +4,16 @@ export class ApplicationService {
   constructor ({ apps, notificationService }) {
     this.activePolls = new Map()
     this.apps = new Map()
-    apps.map(appInfo => {
-      const el = document.getElementById(appInfo.id)
+    apps.map(app => {
+      const el = document.getElementById(app.id)
       const iframe = el.getElementsByTagName('iframe')[0]
-      const app = this.updateAppInfo({ ...appInfo, el, iframe })
-      iframe.addEventListener('load', event =>
+      this.updateAppInfo({ ...app, el, iframe })
+    })
+    apps.map(app =>
+      app.iframe.addEventListener('load', event =>
         this.iframeEventHandler({ event, app })
       )
-    })
+    )
 
     // The backend is responsible for polling each app to check if and when
     // they're updated to a new version. When a new version is detected, the
@@ -56,8 +58,10 @@ export class ApplicationService {
     // Use provided timestamp if available, otherwise set to now
     app.updated = app.updated ? new Date(app.updated) : new Date()
     this.apps.set(id, app)
-    app.el.removeAttribute('data-error')
-    app.el.setAttribute('data-version', app.version)
+    app.el.dataset.version = app.version
+    if (app.el.hasAttribute('data')) {
+      app.el.removeAttribute('data')
+    }
     if (oldApp === undefined || app.version !== oldApp.version) {
       app.iframe.setAttribute('name', `${app.id}-${app.version}`)
       app.iframe.setAttribute('src', `${app.url}?ts=${app.updated.getTime()}`)

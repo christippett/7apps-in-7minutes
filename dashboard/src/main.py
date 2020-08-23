@@ -24,7 +24,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from common.config import LOGGING_CONFIG, settings
 from common.logging import setup_stackdriver_logging
-from models import AppTheme, DeploymentJob
+from models import DeploymentJob
+from models.app import Theme
 from services import AppService, Notifier
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -75,7 +76,7 @@ async def index(request: Request):
         "function",
     ]
     props = {
-        "themes": AppTheme.random(20),
+        "themes": Theme.random(20),
         "apps": sorted(app_service.apps, key=lambda v: display_order.index(v.id)),
     }
     return templates.TemplateResponse(
@@ -99,9 +100,7 @@ async def index(request: Request):
         },
     },
 )
-async def deploy(
-    theme: AppTheme, background_tasks: BackgroundTasks, response: Response
-):
+async def deploy(theme: Theme, background_tasks: BackgroundTasks, response: Response):
     """
     Create new Deployment Job
     """

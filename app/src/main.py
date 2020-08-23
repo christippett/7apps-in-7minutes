@@ -28,11 +28,11 @@ class Theme:
     def __post_init__(self):
         # Silently replace any unavailable theme properties with something
         # random instead of raising an exception
-        if self.font is None:
+        if not self.font:
             self.font = self.get_random_font()
         if self.ascii_font not in FigletFont.getFonts():
             self.ascii_font = self.get_random_ascii_font()
-        if self.gradient is None or len(self.colors) == 0:
+        if not self.gradient or len(self.colors) == 0:
             self.gradient = self.get_random_gradient()
 
     @property
@@ -82,7 +82,8 @@ class App:
             id, title = "compute-engine", "Compute Engine"
         else:
             title, _, _ = request.host.rpartition(":")
-        return cls(id=title.lower(), title=title.title(), **kwargs)
+            id = title.lower()
+        return cls(id=id, title=title.title(), **kwargs)
 
 
 app = Flask("7apps")
