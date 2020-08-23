@@ -10,6 +10,7 @@ export class ApplicationService {
     this.activePolls = new Map()
     this.apps = new Map()
     apps.map(app => {
+      console.debug(`📡 Ground Control to [${app.title}]...`)
       const el = document.getElementById(app.id)
       const iframe = el.getElementsByTagName('iframe')[0]
       this.update({ ...app, el, iframe })
@@ -41,7 +42,6 @@ export class ApplicationService {
     }, 2000)
     const iframe = event.target
     const origin = new URL(iframe.src).origin
-    console.debug(`📡 Ground Control to [${app.title}]...`)
     iframe.contentWindow.postMessage({ timeoutID }, origin)
   }
 
