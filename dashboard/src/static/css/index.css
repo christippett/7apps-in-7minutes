@@ -218,41 +218,88 @@ g.axis > line {
   stroke: #dedeea;
 }
 
-g.axis > circle.edge {
+g.axis > circle.edge,
+g.axis > g.masks {
   fill: #f5f6fa;
   stroke: #d6d5da;
   stroke-width: 1;
 }
 
-g.axis > g.masks {
+g.axis > g.masks > circle.major,
+g.axis > g.masks > circle.minor {
+  stroke: #f5f6fa;
   fill: #f5f6fa;
-  stroke: none;
+}
+g.axis > g.masks > circle.major {
+  stroke-width: 6;
 }
 
 /* Ticks  */
-g.tick {
-  transition: all 0.75s ease-in;
+.tick {
+  transition: all 2s ease-in;
+}
+g.labels .tick rect {
+  fill: #f5f6fa;
+  filter: url(#blur);
 }
 
-g.tick.major text {
+g.labels > .tick.major text {
   font-family: "Roboto Mono";
   font-size: 0.95em;
   fill: #8b8b8b;
+  color: #2c2928;
   letter-spacing: 1px;
   word-spacing: -0.4rem;
   line-height: 0;
 }
-g.ticks > g.tick circle {
-  fill: #c0c6ca;
-  stroke: #f5f6fa;
-  stroke-width: 4;
+g.labels > g.tick.major.active {
+  /* active */
+  opacity: 0;
+  transition-duration: 0.5s;
+}
+.timeline:hover g.labels > g.tick.major {
+  opacity: 1;
 }
 
-g.tick.minor text,
-g.tick.minor rect,
-g.tick.major[data-value="0"] *,
-g.tick.major[data-value="0"],
-g.tick.major:not([data-value="0"]) circle {
+g.ticks.layer-2 > * {
+  opacity: 0;
+  transition-delay: 8s;
+}
+g.ticks.layer-2 > .active {
+  opacity: 1;
+}
+g.ticks > circle.tick.minor {
+  fill: #c0c6ca;
+  stroke: #f5f6fa;
+  stroke-width: 3;
+}
+g.ticks > circle.tick.major {
+  fill: #f5f6fa;
+  stroke: #c0c6ca;
+  stroke-width: 1;
+}
+g.ticks.layer-2 > circle.tick.major.active {
+  fill: #ea4335;
+  stroke: #f5f6fa;
+  stroke-width: 2;
+}
+g.ticks > circle.tick.minor.active {
+  /* active */
+  fill: #2c2928;
+  stroke: #f5f6fa;
+  stroke-width: 3;
+}
+g.ticks > circle.tick.major.active {
+  /* active */
+  fill: #2c2928;
+  stroke: #2c2928;
+  stroke-width: 2;
+}
+
+.labels .tick.minor,
+.tick.major[data-value="0"] *,
+.tick.major[data-value="0"],
+.tick.major:not([data-value="0"]) circle {
   display: none;
 }
 g.ticks > g.tick[data-value="0"] circle {
@@ -261,26 +308,18 @@ g.ticks > g.tick[data-value="0"] circle {
   fill: #f5f6fa;
 }
 
-g.ticks > g.tick.minor.active > circle,
-g.ticks > g.tick.minor.elapsed > circle {
+g.ticks > g.tick.minor.active > circle {
   fill: #2c2928;
-  stroke: #f5f6fa;
+  stroke: #2c2928;
   stroke-width: 2;
-  animation: pulse 0.5s 2;
 }
-g.ticks > g.tick.major.active > circle,
-g.ticks > g.tick.major.elapsed > circle {
+g.ticks > g.tick.major.active > circle {
   fill: #2c2928;
-  stroke: none;
+  stroke: 0;
 }
 
-g.ticks > g.tick.major.active > text,
-g.ticks > g.tick.minor.active > circle {
-  animation: pulse 0.65s infinite;
-}
-g.ticks > g.tick.major.elapsed > text {
-  color: #2c2928;
-  font-weight: 500;
+g.tick.major.active circle {
+  display: block;
 }
 
 /* Links */
@@ -397,6 +436,7 @@ iframe.app-frame {
 }
 .error p {
   padding: 0.25rem 0 0.15rem;
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 0.75);
 }
 .error p:first-child:after {
   content: attr(data-title);

@@ -101,9 +101,11 @@ notificationService.subscribe('echo', message =>
           })
         })
         notificationService.subscribe('build', message => {
-          if (message.data.status === 'finished') {
+          if (message.data.status === 'started') {
+            app.startPoll(message.data.version)
+          } else if (message.data.status === 'finished') {
             timeline.stopCountdown()
-            // Show a new theme for when the deployment completes
+            // Select a new theme for when the deployment ends
             this.themeIndex = Math.floor(
               Math.random() * Math.floor(this.themes.length)
             )

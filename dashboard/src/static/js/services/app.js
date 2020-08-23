@@ -1,5 +1,10 @@
 import utils from '../utils.js'
 
+const PollingStatus = {
+  Active: 1,
+  Inactive: 0
+}
+
 export class ApplicationService {
   constructor ({ apps, notificationService }) {
     this.activePolls = new Map()
@@ -7,22 +12,15 @@ export class ApplicationService {
     apps.map(app => {
       const el = document.getElementById(app.id)
       const iframe = el.getElementsByTagName('iframe')[0]
-      this.updateAppInfo({ ...app, el, iframe })
+      this.update({ ...app, el, iframe })
     })
-    apps.map(app =>
+
+    // Handle IFrame load events
+    this.apps.forEach(app =>
       app.iframe.addEventListener('load', event =>
         this.iframeEventHandler({ event, app })
       )
     )
-
-    // The backend is responsible for polling each app to check if and when
-    // they're updated to a new version. When a new version is detected, the
-    // backend sends a message to every client so they can refresh and show the
-    // new version
-    notificationService.subscribe('refresh-app', message => {
-      const { version, app, duration } = message.data
-      this.refreshApp({ version, app, duration })
-    })
   }
 
   iframeMessageHandler (event) {
@@ -32,7 +30,7 @@ export class ApplicationService {
       window.clearTimeout(timeoutID)
     }
     if (app) {
-      this.updateAppInfo(app)
+      this.update(app)
     }
   }
 
@@ -43,29 +41,31 @@ export class ApplicationService {
     }, 2000)
     const iframe = event.target
     const origin = new URL(iframe.src).origin
-    console.log(
-      `📡 Ground Control to '${app.title}'. Commencing countdown... engines on!`
-    )
+    console.debug(`📡 Ground Control to [${app.title}]...`)
     iframe.contentWindow.postMessage({ timeoutID }, origin)
   }
 
-  updateAppInfo (app) {
+  update (app) {
     const id = app.id
+
+    // Update app and inherit its existing properties
     const oldApp = this.apps.get(id)
-    if (oldApp) {
-      app = { ...oldApp, ...app }
-    }
-    // Use provided timestamp if available, otherwise set to now
+    if (oldApp) app = { ...oldApp, ...app }
     app.updated = app.updated ? new Date(app.updated) : new Date()
     this.apps.set(id, app)
+
+    // Update DOM elements that reference app properties
     app.el.dataset.version = app.version
-    if (app.el.hasAttribute('data')) {
-      app.el.removeAttribute('data')
+    if (app.el.hasAttribute('data-error')) {
+      app.el.removeAttribute('data-error')
     }
     if (oldApp === undefined || app.version !== oldApp.version) {
       app.iframe.setAttribute('name', `${app.id}-${app.version}`)
       app.iframe.setAttribute('src', `${app.url}?ts=${app.updated.getTime()}`)
-      if (oldApp) {
+
+      if (oldApp !== undefined) {
+        // This is a legitimate new version (not triggered by initial page load)
+        console.log(`🕹️ ${app.title} has updated to version ${app.version}`)
         app.el.classList.add('has-new-version')
         setTimeout(() => app.el.classList.remove('has-new-version'), 3000)
       }
@@ -73,62 +73,36 @@ export class ApplicationService {
     return app
   }
 
-  async refreshApp (event) {
-    // Rather than having every client poll each app separately, the backend
-    // takes care of this for us and broadcasts a notification once an app has
-    // been updated. This is the function that's triggered on the back of that
-    // notification.  The function checks the app to make sure it matches the
-    // expected version and then refreshes its <iframe> container so the new
-    // version is visible.
-    var app = this.apps.get(event.app.id)
-    const version = event.version
-    const updateTime = new Date(event.app.updated)
-    const icons = ['😅', '😬', '🤢']
-
-    // Duplicate notifications may trigger this function more than once
-    if (this.activePolls.get(app.id)) {
-      console.debug(`☝️ Refresh already in progress for ${app.title}`)
+  async startPoll (version) {
+    if (this.pollingStatus === PollingStatus.Active) {
+      console.debug('☝️ Application poll already in-progress')
       return
     }
-    this.activePolls.set(app.id, true)
-
-    // Although the backend has confirmed the app is updated, it may take a
-    // few attempts before the client sees the new version
-    console.log(`🚰 Refreshing ${app.title} (expecting version ${version})`)
+    console.log(`🚰 Polling applications for version ${version}`)
+    const icons = ['🤠', '😴', '😅', '🤨', '🤔', '😬', '🥴', '🤢', '🥵', '😔']
+    var timestamp = +new Date()
     var count = 0
-    while (this.activePolls.get(app.id)) {
-      // Get currrent app config as JSON
-      const resp = await this.fetchApp(app.url)
-
-      // Check version returned by client matches backend
-      if (resp.app && resp.app.version === version) {
-        console.log(`🕹️ ${app.title} has updated to version ${version}`)
-        app = { ...app, ...event.app, ...resp.app, updated: updateTime }
-        this.apps.set(app.id, app)
-
-        app.el.dataset.version = app.version
-        app.el.dataset.title = app.title
-        app.iframe.name = `${app.id}-${app.version}`
-        app.iframe.src = `${app.url}?ts=${updateTime.getTime()}`
-
-        // Make the iframe jiggle
-        app.el.classList.add('has-new-version')
-        setTimeout(() => app.el.classList.remove('has-new-version'), 3000)
-        this.activePolls.delete(app.id)
+    var apps = Array.from(this.apps.values())
+    this.pollingStatus = PollingStatus.Active
+    setTimeout(() => (this.pollingStatus = PollingStatus.Inactive), 600)
+    while (this.pollingStatus === PollingStatus.Active) {
+      apps = apps.filter(app => app.version !== version)
+      if (apps.length === 0) {
+        console.log(`🛁 All applications updated to version ${version}`)
+        this.pollingStatus = PollingStatus.Inactive
         return
       }
-
-      // Call it quits if we can't reconcile the app's version after 4 attempts
+      this.apps.forEach(app => {
+        app.iframe.src = app.iframe.src.split('?')[0] + `?ts=${timestamp}`
+      })
+      console.info(
+        `${
+          icons[Math.min(count, icons.length - 1)]
+        } Still polling applications for version ${version}`
+      )
+      await utils.sleep(20000)
+      timestamp = +new Date()
       count++
-      if (count >= 4) {
-        this.activePolls.delete(app.id)
-        console.error(
-          `🥵 Failed to get latest version for ${app.title} (currently ${resp.app.version}, expected ${version})`
-        )
-        return
-      }
-      await utils.sleep(10000)
-      console.debug(`${icons[count - 1]} Still refreshing ${app.title}...`)
     }
   }
 

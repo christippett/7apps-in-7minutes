@@ -10,6 +10,7 @@ import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
 
+from common.config import settings
 from common.utils import future_exception_handler
 from models.app import App, AppList, Theme
 from models.build import BuildRef
@@ -30,7 +31,11 @@ class AppService:
     def load_from_config(cls, path, notifier: Notifier):
         with open(path) as fp:
             config = yaml.safe_load(fp)
-        apps = list(map(App.parse_obj, config["apps"]))
+        apps = [
+            a
+            for a in map(App.parse_obj, config["apps"])
+            if a.id != "localhost" or settings.debug
+        ]
         return cls(apps=apps, notifier=notifier)
 
     async def deploy(self, theme: Theme) -> Tuple[str, BuildRef]:
