@@ -65,7 +65,6 @@ export class ApplicationService {
 
       if (oldApp !== undefined) {
         // This is a legitimate new version (not triggered by initial page load)
-        console.log(`🕹️ ${app.title} has updated to version ${app.version}`)
         app.el.classList.add('has-new-version')
         setTimeout(() => app.el.classList.remove('has-new-version'), 3000)
       }
@@ -75,34 +74,29 @@ export class ApplicationService {
 
   async startPoll (version) {
     if (this.pollingStatus === PollingStatus.Active) {
-      console.debug('☝️ Application poll already in-progress')
+      console.debug('☝️ Poll already in-progress')
       return
     }
     console.log(`🚰 Polling applications for version ${version}`)
-    const icons = ['🤠', '😴', '😅', '🤨', '🤔', '😬', '🥴', '🤢', '🥵', '😔']
-    var timestamp = +new Date()
-    var count = 0
-    var apps = Array.from(this.apps.values())
+    var apps = Array.from(this.apps.keys())
     this.pollingStatus = PollingStatus.Active
-    setTimeout(() => (this.pollingStatus = PollingStatus.Inactive), 600)
+    setTimeout(() => (this.pollingStatus = PollingStatus.Inactive), 600 * 1000)
     while (this.pollingStatus === PollingStatus.Active) {
-      apps = apps.filter(app => app.version !== version)
       if (apps.length === 0) {
         console.log(`🛁 All applications updated to version ${version}`)
         this.pollingStatus = PollingStatus.Inactive
         return
       }
-      this.apps.forEach(app => {
-        app.iframe.src = app.iframe.src.split('?')[0] + `?ts=${timestamp}`
+      apps.slice(0).forEach(id => {
+        const app = this.apps.get(id)
+        if (app.version === version) {
+          console.log(`🕹️ ${app.title} has updated to version ${version}`)
+          apps.splice(apps.indexOf(id), 1)
+        } else {
+          app.iframe.src = app.iframe.src.split('?')[0] + `?ts=${+new Date()}`
+        }
       })
-      console.info(
-        `${
-          icons[Math.min(count, icons.length - 1)]
-        } Still polling applications for version ${version}`
-      )
-      await utils.sleep(20000)
-      timestamp = +new Date()
-      count++
+      await utils.sleep(15000)
     }
   }
 

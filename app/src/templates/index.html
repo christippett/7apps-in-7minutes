@@ -116,7 +116,7 @@
     window.addEventListener(
       "message",
       (event) => {
-        console.log(`🛰️ This is [${app.title}] to Ground Control ➟ ${app.version}`);
+        console.debug(`🛰️ This is [${app.title}] to Ground Control ➟ ${app.version}`);
         const data = { ...event.data, app }
         event.source.postMessage(data, event.origin);
       },

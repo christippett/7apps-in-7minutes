@@ -44,7 +44,7 @@
       #0000c0 85.71%
     );
   overflow: hidden;
-  /* filter: grayscale(0.10); */
+  /* filter: grayscale(1); */
   transition: filter 0.5s ease-in-out;
 }
 .broadcast-error:before {

@@ -21,8 +21,8 @@ export class Timeline {
     items = new Map(),
     opts = {
       margin: { left: 0, right: 0, top: 0, bottom: 0 },
-      maxValue: 7 * 60,
-      tickInterval: 30
+      maxValue: 3 * 60,
+      tickInterval: 15
     }
   }) {
     this.el = el
@@ -117,7 +117,7 @@ export class Timeline {
   startCountdown (headstart = 0) {
     d3.select('.countdown .axis line').attr('y2', 0)
     d3.select('.countdown .axis circle').attr('cy', 0)
-    this.parentNode.classList.add('is-counting')
+    this.parentNode.classList.add('show-countdown')
     this.countdownTimer = d3.interval(
       ms => this.countdownHandler(ms + headstart),
       100
@@ -126,11 +126,13 @@ export class Timeline {
   }
 
   stopCountdown () {
-    this.countdownTimer.stop()
+    try {
+      this.countdownTimer.stop()
+    } catch {}
   }
 
   resetCountdown () {
-    this.parentNode.classList.remove('is-counting')
+    this.parentNode.classList.remove('show-countdown')
     this.setClock(0)
     this.items.clear()
     this.create()
@@ -152,9 +154,11 @@ export class Timeline {
       .transition()
       .attr('cy', value)
 
+    const actionInterval = this.timelineScale(3)
+    const scale = this.timelineScale
     d3.selectAll('.tick').classed('active', function () {
-      const tick = parseInt(this.dataset.value)
-      return tick - 4 <= totalSeconds
+      const tick = scale(this.dataset.value)
+      return tick - actionInterval <= value
     })
   }
 
@@ -252,7 +256,6 @@ export class Timeline {
       .classed('layer-1', false)
       .classed('layer-2', true)
       .selectAll('circle')
-      .attr('r', 5)
 
     // Paths that link axis markers to target IFrames
     svg.append('g').classed('items', true)
@@ -338,7 +341,7 @@ export class Timeline {
       .attr('data-value', d => d.tick)
       .attr('cx', 0)
       .attr('cy', d => d.y)
-      .attr('r', d => (d.isMajor ? 3 : 4))
+      .attr('r', d => (d.isMajor ? 6 : 4))
     return group
   }
 

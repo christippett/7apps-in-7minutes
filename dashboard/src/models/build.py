@@ -134,5 +134,6 @@ class LogRecord(BaseModel):
 
     @validator("text")
     def transform_text(cls, v):
-        # Remove extended ellipses
-        return re.sub(r"\.{4,}", r"...", v).rstrip("\n")
+        # Remove prefix and extended ellipses
+        text = re.sub(r"^(step #\d.*?:)", "", v, flags=re.I)
+        return re.sub(r"\.{4,}", r"...", text).rstrip("\n")

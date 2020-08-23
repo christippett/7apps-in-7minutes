@@ -36,7 +36,7 @@ footer {
 
 .header {
   text-align: center;
-  margin: 1rem;
+  margin: 1.2rem 1rem 0;
   font-size: 1rem;
   position: relative;
 }
@@ -193,8 +193,7 @@ footer {
 
 .timeline {
   margin: 0 auto;
-  width: 6rem;
-  height: 90%;
+  width: 12rem;
   font-size: 0.8rem;
   display: none;
   z-index: 500;
@@ -236,7 +235,7 @@ g.axis > g.masks > circle.major {
 
 /* Ticks  */
 .tick {
-  transition: all 2s ease-in;
+  transition: all 0.5s ease-in;
 }
 g.labels .tick rect {
   fill: #f5f6fa;
@@ -255,7 +254,7 @@ g.labels > .tick.major text {
 g.labels > g.tick.major.active {
   /* active */
   opacity: 0;
-  transition-duration: 0.5s;
+  transition-duration: 0.25s;
 }
 .timeline:hover g.labels > g.tick.major {
   opacity: 1;
@@ -263,7 +262,7 @@ g.labels > g.tick.major.active {
 
 g.ticks.layer-2 > * {
   opacity: 0;
-  transition-delay: 8s;
+  transition-delay: 7s;
 }
 g.ticks.layer-2 > .active {
   opacity: 1;
@@ -279,15 +278,15 @@ g.ticks > circle.tick.major {
   stroke-width: 1;
 }
 g.ticks.layer-2 > circle.tick.major.active {
-  fill: #ea4335;
+  /* fill: #ea4335; */
   stroke: #f5f6fa;
-  stroke-width: 2;
+  stroke-width: 3;
 }
 g.ticks > circle.tick.minor.active {
   /* active */
   fill: #2c2928;
   stroke: #f5f6fa;
-  stroke-width: 3;
+  stroke-width: 2;
 }
 g.ticks > circle.tick.major.active {
   /* active */
@@ -332,6 +331,8 @@ g.item > g.bg > circle.source {
   fill: white;
   stroke: white;
   stroke-width: 4;
+  filter: url(#blur);
+  opacity: 0.95;
 }
 g.item > g.bg > circle.target {
   fill: white;
@@ -342,10 +343,12 @@ g.item > g.bg > path.link {
   fill: none;
   stroke: white;
   stroke-width: 6;
+  opacity: 0.8;
+  /* filter: url(#blur); */
 }
 
 /* Countdown  */
-.is-counting g.axis > circle.origin,
+.show-countdown g.axis > circle.origin,
 g.countdown > circle.leader,
 g.countdown > line.leader {
   fill: #2c2928;
@@ -365,8 +368,8 @@ g.items {
 }
 
 g.axis > circle.origin,
-.is-counting g.items,
-.is-counting g.countdown {
+.show-countdown g.items,
+.show-countdown g.countdown {
   opacity: 1;
 }
 
@@ -374,7 +377,7 @@ g.axis > circle.origin,
 g.countdown > line.leader {
   stroke-width: 3;
 } */
-/* .is-counting g.ticks > text.active.major.tick {
+/* .show-countdown g.ticks > text.active.major.tick {
   fill: #f5f6fa;
 } */
 
@@ -483,6 +486,7 @@ iframe.app-frame {
   overflow: hidden;
   background: transparent;
   cursor: zoom-in;
+  min-height: 300px;
 }
 
 .demo-container.is-fullscreen .box {
@@ -490,7 +494,7 @@ iframe.app-frame {
   cursor: zoom-out;
 }
 
-.demo-container:not(.is-fullscreen):hover .box {
+.demo-container:not(.is-loading):not(.is-fullscreen):hover .box {
   transform: scale(1.05);
 }
 
@@ -806,8 +810,14 @@ iframe.app-frame {
     padding: 1.5rem 1rem;
   }
   .column {
+    min-width: inherit;
     padding: 0.75rem;
     --columnGap: 0.75rem;
+    width: 50%;
+    flex: none;
+  }
+  .columns {
+    display: flex;
   }
   .header {
     font-size: 1.1rem;
@@ -821,11 +831,14 @@ iframe.app-frame {
   .app-url {
     display: initial;
   }
+  .demo-container .box {
+    min-height: unset;
+  }
 }
 @media (min-width: 768px) {
   .column,
   .columns {
-    --columnGap: 3rem !important;
+    --columnGap: 2.5rem !important;
   }
   footer {
     padding: 0.5rem 1.5rem 1.5rem;
@@ -843,10 +856,10 @@ iframe.app-frame {
 @media (min-width: 1024px) {
   .column,
   .columns {
-    --columnGap: 4rem !important;
+    --columnGap: 3rem !important;
   }
   .timeline {
-    width: 8rem;
+    width: 15rem;
     font-size: 0.9rem;
   }
   .header {
