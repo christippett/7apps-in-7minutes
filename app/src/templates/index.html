@@ -1,5 +1,5 @@
-{% with %} {% set gradient=range(1, 360)|random|string+"deg, "+app.theme.colors|join(",
-")%} {% set font = app.theme.font|replace(" ", "+") %}
+{% with %} {% set gradient=range(1, 90)|random|string+"deg,"+app.theme.colors|join(",")%}
+{% set font = app.theme.font|replace(" ", "+") %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -111,5 +111,13 @@
       {% endif %}
     </div>
   </body>
+  <script>
+    const appInfo = {{ app|tojson }};
+    window.addEventListener(
+      "message",
+      (event) => event.source.postMessage(appInfo, event.origin),
+      false
+    );
+  </script>
 </html>
 {% endwith %}

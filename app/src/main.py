@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from colour import Color
-from flask import Flask, jsonify, make_response, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask_cors import cross_origin
 from pyfiglet import Figlet
 
@@ -95,9 +95,7 @@ def main(*args, **kwargs):
     if request.headers.get("Accept") == "application/json":
         return jsonify(dataclasses.asdict(app_data))
 
-    resp = make_response(render_template("index.html", app=app_data))
-    resp.headers.set("X-Frame-Options", "SAMEORIGIN")
-    return resp
+    return render_template("index.html", app=app_data)
 
 
 if __name__ == "__main__":
