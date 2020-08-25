@@ -34,12 +34,11 @@ footer {
   justify-content: center;
   align-items: center;
   position: relative;
-  padding: 0.5rem;
+  padding: 2rem 1.5rem;
 }
 
 .header {
   text-align: center;
-  margin: 0 20%;
   font-size: 1rem;
   position: relative;
 }
@@ -66,7 +65,7 @@ footer {
 
 .google-logo {
   display: inline-block;
-  vertical-align: text-top;
+  vertical-align: middle;
   height: 1.1rem;
   padding: 0 0.25rem;
 }
@@ -96,15 +95,15 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: absolute;
-  top: 0;
+  position: fixed;
+  bottom: 0;
   left: 0;
   right: 0;
-  transform: translateY(-100%);
   width: 90%;
   max-width: 400px;
   margin: 0 auto;
-  font-size: 0.75rem;
+  padding: 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
   line-height: 1.4;
   text-align: left;
@@ -114,7 +113,7 @@ footer {
 
 .comment {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   text-align: left;
   position: relative;
   margin: 0.25em;
@@ -374,7 +373,7 @@ g.countdown > line.leader {
 .iframe-container {
   width: 100%;
   flex: 0.8;
-  margin-top: 3.5rem;
+  margin-top: 2rem;
   margin-bottom: 1rem;
 }
 
@@ -781,6 +780,9 @@ iframe.app-frame {
   .column,
   .columns {
     --columnGap: 3rem !important;
+  }
+  .iframe-container {
+    margin-top: 3.5rem;
   }
   .timeline {
     width: 6.5rem;

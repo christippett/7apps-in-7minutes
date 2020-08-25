@@ -130,9 +130,9 @@ async def websocket_endpoint(websocket: WebSocket):
     await notifier.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            logger.debug(f"{websocket.client.host}: {data}")
-            await notifier.send("echo", data=data)
+            text = await websocket.receive_text()
+            logger.debug(f"{websocket.client.host}: {text}")
+            await notifier.send("echo", text=text)
             # await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
         notifier.disconnect(websocket)

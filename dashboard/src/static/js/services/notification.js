@@ -1,13 +1,13 @@
 export class NotificationService {
   constructor () {
+    this.subscriptions = new Map()
     const scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
     const webSocketUri =
       scheme +
       window.location.hostname +
       (window.location.port ? ':' + window.location.port : '') +
       '/ws'
-    this.websocket = this.connect(webSocketUri)
-    this.subscriptions = new Map()
+    this.connect(webSocketUri)
   }
 
   connect (uri) {
@@ -24,6 +24,7 @@ export class NotificationService {
       const message = JSON.parse(event.data)
       this.dispatch(message.topic, message)
     }
+    this.websocket = websocket
     return websocket
   }
 

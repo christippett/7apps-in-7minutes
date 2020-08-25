@@ -27,6 +27,7 @@ const app = new ApplicationService({
 })
 
 // Debug WebSocket
+window.ns = notificationService
 notificationService.subscribe('echo', message =>
   comment.add({ text: message.data.text })
 )
