@@ -12,3 +12,5 @@ COPY pyproject.toml poetry.lock* /app/
 RUN poetry install --no-root --no-dev
 
 ADD src /app/
+
+ENV MAX_WORKERS=1
