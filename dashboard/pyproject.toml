@@ -31,6 +31,8 @@ devtools = "^0.6"
 profile = "black"
 src_paths = ["src"]
 known_local_folder = ["src"]
+known_fastapi = ["fastapi", "starlette", "uvicorn"]
+sections = ["FUTURE","STDLIB","FASTAPI","THIRDPARTY","FIRSTPARTY","LOCALFOLDER"]
 
 [build-system]
 requires = ["poetry>=0.12"]

@@ -3,24 +3,19 @@ import logging.config
 import time
 
 import uvicorn
-from fastapi import (
-    BackgroundTasks,
-    FastAPI,
-    HTTPException,
-    Request,
-    Response,
-    WebSocket,
-)
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import FileResponse
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.websockets import WebSocketDisconnect
+from fastapi.websockets import WebSocket, WebSocketDisconnect
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from google.cloud import error_reporting
 from google.cloud.error_reporting import HTTPContext
 from requests.exceptions import HTTPError as RequestsHTTPError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from common.config import LOGGING_CONFIG, settings
 from common.logging import setup_stackdriver_logging
@@ -40,6 +35,7 @@ app = FastAPI(
     description="Dashboard and API for interacting with the 7-Apps demo application.",
     debug=settings.debug,
 )
+app.add_middleware(GZipMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 

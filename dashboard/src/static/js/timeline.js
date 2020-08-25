@@ -1,18 +1,19 @@
-import * as path from 'https://unpkg.com/d3-path@1?module'
-import * as scale from 'https://unpkg.com/d3-scale@2?module'
-import * as selection from 'https://unpkg.com/d3-selection@1?module'
-import * as shape from 'https://unpkg.com/d3-shape@1?module'
-import * as timer from 'https://unpkg.com/d3-timer@1?module'
-import * as transition from 'https://unpkg.com/d3-transition@1?module'
+import { scaleLinear } from 'd3-scale'
+import { create, select, selectAll } from 'd3-selection'
+import { linkHorizontal } from 'd3-shape'
+import { interval, timeout } from 'd3-timer'
+import { transition } from 'd3-transition'
 import utils from './utils.js'
 
 const d3 = {
-  ...selection,
-  ...path,
-  ...timer,
-  ...scale,
-  ...transition,
-  ...shape
+  scaleLinear,
+  timeout,
+  interval,
+  linkHorizontal,
+  select,
+  selectAll,
+  create,
+  transition
 }
 
 export class Timeline {
