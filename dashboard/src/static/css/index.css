@@ -99,11 +99,11 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  width: 90%;
+  width: 100%;
   max-width: 400px;
   margin: 0 auto;
   padding: 1rem;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
   line-height: 1.4;
   text-align: left;
