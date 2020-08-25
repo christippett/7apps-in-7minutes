@@ -16,19 +16,18 @@
     <div class="header">
       <p class="title is-fancy is-3">7-Apps in 7-minutes</p>
       <p class="subtitle is-italic is-6">
-        Deploying a Python Flask app to every service on
-        <span class="google-logo">{% include "misc/google-cloud-logo.svg" %}</span>
+        Deploying a Python Flask web app to every service on <br><span
+          class="google-logo">{% include "misc/google-cloud-logo.svg" %}</span>
       </p>
-      <div id="commentary" class="commentary"></div>
     </div>
     <div class="iframe-container columns is-variable is-multiline is-relative">
-      <div class="timeline is-overlay">
-        <svg id="timeline"></svg>
+      <div id="timeline" class="timeline is-overlay">
       </div>
       {% include "content/iframes.html" %} {% include "content/build.html" %}
     </div>
   </section>
   <footer>
+    <div id="commentary" class="commentary"></div>
     <div class="content has-text-centered has-text-grey">
       <p>
         Source on
@@ -39,8 +38,14 @@
     </div>
   </footer>
 </body>
-<script defer src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
-<script>window.props = {{ props | tojson }};</script>
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
+<script>
+  const props = {{ props | tojson }};
+  window.props = props
+  window.WebFont.load({
+    google: { families: props.themes.map(t => t.font) }
+  })
+</script>
 <script type="module" src="/static/js/index.js"></script>
 
 </html>

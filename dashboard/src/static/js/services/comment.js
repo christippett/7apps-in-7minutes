@@ -41,7 +41,13 @@ export class CommentService {
   close (id) {
     const comment = this.comments.get(id)
     comment.classList.add('closed')
-    setTimeout(() => this.el.removeChild(comment), 300)
+    setTimeout(() => {
+      try {
+        this.el.removeChild(comment)
+      } catch {
+        this.comments.delete(id)
+      }
+    }, 300)
   }
 
   reset () {

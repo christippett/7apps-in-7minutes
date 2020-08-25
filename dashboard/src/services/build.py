@@ -43,7 +43,7 @@ class CloudBuildLogger:
         separator = LogRecord(text="-" * 120, section=LogSection.Header)
 
         # Send header
-        header = figlet_format("Cloud Build", font="colossal").strip("\n")
+        header = figlet_format("Cloud Build", font="colossal").lstrip("\n").rstrip()
         yield LogRecord(text=header, type=LogType.AsciiArt, section=LogSection.Header)
         yield LogRecord(text="Streaming Cloud Build logs", section=LogSection.Header)
         yield separator
@@ -51,13 +51,12 @@ class CloudBuildLogger:
         # Poll Cloud Storage for logs
         is_active = self.build_is_active()
         is_final = False
-        await asyncio.sleep(1)
         while is_active or is_final:
+            await asyncio.sleep(1)
             async for log in self.get_logs():
                 yield log
             if is_final:
                 break
-            await asyncio.sleep(1)
             is_active = self.build_is_active()
             is_final = not is_active
 
@@ -123,10 +122,15 @@ class CloudBuildService:
         if build.id in self.logs_history:
             logger.debug("Log stream already in-progress for build: %s", build.id)
             return
+
         logger.info("Starting streaming logs for build: %s", build.id, icon="🚿")
+        await self.notifier.send("build", id=build.id, status="started")
         await asyncio.sleep(0.5)
+
         cloudbuild_logger = CloudBuildLogger(build, self)
         async for log in cloudbuild_logger.stream_logs():
             self.logs_history[build.id].append(log)
-            await self.notifier.send("log", log)
+            await self.notifier.send("log", log, opts={"exclude": {"raw"}})
+
+        await self.notifier.send("build", id=build.id, status="finished")
         logger.info("Finished streaming logs for build: %s", build.id, icon="🛁")

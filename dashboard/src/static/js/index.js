@@ -21,22 +21,30 @@ const logger = new LogService({
 })
 const app = new ApplicationService({
   apps: props.apps,
+  themes: props.themes,
+  timeline,
   notificationService
 })
-
-// Receive messages sent from IFrames
-window.addEventListener(
-  'message',
-  function (event) {
-    app.iframeMessageHandler(event)
-  },
-  false
-)
 
 // Debug WebSocket
 notificationService.subscribe('echo', message =>
   comment.add({ text: message.data.text })
 )
+
+notificationService.subscribe('app-updated', message => {
+  const { app, duration } = message.data
+  const { minute, second } = utils.timePart(duration * 1000)
+  const time = [
+    minute ? `${minute} minutes` : '',
+    second ? `${second} seconds` : ''
+  ]
+  comment.add({
+    text: `<p><span class='is-fancy'>${
+      app.title
+    }</span> updated in <strong><em>${time.join(', ')}</em></strong></p>`,
+    style: 'success'
+  })
+})
 ;(() => {
   window.demo = function () {
     const data = {
@@ -51,16 +59,34 @@ notificationService.subscribe('echo', message =>
 
     const methods = {
       init () {
-        this.loadFonts()
-        this.addUpdateListener()
-      },
-      loadFonts () {
-        window.WebFont.load({
-          google: { families: this.themes.map(t => t.font) }
+        const demoElement = document.getElementById('demo')
+        const buildElement = document.getElementById('build')
+        const logElement = document.getElementById('logs')
+
+        // Toggle fullscreen
+        const demoContainer = demoElement.getElementsByClassName('box')[0]
+        demoContainer.addEventListener('click', event => {
+          event.stopPropagation()
+          demoElement.classList.toggle('is-fullscreen')
         })
-      },
-      toggleFullscreen () {
-        this.isFullscreen = !this.isFullscreen
+
+        // Wire-up deploy button
+        const deployButton = demoElement.getElementsByClassName(
+          'deploy button'
+        )[0]
+        deployButton.addEventListener('click', event => {
+          event.stopPropagation()
+          deployButton.classList.add('is-loading')
+          demoElement.classList.add('is-loading')
+          this.deployTheme().then(() => {
+            demoElement.classList.remove('is-loading')
+            deployButton.classList.remove('is-loading')
+            demoElement.classList.add('is-active')
+            logElement.classList.remove('is-hidden')
+            buildElement.style = 'opacity: 0;'
+            setTimeout(() => buildElement.classList.add('is-hidden'), 2500)
+          })
+        })
       },
       previousTheme () {
         this.themeIndex =
@@ -73,10 +99,6 @@ notificationService.subscribe('echo', message =>
       theme () {
         return this.themes[this.themeIndex]
       },
-      randomColor () {
-        const theme = this.themes[utils.randomNumber(this.themes.length)]
-        return theme.colors[0]
-      },
       themeGradient () {
         const theme = this.theme()
         const colors = theme.colors
@@ -87,80 +109,48 @@ notificationService.subscribe('echo', message =>
           )}) 0% 0% / 400% 400%;`
         ].join(' ')
       },
-      addUpdateListener () {
-        notificationService.subscribe('refresh-app', message => {
-          const { app, version, duration } = message.data
-          comment.add({
-            text: `<span class='is-fancy'>${app.title}</span> has been updated to version <span class="is-family-monospace">${version}</span>`,
-            style: 'success'
-          })
-          timeline.add({
-            app,
-            duration,
-            color: this.randomColor()
-          })
-        })
-        notificationService.subscribe('build', message => {
-          if (message.data.status === 'started') {
-            app.startPoll(message.data.version)
-          } else if (message.data.status === 'finished') {
-            timeline.stopCountdown()
-            // Select a new theme for when the deployment ends
-            this.themeIndex = Math.floor(
-              Math.random() * Math.floor(this.themes.length)
-            )
-            setTimeout(() => {
-              timeline.resetCountdown()
-              this.isDeploying = false
-              this.build = null
-            }, 90000)
-          }
-        })
-      },
       async deployTheme () {
-        this.isLoading = true
-        const resp = await app.deploy({
-          data: this.theme()
-        })
-
-        // A status of 409 means another build already in-progress
-        if (!resp.ok && resp.status !== 409) {
-          this.isLoading = false
-          comment.add({ text: resp.statusText })
-          return
+        try {
+          var { build, status } = await app.deploy({
+            data: this.theme()
+          })
+        } catch (e) {
+          comment.add({ text: e })
+          return false
         }
 
-        const build = await resp.json()
-        const currentTime = new Date()
-        const startTime = new Date(build.started)
         logger.getLogs(build.id)
-        timeline.startCountdown(Math.abs(currentTime - startTime))
+        timeline.startCountdown(build.createTime)
+        this.build = build
 
-        this.build = build // { id, version }
-        this.isDeploying = true
-
-        // Keep loading for a bit longer to allow time for some initial logs to
-        // show up
         setTimeout(() => {
-          this.isLoading = false
-        }, 500)
+          this.themeIndex = Math.floor(
+            Math.random() * Math.floor(this.themes.length)
+          )
+        }, 10000)
 
-        const logComment = [
-          '<p>The stream of text you see below are the current logs being generated by Cloud Build.</p>',
-          '<p>You can check out its config along with the source code for everything else on ',
-          "<a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><strong>GitHub</strong></a>.</p>"
-        ].join('')
+        const logComment = {
+          text: [
+            '<p>The stream of text you see in the box above are the logs output by Cloud Build.</p>',
+            '<p>You can check out the steps used to deploy each app, along with the source code for everything on ',
+            "<a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><strong>GitHub</strong></a>.</p>"
+          ].join(''),
+          style: 'info'
+        }
 
-        if (resp.status === 409) {
+        if (status === 409) {
           const message = [
             '<p>It seems a another deployment is already in-progress. Give it a minute or two <em>(or seven)</em> and try again.</p>',
             "<p>In the meantime, let's check out what's happening with the current deployment.</p>"
           ].join('')
-          comment.queue({ messages: [message, logComment], style: 'danger' })
+          comment.queue({
+            messages: [message, logComment],
+            style: 'warning'
+          })
         } else {
           const message = [
-            '<p><span class="is-fancy">Woohoo!</span> You just triggered a new <strong>Cloud Build</strong> job!</p>',
-            `<p>Keep an eye out for the version <span class="is-family-monospace">${build.version}</span>, that's yours!</p>`
+            '<span class="is-fancy">Woohoo!</span> You just triggered a new <strong>Cloud Build</strong> job! ',
+            `Keep an eye out for the version <span class="is-family-monospace">${build.version}</span>, that's yours!`
           ].join('')
           comment.queue({ messages: [message, logComment], style: 'success' })
         }

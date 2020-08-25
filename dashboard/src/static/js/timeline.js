@@ -21,16 +21,25 @@ export class Timeline {
     items = new Map(),
     opts = {
       margin: { left: 0, right: 0, top: 0, bottom: 0 },
-      maxValue: 3 * 60,
+      maxValue: 195,
       tickInterval: 15
     }
   }) {
-    this.el = el
-    this.parentNode = el.parentNode
+    this.parentNode = el
     this.opts = opts
     this.items = items
+    this.itemColours = [
+      '#ea4335',
+      '#fbbc05',
+      '#33b1b6',
+      '#34a853',
+      '#f18238',
+      '#4285f4',
+      '#cf64c6'
+    ]
+
     this.countdownTimer = null
-    this.countdownSeconds = 0
+    this.countdownResetId = null
 
     // Create SVG and add it to the DOM
     this.create()
@@ -76,27 +85,32 @@ export class Timeline {
   create () {
     // Create SVG element and attach to DOM, replacing any existing SVG
     // elements if necessary
-    this.parentNode.innerHTML = ''
-    this.svg = d3
-      .select(this.parentNode)
-      .append(() => this.renderTimeline().node())
-    this.updateTimeline()
+    const svg = d3
+      .select('#timeline')
+      .selectAll('svg')
+      .data([1])
+      .enter()
+      .append('svg:svg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('preserveAspectRatio', 'xMinYMin meet')
+      .attr('viewBox', `0 0 ${this.width} ${this.height}`)
+    svg.append(() => this.drawFilters().node())
+    svg.append(() => this.drawTimeline().node())
+    this.drawDataItems()
   }
 
-  add ({ app, duration, color }) {
-    console.log(`📈 Adding ${app.title} to timeline`)
-    const timelineValue = Math.min(duration, this.countdownSeconds)
+  add ({ app, duration }) {
     const item = {
       id: app.id,
       app,
       duration,
-      color,
       position: () => {
         const bbox = document
           .getElementById(`${app.id}`)
           .getBoundingClientRect()
         return {
-          source: [this.margin.left, this.timelineScale(timelineValue)],
+          source: [this.margin.left, this.timelineScale(duration)],
           target: [
             this.bbox.x >= bbox.x ? 0 : this.width,
             bbox.y + bbox.height / 2 - this.bbox.y
@@ -108,40 +122,46 @@ export class Timeline {
         .source(d => d.position().source)
         .target(d => d.position().target)
     }
-    this.items.set(app.id, item)
-    this.updateTimeline()
+    this.items.set(app.id, { ...item })
+    this.drawDataItems()
   }
 
   /* Show countdown during deployment ------------------------------------- */
 
-  startCountdown (headstart = 0) {
+  startCountdown (startTime) {
     d3.select('.countdown .axis line').attr('y2', 0)
     d3.select('.countdown .axis circle').attr('cy', 0)
     this.parentNode.classList.add('show-countdown')
     this.countdownTimer = d3.interval(
-      ms => this.countdownHandler(ms + headstart),
+      ms => this.countdownHandler(startTime),
       100
     )
-    d3.timeout(ms => this.stopCountdown(), 7 * 60000 - headstart)
+    const finishTime = new Date(+startTime + 7 * 60000)
+    d3.timeout(ms => this.stopCountdown(), finishTime - new Date())
   }
 
   stopCountdown () {
     try {
       this.countdownTimer.stop()
     } catch {}
+    if (!this.countdownResetId) {
+      this.countdownResetId = setTimeout(() => {
+        this.resetCountdown()
+      }, 60000)
+    }
   }
 
   resetCountdown () {
     this.parentNode.classList.remove('show-countdown')
+    d3.selectAll('.tick.active').classed('active', false)
     this.setClock(0)
     this.items.clear()
     this.create()
   }
 
-  countdownHandler (ms) {
+  countdownHandler (startTime) {
+    const ms = Math.abs(new Date() - startTime)
     const value = Math.floor(this.timelineScale(ms / 1000))
-    const totalSeconds = Math.floor(ms / 1000)
-    this.countdownSeconds = totalSeconds
 
     // Update clock
     this.setClock(ms)
@@ -154,57 +174,121 @@ export class Timeline {
       .transition()
       .attr('cy', value)
 
-    const actionInterval = this.timelineScale(3)
     const scale = this.timelineScale
     d3.selectAll('.tick').classed('active', function () {
-      const tick = scale(this.dataset.value)
-      return tick - actionInterval <= value
+      const tick = scale(this.dataset.value - 0.25)
+      return tick <= value
     })
   }
 
   setClock (ms) {
     // Update countdown clock
-    const timePart = utils.timePart(ms)
-    d3.select('text.clock').text(`${timePart.minute}:${timePart.second}`)
+    const pad = v => v.toString().padStart(2, '0')
+    const { minute, second } = utils.timePart(ms)
+    const clock = `${pad(minute)}:${pad(second)}`
+    d3.select('text.clock').text(clock)
   }
 
   /* Generate base SVG container ------------------------------------------- */
 
-  renderTimeline () {
-    const svg = d3
-      .create('svg')
-      .attr('id', 'timeline')
-      .attr('viewBox', `0 0 ${this.width} ${this.height}`)
-      .attr('width', '100%')
-      .attr('height', '100%')
-
-    // Drop-shadow filter
-    const defs = svg.append('defs')
-    defs
-      .append('filter')
-      .attr('id', 'blur')
-      .append('feGaussianBlur')
-      .attr('stdDeviation', 1)
-      .attr('in', 'SourceGraphic')
-    const shadow = defs
-      .append('filter')
-      .attr('id', 'shadow')
-      .attr('width', '200%')
-      .attr('height', '200%')
-      .attr('y', '-50%')
-      .attr('x', '-50%')
-    shadow
-      .append('feDropShadow')
-      .attr('dx', 1)
-      .attr('dy', 1)
-      .attr('stdDeviation', 0)
-      .attr('flood-opacity', 1)
-      .attr('flood-color', '#000000')
-
-    const axis = svg
-      .append('g')
-      .classed('axis', true)
+  drawTimeline () {
+    const timeline = d3
+      .create('svg:g')
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+    const axisTicks = this.drawAxisTicks()
+    timeline.append(() => this.drawTimer().node())
+    timeline.append(() => this.drawAxis().node())
+    timeline.append(() => axisTicks.clone(true).node())
+    timeline.append(() => this.drawCountdown().node())
+    timeline.append(() => axisTicks.clone(true).node()).classed('overlay', true)
+    timeline
+      .append('svg:g')
+      .classed('items', true)
+      .attr('transform', `translate(${this.margin.left * -1}, 0)`)
+    timeline.append(() => this.drawLabels().node())
+    return timeline
+  }
+
+  /* Timeline D3 Components ------------------------------------------------ */
+
+  drawDataItems () {
+    const nodes = Array.from(this.items.values()).sort((a, b) =>
+      a.duration < b.duration ? -1 : 0
+    )
+    const parent = d3
+      .select('#timeline svg g.items')
+      .selectAll('g.item')
+      .data(nodes, d => d.id)
+    const items = parent
+      .enter()
+      .append('svg:g')
+      .classed('item', true)
+      .attr('data-app', d => d.id)
+      .attr('data-duration', d => d.duration)
+    parent.exit().remove()
+
+    // Background elements
+    const bg = items.append('svg:g').classed('bg', true)
+    bg.append('svg:path')
+      .classed('link', true)
+      .attr('d', d => d.linkGenerator(d))
+    bg.append('svg:circle')
+      .classed('target', true)
+      .attr('cx', d => d.position().target[0])
+      .attr('cy', d => d.position().target[1])
+      .attr('r', 5)
+    bg.append('svg:circle')
+      .classed('source', true)
+      .attr('cy', d => d.position().source[1])
+      .attr('cx', this.margin.left)
+      .attr('r', 4)
+
+    // Foreground elements
+    const getColour = id => {
+      const i = [...this.items.keys()].indexOf(id)
+      return this.itemColours[i]
+    }
+    items
+      .append('svg:circle')
+      .classed('target', true)
+      .attr('fill', d => getColour(d.id))
+      .attr('cx', d => d.position().target[0])
+      .attr('cy', d => d.position().target[1])
+      .attr('r', 5)
+    items
+      .append('svg:circle')
+      .classed('source', true)
+      .attr('fill', d => getColour(d.id))
+      .attr('cx', this.margin.left)
+      .attr('cy', d => d.position().source[1])
+      .attr('r', 4)
+    items
+      .append('svg:path')
+      .classed('link', true)
+      .attr('stroke', d => getColour(d.id))
+      .attr('d', d => d.linkGenerator(d))
+
+    items.merge(parent)
+  }
+
+  drawTimer () {
+    const root = d3
+      .create('svg:g')
+      .classed('timer', true)
+      .attr('transform', 'translate(0, -20)')
+    root
+      .append('text')
+      .classed('clock', true)
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('text-anchor', 'middle')
+      .text('00:00')
+    return root
+  }
+
+  drawAxis () {
+    const axis = d3.create('svg:g').classed('axis', true)
+    axis.append('line').attr('y2', this.innerHeight)
     axis.append('line').attr('y2', this.innerHeight)
     axis
       .selectAll('circle.edge')
@@ -231,106 +315,12 @@ export class Timeline {
       .attr('cx', 0)
       .attr('cy', d => d.y)
       .attr('r', 4)
-
-    svg
-      .append('text')
-      .classed('clock', true)
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('transform', `translate(${this.margin.left}, -20)`)
-      .attr('text-anchor', 'middle')
-      .text('00:00')
-
-    const ticksLayer1 = this.renderTicks(svg)
-      .classed('layer-1', true)
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-
-    this.renderCountdown(svg).attr(
-      'transform',
-      `translate(${this.margin.left}, ${this.margin.top})`
-    )
-
-    ticksLayer1
-      .clone(true)
-      .raise()
-      .classed('layer-1', false)
-      .classed('layer-2', true)
-      .selectAll('circle')
-
-    // Paths that link axis markers to target IFrames
-    svg.append('g').classed('items', true)
-
-    this.renderLabels(svg).attr(
-      'transform',
-      `translate(${this.margin.left}, ${this.margin.top})`
-    )
-
-    return svg
+    return axis
   }
 
-  /* Render Timeline data ----------------------------------------------------- */
-
-  updateTimeline () {
-    const nodes = Array.from(this.items.values())
-
-    // Helper function for updating data nodes
-    const update = (root, { el, tag, nodes }) => {
-      const [tagName, className] = tag.split('.')
-      const u = root
-        .select(el)
-        .selectAll(tag)
-        .data(nodes, d => d.id)
-      let enter = u.enter().append(tagName)
-      if (className) {
-        enter = enter.classed(className, true)
-      }
-      u.exit().remove()
-      return enter.merge(u)
-    }
-
-    const itemGroup = update(this.svg, { el: 'g.items', tag: 'g.item', nodes })
-
-    // Background elements
-    const bg = itemGroup.append('g').classed('bg', true)
-    bg.append('path')
-      .classed('link', true)
-      .attr('d', d => d.linkGenerator(d))
-    bg.append('circle')
-      .classed('target', true)
-      .attr('cx', d => d.position().target[0])
-      .attr('cy', d => d.position().target[1])
-      .attr('r', 5)
-    bg.append('circle')
-      .classed('source', true)
-      .attr('cy', d => d.position().source[1])
-      .attr('r', 4)
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-
-    // Foreground elements
-    const fg = itemGroup.append('g').classed('fg', true)
-    fg.append('circle')
-      .classed('target', true)
-      .attr('fill', d => d.color)
-      .attr('cx', d => d.position().target[0])
-      .attr('cy', d => d.position().target[1])
-      .attr('r', 5)
-    fg.append('circle')
-      .classed('source', true)
-      .attr('fill', d => d.color)
-      .attr('cy', d => d.position().source[1])
-      .attr('r', 4)
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-    fg.append('path')
-      .classed('link', true)
-      .attr('stroke', d => d.color)
-      .attr('d', d => d.linkGenerator(d))
-  }
-
-  /* Timeline D3 Components ------------------------------------------------ */
-
-  renderTicks (parent) {
-    const group = parent.append('g').classed('ticks', true)
-    group
+  drawAxisTicks () {
+    const ticks = d3.create('svg:g').classed('ticks', true)
+    ticks
       .selectAll('circle.tick')
       .data(this.tickValues)
       .enter()
@@ -341,14 +331,13 @@ export class Timeline {
       .attr('data-value', d => d.tick)
       .attr('cx', 0)
       .attr('cy', d => d.y)
-      .attr('r', d => (d.isMajor ? 6 : 4))
-    return group
+      .attr('r', d => (d.isMajor ? 5 : 4))
+    return ticks
   }
 
-  renderLabels (parent) {
-    const labels = parent
-      .append('g')
-      .classed('labels', true)
+  drawLabels () {
+    const root = d3.create('svg:g').classed('labels', true)
+    const labels = root
       .selectAll('g.tick')
       .data(this.tickValues)
       .enter()
@@ -372,12 +361,22 @@ export class Timeline {
       .attr('y', d => d.y)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'central')
-      .text(d => `${d.tick / 60} min`)
-    return labels
+      .text(d => {
+        let { minute, second } = utils.timePart(d.tick * 1000)
+        minute = parseInt(minute)
+        second = parseInt(second)
+        if (second === 0) {
+          return `${minute} min`
+        } else if (minute === 0) {
+          return `${second} sec`
+        }
+        return `${minute}m ${second}s`
+      })
+    return root
   }
 
-  renderCountdown (parent) {
-    const countdown = parent.append('g').classed('countdown', true)
+  drawCountdown () {
+    const countdown = d3.create('svg:g').classed('countdown', true)
     countdown
       .append('line')
       .classed('leader', true)
@@ -388,6 +387,31 @@ export class Timeline {
       .attr('r', 2)
       .attr('cy', 0)
     return countdown
+  }
+
+  drawFilters () {
+    const defs = d3.create('svg:defs')
+    defs
+      .append('filter')
+      .attr('id', 'blur')
+      .append('feGaussianBlur')
+      .attr('stdDeviation', 1)
+      .attr('in', 'SourceGraphic')
+    const shadow = defs
+      .append('filter')
+      .attr('id', 'shadow')
+      .attr('width', '200%')
+      .attr('height', '200%')
+      .attr('y', '-50%')
+      .attr('x', '-50%')
+    shadow
+      .append('feDropShadow')
+      .attr('dx', 1)
+      .attr('dy', 1)
+      .attr('stdDeviation', 0)
+      .attr('flood-opacity', 1)
+      .attr('flood-color', '#000000')
+    return defs
   }
 
   get tickValues () {

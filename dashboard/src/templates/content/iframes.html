@@ -1,22 +1,20 @@
 {% for app in props.apps %}
 <div class="column is-half">
-  <div id="{{ app.id }}" data-version="{{ app.version }}" class="app box is-clipped is-unselectable">
-    <div class="app-url">
+  <div id="{{ app.id }}" class="app box is-clipped is-unselectable">
+    <div class="app-url is-family-monospace is-italic">
       <a target="_blank" rel="noopener noreferrer" href="{{ app.url }}">{{ app.url }}</a>
     </div>
-    <div class="error is-overlay">
-      <div class="notice is-overlay">
-        <p class="is-fancy" data-title="{{ app.title }}"></p>
-        <p class="is-family-monospace" data-notice="Service will resume shortly">
-        </p>
-      </div>
-      <div class="broadcast-error"></div>
+    <div class="error is-overlay is-clipped">
+      <p class="is-fancy is-size-5">{{ app.title }}</p>
+      <p class="is-family-monospace py-3">service will resume shortly</p>
+      <div class="broadcast"></div>
       <div class="static-overlay">
         <div></div>
       </div>
       <div class="scan-overlay"></div>
     </div>
-    <iframe name="{{ app.id }}-{{ app.version }}" importance="high" scrolling="no" class="app-frame">
+    <iframe name="{{ app.id }}-{{ app.version }}" src="{{ app.url }}" importance="high" scrolling="no"
+      class="app-frame">
     </iframe>
   </div>
 </div>

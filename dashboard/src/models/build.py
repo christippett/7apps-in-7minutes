@@ -95,6 +95,7 @@ class LogSection(str, Enum):
 
 
 class LogRecord(BaseModel):
+    raw: str
     text: str
     step: Optional[int]
     id: Optional[str] = Field(title="ID")
@@ -104,27 +105,30 @@ class LogRecord(BaseModel):
     class Config:
         use_enum_values = True
 
+    def __init__(self, text, **kwargs):
+        super().__init__(raw=text, text=text, **kwargs)
+
     @validator("step", pre=True, always=True)
     def match_step(cls, v, values):
-        text = values.get("text", "")
+        text = values.get("raw", "")
         m = re.search(r"step #(\d+)", text, flags=re.I)
         return m.group(1) if m else None
 
     @validator("id", pre=True, always=True)
     def match_id(cls, v, values):
-        text = values.get("text", "")
+        text = values.get("raw", "")
         m = re.search(r"step #\d+ - \"(.+?)\"", text, flags=re.I)
         return m.group(1) if m else None
 
     @validator("section", pre=True, always=True)
     def match_section(cls, v, values):
-        text = values.get("text", "")
+        text = values.get("raw", "")
         m = re.match(r"\s*(FETCHSOURCE|BUILD|PUSH|DONE|ERROR)", text)
         return m.group(1).lower() if m else v
 
     @validator("type_", pre=True, always=True)
     def match_type(cls, v, values):
-        text = values.get("text", "")
+        text = values.get("raw", "")
         if re.match(r"\s*(FETCHSOURCE|BUILD|PUSH|DONE|ERROR)", text):
             return LogType.SectionHeader
         elif re.match(r"\s*(starting|finished)", text, flags=re.I):
@@ -132,8 +136,9 @@ class LogRecord(BaseModel):
         elif re.match(r"^[=-]+$", text):
             return LogType.Separator
 
-    @validator("text")
-    def transform_text(cls, v):
+    @validator("text", pre=True, always=True)
+    def transform_text(cls, v, values):
         # Remove prefix and extended ellipses
-        text = re.sub(r"^(step #\d.*?:)", "", v, flags=re.I)
+        text = values.get("raw", "")
+        text = re.sub(r"^(step #\d.*?: ?)", "", text, flags=re.I)
         return re.sub(r"\.{4,}", r"...", text).rstrip("\n")

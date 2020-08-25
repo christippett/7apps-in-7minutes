@@ -1,6 +1,6 @@
 /*  Credit: https://codepad.co/snippet/no-signal-effect  */
 
-.broadcast-error {
+.broadcast {
   content: "";
   z-index: -1;
   display: block;
@@ -47,7 +47,7 @@
   /* filter: grayscale(1); */
   transition: filter 0.5s ease-in-out;
 }
-.broadcast-error:before {
+.broadcast:before {
   content: "";
   position: absolute;
   display: block;

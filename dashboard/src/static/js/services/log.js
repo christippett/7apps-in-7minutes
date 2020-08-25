@@ -27,7 +27,7 @@ export class LogService {
 
     // CSS styles depend on data attributes to colourise log output
     for (const [key, value] of Object.entries(logRecord)) {
-      if (value !== null && key !== 'text') {
+      if (key !== 'text') {
         el.setAttribute(`data-${key}`, value)
       }
     }

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+from asyncio.futures import Future
 from datetime import datetime
 from typing import List, Tuple, cast
 from uuid import uuid4
@@ -8,6 +9,7 @@ from uuid import uuid4
 import aiohttp
 import yaml
 from aiohttp.client import ClientSession
+from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.typedefs import LooseHeaders
 
 from common.config import settings
@@ -19,13 +21,15 @@ from services.notifier import Notifier
 
 logger = logging.getLogger("dashboard." + __name__)
 
+accept_header = cast(LooseHeaders, {"Accept": "application/json"})
+
 
 class AppService:
     def __init__(self, apps: List[App], notifier: Notifier):
         self.apps = AppList(__root__=apps)
         self.notifier = notifier
         self.build = CloudBuildService(notifier=notifier)
-        self._active_monitor = None
+        self.active_poll = None
 
     @classmethod
     def load_from_config(cls, path, notifier: Notifier):
@@ -65,77 +69,69 @@ class AppService:
         async with session.get(app.url) as response:
             response.raise_for_status()
             data = await response.json()
-            app_copy = app.copy(update=data)
-            app_copy.updated = datetime.utcnow()
-            return app_copy
+            data.update(app.dict(include={"id", "title", "url"}))
+            return App.parse_obj(data)
 
-    async def update_apps(self):
-        headers = cast(LooseHeaders, {"Accept": "application/json"})
-        tasks = []
-        async with aiohttp.ClientSession(headers=headers) as session:
-            for current_app in self.apps:
-                task = self.fetch_app(current_app, session)
-                tasks.append(asyncio.ensure_future(task))
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-        for app in [r for r in results if isinstance(r, App)]:
-            self.apps.replace(app)
+    async def refresh_app_data(self):
+        async with aiohttp.ClientSession(headers=accept_header) as session:
+            for app in self.apps:
+                try:
+                    self.apps.replace(await self.fetch_app(app, session))
+                except ClientResponseError as exc:
+                    logger.error("Error while updating %s: %s", app, exc)
 
-    async def start_monitor(self, version: str, build: BuildRef):
-        if self._active_monitor is not None and not self._active_monitor.done():
-            return
-        self._active_monitor = asyncio.ensure_future(self._monitor(version, build))
-        self._active_monitor.add_done_callback(future_exception_handler)
-        return self._active_monitor
-
-    async def _monitor(self, version: str, build: BuildRef):
-        logger.info("Starting application monitor", icon="👀")
-        await self.notifier.send("build", status="started", version=version)
-
-        # Use Cloud Build's creation time for calculating app's update duration
-        start_time = build.createTime.replace(tzinfo=None)
-        interval = 10
-        timeout = 600
-        old_apps = self.apps.copy(deep=True)
+    async def poll_for_version(
+        self, app: App, version: str, session: ClientSession, interval=1,
+    ) -> App:
+        version_confirmation = 0
+        consecutive_errors = 0
         while True:
-            timer = int((datetime.utcnow() - start_time).total_seconds())
-            await self.update_apps()
-
-            # Limit logs to once every 30s
-            if timer % 30 < interval:
-                logger.info("Polling applications (%ss elapsed)", timer, icon="⏳")
-                sep = "\n    - "
-                for v, apps in self.apps.versions().items():
-                    logger.info(
-                        "%s:" + sep + "%s", v, sep.join(map(str, apps)), icon="💾"
-                    )
-
-            # Process updated app(s)
-            for app in old_apps:
-                latest_app = self.apps.get(app.id)
-                if latest_app.version != version:
-                    continue
-                logger.info(
-                    "%s updated after %ss (%s -> %s)",
-                    app,
-                    timer,
-                    app.version,
-                    version,
-                    icon="✨",
-                )
-
-                await self.notifier.send(
-                    "refresh-app", version=version, app=latest_app, duration=timer
-                )
-                old_apps.remove(app)  # remove from poll rotation
-
-            # Should we keep polling?
-            if all(map(lambda a: a.version == version, self.apps)):
-                logger.info("All applications updated (%s)", version, icon="🎉")
-                break
-            elif timer > timeout or self.build.get_active_builds() == 0:
-                logger.warning("Stopping monitor after %ss", timeout, icon="⏳")
-                break
             await asyncio.sleep(interval)
-        await self.notifier.send(
-            "build", status="finished", version=version, duration=timer
+            notify = False
+            try:
+                app = await self.fetch_app(app, session)
+                notify = consecutive_errors >= 5
+                consecutive_errors = 0
+            except ClientResponseError:
+                notify = consecutive_errors == 0
+                consecutive_errors += 1
+            finally:
+                version_confirmation += 1 if app.version == version else 0
+                if version_confirmation >= 2:
+                    return app
+                if notify:
+                    await self.notifier.send("refresh-app", app=app)
+
+    async def poll_all_for_version(
+        self, version: str, build: BuildRef, timeout: float = 600
+    ):
+        logger.info("Polling applications for version %s", version, icon="⏳")
+        tasks: List[Future[App]] = []
+        async with aiohttp.ClientSession(headers=accept_header) as session:
+            for app in self.apps:
+                task = self.poll_for_version(app, version, session)
+                tasks.append(asyncio.create_task(task))
+            for f in asyncio.as_completed(tasks, timeout=timeout):
+                app = await f
+                self.apps.replace(app)
+                build_started = build.createTime.replace(tzinfo=None)
+                build_duration = (datetime.utcnow() - build_started).total_seconds()
+                await self.notifier.send(
+                    "app-updated",
+                    app=app,
+                    version=version,
+                    started=build.createTime,
+                    duration=int(build_duration),
+                )
+                logger.info("%s updated to version %s", app, version, icon="✨")
+        logger.info("Finished polling for version %s", version, icon="⏳")
+
+    async def start_polling_for_version(self, version: str, build: BuildRef):
+        if self.active_poll is not None and not self.active_poll.done():
+            logger.warning("Active poll already in progress")
+            return
+        self.active_poll = asyncio.ensure_future(
+            self.poll_all_for_version(version, build)
         )
+        self.active_poll.add_done_callback(future_exception_handler)
+        return self.active_poll

@@ -69,11 +69,11 @@ async def index(request: Request):
         "localhost",
         "compute-engine",
         "kubernetes",
+        "function",
         "run",
         "run-anthos",
         "standard",
         "flex",
-        "function",
     ]
     props = {
         "themes": Theme.random(20),
@@ -83,7 +83,7 @@ async def index(request: Request):
         name="index.html",
         context={
             "request": request,
-            "props": jsonable_encoder(props),
+            "props": jsonable_encoder(props, exclude_none=True),
             "timestamp": int(time.time()),
         },
     )
@@ -107,20 +107,22 @@ async def deploy(theme: Theme, background_tasks: BackgroundTasks, response: Resp
     try:
         response.status_code = 409 if app_service.build.get_active_builds() else 200
         version, build = await app_service.deploy(theme)
-        background_tasks.add_task(app_service.start_monitor, version, build)
+        background_tasks.add_task(app_service.start_polling_for_version, version, build)
         background_tasks.add_task(app_service.build.stream_logs, build)
     except RequestsHTTPError as e:
         logger.exception(e)
         code = e.response.status_code
         raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
-    return DeploymentJob(id=build.id, version=version, started=build.createTime)
+    return DeploymentJob.construct(
+        id=build.id, version=version, create_time=build.createTime
+    )
 
 
 @app.on_event("startup")
 async def startup():
     # prime generator: https://stackoverflow.com/a/19892334
     await notifier.notification_generator.asend(None)
-    await app_service.update_apps()
+    await app_service.refresh_app_data()
 
 
 @app.websocket("/ws")

@@ -22,4 +22,4 @@ class Message(BaseModel):
 class DeploymentJob(BaseModel):
     id: str
     version: str
-    started: datetime
+    create_time: datetime = Field(alias="createTime")
