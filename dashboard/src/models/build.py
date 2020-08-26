@@ -129,7 +129,9 @@ class LogRecord(BaseModel):
     @validator("type_", pre=True, always=True)
     def match_type(cls, v, values):
         text = values.get("raw", "")
-        if re.match(r"\s*(FETCHSOURCE|BUILD|PUSH|DONE|ERROR)", text):
+        if v:
+            return v
+        elif re.match(r"\s*(FETCHSOURCE|BUILD|PUSH|DONE|ERROR)", text):
             return LogType.SectionHeader
         elif re.match(r"\s*(starting|finished)", text, flags=re.I):
             return LogType.StepStatus

@@ -1,19 +1,21 @@
-<div id="demo" class="demo-container column is-half is-relative" x-data="demo()" x-init="init">
-  <div class="box is-unselectable">
-    <div id="logs" class="logs is-overlay is-hidden"></div>
-    <div id="build" class="demo-interface is-overlay">
-      <div class="preview-frame is-overlay" :style="themeGradient()">
-        <p class="title" :style="`font-family: '${theme().font}`">Deploy 7-Apps</p>
+<div id="demo" class="demo-container column is-half is-relative"
+  :class="{ 'is-fullscreen': isFullscreen, 'is-loading': isLoading, 'is-active': showLogs()}" x-data="demo()"
+  x-init="updateThemeStyle()" x-cloak>
+  <div class="box is-unselectable" @click.stop="toggleFullscreen()">
+    <div id="logs" class="logs is-overlay" x-show="showLogs()"></div>
+    <div id="build" class="demo-interface is-overlay" x-show.transition.duration.1s="!showLogs()">
+      <div class="preview-frame theme is-overlay">
+        <p class="title">Deploy 7-Apps</p>
       </div>
       <nav class="is-overlay">
-        <button class="button is-light" @click.stop="previousTheme()">
+        <button class="button is-light" @click.stop="selectTheme(theme - 1)">
           {% include "misc/left.svg" %}
         </button>
-        <button class="button is-light" @click.stop="nextTheme()">
+        <button class="button is-light" @click.stop="selectTheme(theme + 1)">
           {% include "misc/right.svg" %}
         </button>
       </nav>
-      <button class="deploy button is-light">
+      <button class="deploy button is-light" :class="{'is-loading': isLoading}" @click.stop="deploy()">
         <span class="icon">
           {% include "misc/touch.svg" %}
         </span>

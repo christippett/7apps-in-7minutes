@@ -289,7 +289,7 @@
       if (logRecord.step !== null && logRecord.id !== null) {
         const step = document.createElement('span');
         step.setAttribute('class', 'lg-step');
-        step.innerText = `Step #${logRecord.step}`.padEnd(8);
+        step.innerText = `Step #${logRecord.step}`;
         el.appendChild(step);
 
         const id = document.createElement('span');
@@ -4393,79 +4393,57 @@
         isFullscreen: false,
         isLoading: false,
         isDeploying: false,
-        showPreview: false,
-        showLogs: false,
-        themeIndex: 0
+        theme: 0
       };
 
       const methods = {
-        init () {
-          const demoElement = document.getElementById('demo');
-          const buildElement = document.getElementById('build');
-          const logElement = document.getElementById('logs');
-
-          // Toggle fullscreen
-          const demoContainer = demoElement.getElementsByClassName('box')[0];
-          demoContainer.addEventListener('click', event => {
-            event.stopPropagation();
-            demoElement.classList.toggle('is-fullscreen');
-          });
-
-          // Wire-up deploy button
-          const deployButton = demoElement.getElementsByClassName(
-            'deploy button'
-          )[0];
-          deployButton.addEventListener('click', event => {
-            event.stopPropagation();
-            deployButton.classList.add('is-loading');
-            demoElement.classList.add('is-loading');
-            this.deployTheme().then(() => {
-              demoElement.classList.remove('is-loading');
-              deployButton.classList.remove('is-loading');
-              demoElement.classList.add('is-active');
-              logElement.classList.remove('is-hidden');
-              buildElement.style = 'opacity: 0;';
-              setTimeout(() => buildElement.classList.add('is-hidden'), 2500);
-            });
-          });
+        toggleFullscreen () {
+          this.isFullscreen = !this.isFullscreen;
         },
-        previousTheme () {
-          this.themeIndex =
-            this.themeIndex === 0 ? this.themes.length - 1 : this.themeIndex - 1;
+        selectTheme (index) {
+          const [min, max] = [0, this.themes.length - 1];
+          this.theme = index < min ? max : index > max ? min : index;
+          this.updateThemeStyle();
         },
-        nextTheme () {
-          this.themeIndex =
-            this.themeIndex + 1 === this.themes.length ? 0 : this.themeIndex + 1;
+        selectedTheme () {
+          return this.themes[this.theme]
         },
-        theme () {
-          return this.themes[this.themeIndex]
+        updateThemeStyle () {
+          const theme = this.selectedTheme();
+          const colors = theme.colors.join(',');
+          document.getElementById('theme').innerHTML = `
+          .theme {
+            background: ${colors[0]};
+            background: linear-gradient(45deg,${colors}) 0% 0% / 400% 400%;
+          }
+          .theme.title {
+            font-family: '${theme.font}';
+          }
+        `;
         },
-        themeGradient () {
-          const theme = this.theme();
-          const colors = theme.colors;
-          return [
-            `background: ${colors[0]};`,
-            `background: linear-gradient(45deg,${colors.join(
-            ','
-          )}) 0% 0% / 400% 400%;`
-          ].join(' ')
+        showLogs () {
+          return this.isDeploying && !this.isLoading
         },
-        async deployTheme () {
+        async deploy () {
+          this.isLoading = true;
           try {
             var { build, status } = await app.deploy({
-              data: this.theme()
+              data: this.selectedTheme()
             });
           } catch (e) {
-            comment.add({ text: e });
+            comment.add({ text: e, style: 'danger' });
+            this.isLoading = false;
             return false
           }
 
           logger.getLogs(build.id);
           timeline.startCountdown(build.createTime);
           this.build = build;
+          this.isDeploying = true;
+          this.isLoading = false;
 
           setTimeout(() => {
-            this.themeIndex = Math.floor(
+            this.theme = Math.floor(
               Math.random() * Math.floor(this.themes.length)
             );
           }, 10000);
@@ -4503,10 +4481,6 @@
         ...methods
       }
     };
-
-    import(
-      'https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js'
-    );
   })();
 
 }());

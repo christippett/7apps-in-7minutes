@@ -36,7 +36,7 @@ export class LogService {
     if (logRecord.step !== null && logRecord.id !== null) {
       const step = document.createElement('span')
       step.setAttribute('class', 'lg-step')
-      step.innerText = `Step #${logRecord.step}`.padEnd(8)
+      step.innerText = `Step #${logRecord.step}`
       el.appendChild(step)
 
       const id = document.createElement('span')

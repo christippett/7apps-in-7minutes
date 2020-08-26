@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css" />
   <link href="/static/css/index.css" rel="stylesheet" />
   <link href="/static/css/error.css" rel="stylesheet" />
+  <style id="theme"></style>
 </head>
 
 <body>
@@ -16,13 +17,12 @@
     <div class="header">
       <p class="title is-fancy is-3">7-Apps in 7-minutes</p>
       <p class="subtitle is-italic is-6">
-        Deploying a Python Flask web app to every service on <br><span
+        Deploying a Python Flask web app to seven different services on <br /><span
           class="google-logo">{% include "misc/google-cloud-logo.svg" %}</span>
       </p>
     </div>
     <div class="iframe-container columns is-variable is-multiline is-relative">
-      <div id="timeline" class="timeline is-overlay">
-      </div>
+      <div id="timeline" class="timeline is-overlay"></div>
       {% include "content/iframes.html" %} {% include "content/build.html" %}
     </div>
   </section>
@@ -38,6 +38,7 @@
     </div>
   </footer>
 </body>
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
 <script>
   const props = {{ props | tojson }};
