@@ -43,8 +43,8 @@ class Notifier:
             try:
                 await websocket.send_text(message)
                 living_connections.append(websocket)
-            except RuntimeError:
-                continue
+            except Exception as exc:
+                logger.warning(exc)
         self.connections = living_connections
 
     async def send(
