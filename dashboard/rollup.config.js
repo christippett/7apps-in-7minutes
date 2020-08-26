@@ -2,9 +2,9 @@ import commonjs from '@rollup/plugin-commonjs'
 import resolve from '@rollup/plugin-node-resolve'
 
 export default {
-  input: 'src/static/js/index.js',
+  input: 'src/static/js/main.js',
   output: {
-    file: 'src/static/js/bundle.js',
+    file: 'src/static/js/7apps-bundle.js',
     format: 'iife',
     globals: {
       window: 'window',
