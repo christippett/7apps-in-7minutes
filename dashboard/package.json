@@ -1,0 +1,24 @@
+{
+  "name": "7apps-in-7minutes",
+  "version": "0.0.1",
+  "description": "7-Apps in 7-Minutes",
+  "main": "static/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chris Tippett <chris.tippett@servian.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-node-resolve": "^9.0.0"
+  },
+  "dependencies": {
+    "d3": "^5.16.0",
+    "d3-path": "^2.0.0",
+    "d3-scale": "^3.2.2",
+    "d3-selection": "^2.0.0",
+    "d3-shape": "^2.0.0",
+    "d3-timer": "^2.0.0",
+    "d3-transition": "^2.0.0"
+  }
+}
