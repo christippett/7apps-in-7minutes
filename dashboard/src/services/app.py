@@ -9,7 +9,6 @@ from uuid import uuid4
 import aiohttp
 import yaml
 from aiohttp.client import ClientSession
-from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.typedefs import LooseHeaders
 
 from common.config import settings
@@ -77,8 +76,8 @@ class AppService:
             for app in self.apps:
                 try:
                     self.apps.replace(await self.fetch_app(app, session))
-                except ClientResponseError as exc:
-                    logger.error("Error while updating %s: %s", app, exc)
+                except aiohttp.ClientError as exc:
+                    logger.warning("Error updating %s: %s", app, exc)
 
     async def poll_for_version(
         self, app: App, version: str, session: ClientSession, interval=1,
@@ -92,7 +91,7 @@ class AppService:
                 app = await self.fetch_app(app, session)
                 notify = consecutive_errors >= 5
                 consecutive_errors = 0
-            except ClientResponseError:
+            except aiohttp.ClientError:
                 notify = consecutive_errors == 0
                 consecutive_errors += 1
             finally:
