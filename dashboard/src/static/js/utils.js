@@ -9,6 +9,11 @@ const utils = {
   },
   randomNumber: max => {
     return Math.floor(Math.random() * Math.floor(max))
+  },
+  loopIndex (index, arr) {
+    const [min, max] = [0, arr.length - 1]
+    const i = index < min ? max : index > max ? min : index
+    return arr[i]
   }
 }
 

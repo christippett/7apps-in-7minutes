@@ -597,10 +597,6 @@ iframe.app-frame {
   overflow: hidden;
 }
 
-.logs > p:last-child {
-  margin-bottom: 3rem;
-}
-
 .logs p > span {
   white-space: pre;
   line-height: 1.2;

@@ -31,7 +31,7 @@ export class NotificationService {
   subscribe (topic, callback) {
     const id = +new Date() + Math.floor(Math.random() * 1000)
     this.subscriptions.set(id, { topic, callback })
-    console.log(`🗞️ Subscribed to topic '${topic}' (#${id})`)
+    console.debug(`🗞️ Subscribed to topic '${topic}' (#${id})`)
     return id
   }
 
@@ -39,7 +39,7 @@ export class NotificationService {
     const sub = this.subscriptions.get(id)
     if (sub) {
       this.subscriptions.delete(id)
-      console.log(`🗞️ Unsubscribed from topic '${sub.topic}' (#${id})`)
+      console.debug(`🗞️ Unsubscribed from topic '${sub.topic}' (#${id})`)
     }
   }
 

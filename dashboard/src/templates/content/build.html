@@ -1,6 +1,6 @@
 <div id="demo" class="demo-container column is-half is-relative"
   :class="{ 'is-fullscreen': isFullscreen, 'is-loading': isLoading, 'is-active': showLogs()}" x-data="demo()"
-  x-init="updateThemeStyle()" x-cloak>
+  x-init="updateThemeStyle">
   <div class="box is-unselectable" @click.stop="toggleFullscreen()">
     <div id="logs" class="logs is-overlay" x-show="showLogs()"></div>
     <div id="build" class="demo-interface is-overlay" x-show.transition.duration.1s="!showLogs()">
@@ -8,10 +8,10 @@
         <p class="title">Deploy 7-Apps</p>
       </div>
       <nav class="is-overlay">
-        <button class="button is-light" @click.stop="selectTheme(theme - 1)">
+        <button class="button is-light" @click.stop="selectTheme(-1)">
           {% include "misc/left.svg" %}
         </button>
-        <button class="button is-light" @click.stop="selectTheme(theme + 1)">
+        <button class="button is-light" @click.stop="selectTheme(1)">
           {% include "misc/right.svg" %}
         </button>
       </nav>

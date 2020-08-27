@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css" />
   <link href="/static/css/index.css" rel="stylesheet" />
   <link href="/static/css/error.css" rel="stylesheet" />
-  <style id="theme"></style>
+  <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+  <style id="theme" type="text/css"></style>
 </head>
 
 <body>
@@ -38,14 +39,8 @@
     </div>
   </footer>
 </body>
-<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
 <script>
-  const props = {{ props | tojson }};
-  window.props = props
-  window.WebFont.load({
-    google: { families: props.themes.map(t => t.font) }
-  })
+  window.props = {{ props | tojson }};
 </script>
 <script src="/static/js/7apps-bundle.js"></script>
 
