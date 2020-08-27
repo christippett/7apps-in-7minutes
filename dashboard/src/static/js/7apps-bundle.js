@@ -279,7 +279,7 @@
 	      } catch {
 	        this.comments.delete(id);
 	      }
-	    }, 300);
+	    }, 1000);
 	  }
 
 	  reset () {
@@ -4417,7 +4417,7 @@
 	// Debug WebSocket
 	window.ns = notificationService;
 	notificationService.subscribe('echo', message =>
-	  comment.add({ text: message.data.text })
+	  comment.add({ text: message.data.text, timeout: 5000 })
 	);
 
 	notificationService.subscribe('app-updated', message => {
@@ -4498,7 +4498,7 @@
 	          text: [
 	            '<p>The stream of text you see in the box above are the logs output by Cloud Build.</p>',
 	            '<p>You can check out the steps used to deploy each app, along with the source code for everything on ',
-	            "<a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><strong>GitHub</strong></a>.</p>"
+	            "<a href='https://github.com/servian/7apps-google-cloud/blob/demo/app/cloudbuild.yaml'><span class='is-text-medium'>GitHub</span></a>.</p>"
 	          ].join(''),
 	          style: 'info'
 	        };

@@ -47,7 +47,7 @@ export class CommentService {
       } catch {
         this.comments.delete(id)
       }
-    }, 300)
+    }, 1000)
   }
 
   reset () {

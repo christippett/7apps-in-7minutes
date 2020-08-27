@@ -64,11 +64,11 @@ async def index(request: Request):
     display_order = [
         "compute-engine",
         "kubernetes",
-        "function",
         "run",
-        "run-anthos",
         "standard",
+        "run-anthos",
         "flex",
+        "function",
     ]
     props = {
         "themes": Theme.random(20),
