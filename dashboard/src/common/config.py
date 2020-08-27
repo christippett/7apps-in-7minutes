@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 import google.auth
-import pydantic
 from google.cloud import error_reporting, secretmanager, storage
 from pydantic import BaseSettings, Field, HttpUrl, validator
 
@@ -68,12 +67,12 @@ class Settings(BaseSettings):
     @validator("google_fonts_api_key", pre=True, always=True)
     def default_google_fonts_api_key(cls, v, values):
         gcp = values.get("gcp")
-        v or gcp.get_secret("GOOGLE_FONTS_API_KEY")
+        return v or gcp.get_secret("GOOGLE_FONTS_API_KEY")
 
     @validator("cloud_build_trigger_id", pre=True, always=True)
     def default_cloud_build_trigger_id(cls, v, values):
         gcp = values.get("gcp")
-        v or gcp.get_secret("CLOUD_BUILD_TRIGGER_ID")
+        return v or gcp.get_secret("CLOUD_BUILD_TRIGGER_ID")
 
 
 settings = Settings()
