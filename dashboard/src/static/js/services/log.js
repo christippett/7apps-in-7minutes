@@ -19,7 +19,6 @@ export class LogService {
     this.activeSubscription = this.notifier.subscribe('log', message => {
       this.createLogRecord(message.data)
     })
-    console.log(`🗞️ Subscribed to log stream: ${this.activeSubscription}`)
   }
 
   createLogRecord (logRecord) {
