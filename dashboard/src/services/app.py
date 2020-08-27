@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 from asyncio.futures import Future
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Tuple, cast
 from uuid import uuid4
 
@@ -60,8 +60,8 @@ class AppService:
                 "_ASCII_FONT": theme.ascii_font or "",
                 "_VERSION": version,
             }
-            logger.info("Deploying new version: %s", version)
             build = await self.build.trigger_build(substitutions)
+            logger.info("Deployment started for version %s", version)
         return version, build
 
     async def fetch_app(self, app: App, session: ClientSession) -> App:
@@ -105,6 +105,7 @@ class AppService:
         self, version: str, build: BuildRef, timeout: float = 600
     ):
         logger.info("Polling applications for version %s", version, icon="⏳")
+        started = build.createTime
         tasks: List[Future[App]] = []
         async with aiohttp.ClientSession(headers=accept_header) as session:
             for app in self.apps:
@@ -113,16 +114,19 @@ class AppService:
             for f in asyncio.as_completed(tasks, timeout=timeout):
                 app = await f
                 self.apps.replace(app)
-                build_started = build.createTime.replace(tzinfo=None)
-                build_duration = (datetime.utcnow() - build_started).total_seconds()
+                now = datetime.utcnow().replace(tzinfo=timezone.utc)
+                duration = int((now - started).total_seconds() * 1000)
                 await self.notifier.send(
                     "app-updated",
                     app=app,
                     version=version,
-                    started=build.createTime,
-                    duration=int(build_duration),
+                    started=started,
+                    finished=now,
+                    duration=duration,
                 )
-                logger.info("%s updated to version %s", app, version, icon="✨")
+                logger.info(
+                    "%s updated to version %s (%sms)", app, version, duration, icon="✨"
+                )
         logger.info("Finished polling for version %s", version, icon="⏳")
 
     async def start_polling_for_version(self, version: str, build: BuildRef):
