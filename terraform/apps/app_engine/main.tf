@@ -56,7 +56,7 @@ resource "google_app_engine_application_url_dispatch_rules" "app" {
 
 resource "google_cloud_scheduler_job" "toggle_serving_status" {
   for_each = {
-    stop  = { status = "STOPPED", schedule = "0 20 * * *" },
+    stop  = { status = "STOPPED", schedule = "30 3 * * *" },
     start = { status = "SERVING", schedule = "0 12 * * *" }
   }
 
