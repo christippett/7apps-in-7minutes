@@ -7,6 +7,7 @@ from typing import List, Tuple, cast
 from uuid import uuid4
 
 import aiohttp
+import petname
 import yaml
 from aiohttp.client import ClientSession
 from aiohttp.typedefs import LooseHeaders
@@ -51,9 +52,7 @@ class AppService:
             build = active_builds[0]
             version = build.substitutions.get("_VERSION") or ""
         else:
-            version = (
-                re.sub(r"[^\w]+", "-", theme.gradient).lower() + "-" + uuid4().hex[:7]
-            )
+            version = petname.Generate() or uuid4().hex[:10]
             substitutions = {
                 "_GRADIENT": theme.gradient,
                 "_FONT": theme.font or "",
