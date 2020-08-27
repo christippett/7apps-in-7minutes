@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 from asyncio.futures import Future
 from datetime import datetime, timezone
 from typing import List, Tuple, cast
