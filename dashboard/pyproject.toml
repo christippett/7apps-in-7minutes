@@ -1,9 +1,15 @@
 [tool.poetry]
 name = "7apps-dashboard"
+homepage = "https://7apps.cloud"
+repository = "https://github.com/servian/7apps-google-cloud"
 version = "0.1.0"
 description = "Landing page and app dashboard for the 7Apps demo."
-authors = ["Chris Tippett <chris.tippett@hey.com>"]
+authors = ["Chris Tippett <chris.tippett@servian.com>"]
 license = "MIT"
+packages = [
+    { include = "main.py", from = "src" },
+]
+
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -13,7 +13,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from google.cloud import error_reporting
 from google.cloud.error_reporting import HTTPContext
 from requests.exceptions import HTTPError as RequestsHTTPError
 
@@ -23,26 +22,29 @@ from models import DeploymentJob
 from models.app import Theme
 from services import AppService, Notifier
 
+# Logging
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("dashboard.main")
 if settings.enable_stackdriver_logging:
     logger.debug("Enabling Stackdriver logging")
     setup_stackdriver_logging()
 
-
+# FastAPI
 app = FastAPI(
     title="7-Apps in 7-Minutes",
     description="Dashboard and API for interacting with the 7-Apps demo application.",
     debug=settings.debug,
 )
 app.add_middleware(GZipMiddleware)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount(
+    "/static", StaticFiles(directory=str(settings.static_dir)), name="static",
+)
+templates = Jinja2Templates(directory=str(settings.templates_dir))
 
-error = error_reporting.Client()
-
+# Application
 notifier = Notifier()
-app_service = AppService.load_from_config("7apps.yaml", notifier=notifier)
+app_config = settings.root_dir.joinpath("7apps.yaml")
+app_service = AppService.load_from_config(str(app_config), notifier=notifier)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -55,7 +57,7 @@ async def unicorn_exception_handler(request: Request, exc: StarletteHTTPExceptio
         remote_ip=request.client.host,
         response_status_code=500,
     )
-    error.report_exception(http_context=context)
+    settings.gcp.error.report_exception(http_context=context)
     return await http_exception_handler(request, exc)
 
 

@@ -7,7 +7,6 @@ from typing import Deque, Dict, List, Optional, Tuple
 
 from google.api_core.exceptions import ClientError
 from google.auth.transport.requests import AuthorizedSession
-from google.cloud import storage
 from pyfiglet import figlet_format
 from requests.exceptions import HTTPError
 
@@ -18,8 +17,6 @@ from services.notifier import Notifier
 logger = logging.getLogger("dashboard." + __name__)
 
 Status = Enum("Status", "ACTIVE INACTIVE UNKNOWN")
-
-storage_client = storage.Client()
 
 
 class CloudBuildLogger:
@@ -32,7 +29,7 @@ class CloudBuildLogger:
 
     def get_log_blob(self, build: BuildRef):
         _, _, bucket_name = self.build.logsBucket.rpartition("gs://")
-        bucket = storage_client.bucket(bucket_name)
+        bucket = settings.gcp.storage.bucket(bucket_name)
         return bucket.blob(f"log-{build.id}.txt")
 
     def build_is_active(self):
@@ -83,7 +80,7 @@ class CloudBuildLogger:
 class CloudBuildService:
     def __init__(self, notifier: Notifier):
         self.notifier = notifier
-        self.session = AuthorizedSession(settings.google_credentials)
+        self.session = AuthorizedSession(settings.gcp.credentials)
         self.logs_history = defaultdict(list)
         self._active_builds: Deque[Tuple[BuildRef, Future]] = deque(maxlen=10)
 
@@ -106,14 +103,12 @@ class CloudBuildService:
         return BuildRef.parse_obj(data["metadata"]["build"])
 
     def get_build(self, id: str) -> BuildRef:
-        url = f"{settings.cloud_build_api_url}/projects/{settings.google_project}/builds/{id}"
+        url = f"{settings.cloud_build_api_url}/projects/{settings.gcp.project}/builds/{id}"
         data = self.make_request(url)
         return BuildRef.parse_obj(data)
 
     def get_active_builds(self) -> List[BuildRef]:
-        url = (
-            f"{settings.cloud_build_api_url}/projects/{settings.google_project}/builds"
-        )
+        url = f"{settings.cloud_build_api_url}/projects/{settings.gcp.project}/builds"
         params = {"filter": '(status="QUEUED" OR status="WORKING") AND tags="app"'}
         data = self.make_request(url, params=params)
         return list(map(BuildRef.parse_obj, data.get("builds", [])))
