@@ -125,7 +125,7 @@ steps:
           --platform=managed \
           --revision-suffix=${_VERSION} && \
         gcloud run services update-traffic \
-          --to-revisions run-${_VERSION} 100
+          --to-revisions=run-${_VERSION}=100
     waitFor: ["docker-push"]
 
   # ========================================================================== #
@@ -144,7 +144,7 @@ steps:
           --namespace=default \
           --revision-suffix=${_VERSION} &&\
         gcloud run services update-traffic \
-          --to-revisions run-${_VERSION} 100
+          --to-revisions=run-${_VERSION}=100
     waitFor: ["docker-push"]
 
   # ========================================================================== #
