@@ -52,11 +52,12 @@ class Theme(BaseModel):
         )
         resp.raise_for_status()
         data = resp.json()
-        cls._fonts = [
-            f["family"]
-            for f in data["items"]
-            if f["category"] in ["handwriting", "display"]
-        ]
+        fonts = filter(
+            lambda f: f["category"] in ["handwriting", "display"]
+            and "regular" in f["variants"],
+            data["items"],
+        )
+        cls._fonts = list(map(lambda f: f["family"], fonts))
         return cls._fonts
 
     @classmethod
