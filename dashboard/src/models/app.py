@@ -45,7 +45,7 @@ class Theme(BaseModel):
             url,
             params={
                 "key": settings.google_fonts_api_key,
-                "fields": "items.family,items.category",
+                "fields": "items.family,items.category,items.variants,items.subsets",
                 "sort": "popularity",
             },
             headers={"Referer": "7apps.cloud"},
@@ -54,7 +54,8 @@ class Theme(BaseModel):
         data = resp.json()
         fonts = filter(
             lambda f: f["category"] in ["handwriting", "display"]
-            and "regular" in f["variants"],
+            and "regular" in f["variants"]
+            and "latin" in f["subsets"],
             data["items"],
         )
         cls._fonts = list(map(lambda f: f["family"], fonts))
