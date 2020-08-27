@@ -79,8 +79,7 @@ steps:
     args:
       - "-c"
       - |
-        cp ../app.standard.yaml app.yaml;
-        cat <<EOT >> app.yaml
+        cp ../app.standard.yaml app.yaml && cat <<EOT >> app.yaml
 
         env_variables:
           GRADIENT: "${_GRADIENT}"
@@ -117,14 +116,14 @@ steps:
 
   - id: cloud-run
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: gcloud
+    entrypoint: sh
     args:
       - "-c"
       - |
         gcloud run deploy run \
           --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION} \
           --platform=managed \
-          --revision-suffix=${_VERSION};
+          --revision-suffix=${_VERSION} && \
         gcloud run services update-traffic \
           --to-revisions run-${_VERSION} 100
     waitFor: ["docker-push"]
@@ -135,7 +134,7 @@ steps:
 
   - id: cloud-run-gke
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
-    entrypoint: gcloud
+    entrypoint: sh
     args:
       - "-c"
       - |
@@ -143,7 +142,7 @@ steps:
           --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION} \
           --platform=gke \
           --namespace=default \
-          --revision-suffix=${_VERSION};
+          --revision-suffix=${_VERSION} &&\
         gcloud run services update-traffic \
           --to-revisions run-${_VERSION} 100
     waitFor: ["docker-push"]
