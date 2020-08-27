@@ -1,7 +1,4 @@
 apps:
-  - id: localhost
-    title: "Localhost"
-    url: http://localhost:8080
   - id: compute-engine
     title: "Compute Engine"
     url: https://compute.7apps.cloud

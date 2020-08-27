@@ -6,7 +6,7 @@
   "scripts": {
     "bundle": "rollup -c",
     "watch": "rollup -c -w -m inline",
-    "python": "(cd src && poetry run python main.py)",
+    "python": "(cd src && DEBUG=1 poetry run uvicorn main:app --reload)",
     "start": "concurrently \"npm run watch\" \"npm run python\""
   },
   "author": "Chris Tippett <chris.tippett@servian.com>",

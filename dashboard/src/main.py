@@ -36,9 +36,7 @@ app = FastAPI(
     debug=settings.debug,
 )
 app.add_middleware(GZipMiddleware)
-app.mount(
-    "/static", StaticFiles(directory=str(settings.static_dir)), name="static",
-)
+app.mount("/static", StaticFiles(directory=str(settings.static_dir)), name="static")
 templates = Jinja2Templates(directory=str(settings.templates_dir))
 
 # Application
@@ -64,7 +62,6 @@ async def unicorn_exception_handler(request: Request, exc: StarletteHTTPExceptio
 @app.get("/")
 async def index(request: Request):
     display_order = [
-        "localhost",
         "compute-engine",
         "kubernetes",
         "function",

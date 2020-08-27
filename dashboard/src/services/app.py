@@ -20,7 +20,7 @@ from services.notifier import Notifier
 
 logger = logging.getLogger("dashboard." + __name__)
 
-accept_header = cast(LooseHeaders, {"Accept": "application/json"})
+DEFAULT_HEADERS = cast(LooseHeaders, {"Accept": "application/json"})
 
 
 class AppService:
@@ -66,67 +66,64 @@ class AppService:
 
     async def fetch_app(self, app: App, session: ClientSession) -> App:
         async with session.get(app.url) as response:
-            response.raise_for_status()
             data = await response.json()
             data.update(app.dict(include={"id", "title", "url"}))
             return App.parse_obj(data)
 
     async def refresh_app_data(self):
-        async with aiohttp.ClientSession(headers=accept_header) as session:
+        async with aiohttp.ClientSession(headers=DEFAULT_HEADERS) as session:
             for app in self.apps:
                 try:
                     self.apps.replace(await self.fetch_app(app, session))
                 except aiohttp.ClientError as exc:
-                    logger.warning("Error updating %s: %s", app, exc)
+                    logger.warning("Unable to update %s: %s", app, exc)
 
-    async def poll_for_version(
-        self, app: App, version: str, session: ClientSession, interval=1,
-    ) -> App:
+    async def poll_for_version(self, app: App, version: str, interval=1,) -> App:
         version_confirmation = 0
         consecutive_errors = 0
-        while True:
-            await asyncio.sleep(interval)
-            notify = False
-            try:
-                app = await self.fetch_app(app, session)
-                notify = consecutive_errors >= 5
-                consecutive_errors = 0
-            except aiohttp.ClientError:
-                notify = consecutive_errors == 0
-                consecutive_errors += 1
-            finally:
-                version_confirmation += 1 if app.version == version else 0
-                if version_confirmation >= 2:
-                    return app
-                if notify:
-                    await self.notifier.send("refresh-app", app=app)
+        async with aiohttp.ClientSession(
+            headers=DEFAULT_HEADERS, raise_for_status=True
+        ) as session:
+            while True:
+                await asyncio.sleep(interval)
+                notify = False
+                try:
+                    app = await self.fetch_app(app, session)
+                    notify = consecutive_errors >= 5
+                    consecutive_errors = 0
+                except aiohttp.ClientError:
+                    notify = consecutive_errors == 0
+                    consecutive_errors += 1
+                except RuntimeError as exc:
+                    logger.warning("Exception raised during version polling: %s", exc)
+                finally:
+                    version_confirmation += 1 if app.version == version else 0
+                    if version_confirmation >= 2:
+                        return app
+                    if notify:
+                        await self.notifier.send("refresh-app", app=app)
 
-    async def poll_all_for_version(
-        self, version: str, build: BuildRef, timeout: float = 600
-    ):
+    async def poll_all_for_version(self, version: str, build: BuildRef):
         logger.info("Polling applications for version %s", version, icon="⏳")
         started = build.createTime
         tasks: List[Future[App]] = []
-        async with aiohttp.ClientSession(headers=accept_header) as session:
-            for app in self.apps:
-                task = self.poll_for_version(app, version, session)
-                tasks.append(asyncio.create_task(task))
-            for f in asyncio.as_completed(tasks, timeout=timeout):
-                app = await f
-                self.apps.replace(app)
-                now = datetime.utcnow().replace(tzinfo=timezone.utc)
-                duration = int((now - started).total_seconds() * 1000)
-                await self.notifier.send(
-                    "app-updated",
-                    app=app,
-                    version=version,
-                    started=started,
-                    finished=now,
-                    duration=duration,
-                )
-                logger.info(
-                    "%s updated to version %s (%sms)", app, version, duration, icon="✨"
-                )
+        for app in self.apps:
+            task = self.poll_for_version(app, version)
+            tasks.append(asyncio.create_task(task))
+        for f in asyncio.as_completed(tasks, timeout=600):
+            app = await f
+            self.apps.replace(app)
+            now = datetime.utcnow().replace(tzinfo=timezone.utc)
+            duration = round((now - started).total_seconds(), 2)
+            await self.notifier.send(
+                "app-updated",
+                app=app,
+                version=version,
+                started=started,
+                finished=now,
+                duration=duration,
+            )
+            logger.info("%s updated after %ss", app, duration, icon="✨")
         logger.info("Finished polling for version %s", version, icon="⏳")
 
     async def start_polling_for_version(self, version: str, build: BuildRef):

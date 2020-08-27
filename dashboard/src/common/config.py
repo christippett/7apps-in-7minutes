@@ -37,9 +37,24 @@ class GoogleClientManager:
 
     def __init__(self):
         self.credentials, self.project = google.auth.default(scopes=self.scopes)
-        self.storage = storage.Client()
-        self.secrets = secretmanager.SecretManagerServiceClient()
-        self.error = error_reporting.Client()
+
+    @property
+    def error(self):
+        if not hasattr(self, "_error"):
+            self._error = error_reporting.Client()
+        return self._error
+
+    @property
+    def secrets(self):
+        if not hasattr(self, "_secrets"):
+            self._secrets = secretmanager.SecretManagerServiceClient()
+        return self._secrets
+
+    @property
+    def storage(self):
+        if not hasattr(self, "_storage"):
+            self._storage = storage.Client()
+        return self._storage
 
     def get_secret(self, secret, version="latest"):
         path = self.secrets.secret_path(self.project, secret)
