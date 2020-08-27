@@ -101,17 +101,22 @@ export class Timeline {
     this.drawDataItems()
   }
 
-  add ({ app, duration }) {
+  add ({ app, timer }) {
+    const value = Math.floor(this.timelineScale(timer.duration))
+    const now = new Date()
+    console.log(app.id, now)
+    console.log(app.id, 'duration:', timer.duration, 'value:', value)
+    console.log(app.id, 'countdown:', this.countdownTick)
     const item = {
       id: app.id,
       app,
-      duration,
+      duration: timer.duration,
       position: () => {
         const bbox = document
           .getElementById(`${app.id}`)
           .getBoundingClientRect()
         return {
-          source: [this.margin.left, this.timelineScale(duration)],
+          source: [this.margin.left, this.timelineScale(timer.duration)],
           target: [
             this.bbox.x >= bbox.x ? 0 : this.width,
             bbox.y + bbox.height / 2 - this.bbox.y
@@ -132,13 +137,12 @@ export class Timeline {
   startCountdown (startTime) {
     d3.select('.countdown .axis line').attr('y2', 0)
     d3.select('.countdown .axis circle').attr('cy', 0)
-    this.parentNode.classList.add('show-countdown')
-    this.countdownTimer = d3.interval(
-      ms => this.countdownHandler(startTime),
-      100
-    )
-    const finishTime = new Date(+startTime + 7 * 60000)
-    d3.timeout(ms => this.stopCountdown(), finishTime - new Date())
+    d3.select('#timeline').classed('show-countdown', true)
+    const now = new Date()
+    const offset = now - startTime
+    this.countdownTimer = d3.interval(ms => {
+      this.countdownHandler({ ms, offset })
+    }, 100)
   }
 
   stopCountdown () {
@@ -160,8 +164,8 @@ export class Timeline {
     this.create()
   }
 
-  countdownHandler (startTime) {
-    const ms = Math.abs(new Date() - startTime)
+  countdownHandler ({ ms, offset }) {
+    ms = Math.floor(ms + offset)
     const value = Math.floor(this.timelineScale(ms / 1000))
 
     // Update clock

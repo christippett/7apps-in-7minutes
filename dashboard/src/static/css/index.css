@@ -100,15 +100,30 @@ footer {
   left: 0;
   right: 0;
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+  max-width: 600px;
+  margin: 0 auto 2rem;
   padding: 1rem;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 500;
   line-height: 1.4;
   text-align: left;
   white-space: break-spaces;
   z-index: 1000;
+}
+.commentary:before {
+  content: "";
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: 15%;
+  background: black;
+  background: linear-gradient(0, rgba(0, 0, 0, 0.75), #f5f6fa00) 0% 0% / 150% 150%;
+  opacity: 0;
+  transition: opacity 0.6s ease-in 0.3s;
+}
+.commentary:not(:empty):before {
+  opacity: 1;
 }
 
 .comment {
@@ -124,12 +139,13 @@ footer {
   background: #363636;
   border-radius: 6px;
   box-shadow: 0 1px 2px -1px currentColor, 0 0 5px -3px currentColor;
-  transition: opacity 0.2s ease-in;
+  transition: opacity 0.25s ease-in;
   opacity: 0;
 }
 
 .commentary .comment {
   opacity: 1;
+  transition-duration: 0.4s;
 }
 
 .comment.closed {

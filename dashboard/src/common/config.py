@@ -13,14 +13,19 @@ LOGGING_CONFIG = {
     "formatters": {
         "icon": {
             "class": "common.logging.ColourFormatter",
-            "format": "%(icon)2s %(message)s %(name)s",
-        }
+            "format": "%(icon)-2s %(message)s",
+        },
+        "icon-verbose": {
+            "class": "common.logging.ColourFormatter",
+            "format": "%(asctime)-10s%(icon)-2s %(message)s [%(name)s]",
+            "datefmt": "%H:%M:%S",
+        },
     },
     "filters": {"icon": {"()": "common.logging.IconFilter"}},
     "handlers": {
         "default": {
             "level": "DEBUG",
-            "formatter": "icon",
+            "formatter": "icon-verbose",
             "filters": ["icon"],
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",

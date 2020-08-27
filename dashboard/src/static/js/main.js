@@ -38,18 +38,12 @@ notificationService.subscribe('echo', message =>
 )
 
 notificationService.subscribe('app-updated', message => {
-  const { app, started, finished, duration } = message.data
-  const { minute, second } = utils.timePart(duration)
+  const { app, duration } = message.data
+  const { minute, second } = utils.timePart(duration * 1000)
   const time = [
     minute ? `${minute} minute${minute === 1 ? '' : 's'}` : null,
     second ? `${second} second${second === 1 ? '' : 's'}` : null
   ].filter(t => t)
-  console.log(
-    `started:${started}`,
-    `finished:${finished}`,
-    `duration:${duration}`,
-    `${new Date(finished) - new Date(started)}`
-  )
   comment.add({
     text: `<p><span class='is-fancy'>${
       app.title

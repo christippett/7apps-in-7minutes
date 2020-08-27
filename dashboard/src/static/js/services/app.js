@@ -28,9 +28,10 @@ export class ApplicationService {
     })
     // Update Timeline when app updated
     notificationService.subscribe('app-updated', message => {
-      const { app, duration } = message.data
+      const { app, started, finished, duration } = message.data
+      const timer = { started, finished, duration }
       this.refreshIframe(app)
-      this.timeline.add({ app, duration })
+      this.timeline.add({ app, timer })
     })
     // Stop Timeline when build finished
     notificationService.subscribe('build', message => {
