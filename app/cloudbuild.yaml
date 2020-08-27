@@ -147,7 +147,7 @@ steps:
         gcloud run services update-traffic run-anthos \
           --platform=gke \
           --namespace=default \
-          --to-revisions=run-${_VERSION}=100
+          --to-revisions=run-anthos-${_VERSION}=100
     waitFor: ["docker-push"]
 
   # ========================================================================== #
