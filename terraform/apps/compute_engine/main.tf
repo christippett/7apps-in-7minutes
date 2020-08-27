@@ -2,7 +2,7 @@ resource "google_compute_instance" "app" {
   name         = var.services.compute_engine.name
   project      = var.project_id
   zone         = var.zone
-  machine_type = "e2-small"
+  machine_type = "f1-micro"
   tags         = ["ssh", "http-server", "https-server", "webhook"]
 
   metadata = {

@@ -30,8 +30,8 @@ resource "kubernetes_deployment" "app" {
           }
           resources {
             limits {
-              cpu    = "250m"
-              memory = "128Mi"
+              cpu    = "200m"
+              memory = "512Mi"
             }
           }
         }
