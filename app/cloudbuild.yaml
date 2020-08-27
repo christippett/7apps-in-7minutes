@@ -119,14 +119,14 @@ steps:
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
-      [
-        "run",
-        "deploy",
-        "run",
-        "--image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION}",
-        "--platform=managed",
-        "--revision-suffix=${_VERSION}",
-      ]
+      - "-c"
+      - |
+        gcloud run deploy run \
+          --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION} \
+          --platform=managed \
+          --revision-suffix=${_VERSION};
+        gcloud run services update-traffic \
+          --to-revisions run-${_VERSION} 100
     waitFor: ["docker-push"]
 
   # ========================================================================== #
@@ -137,15 +137,15 @@ steps:
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: gcloud
     args:
-      [
-        "run",
-        "deploy",
-        "run-anthos",
-        "--image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION}",
-        "--platform=gke",
-        "--namespace=default",
-        "--revision-suffix=${_VERSION}",
-      ]
+      - "-c"
+      - |
+        gcloud run deploy run-anthos \
+          --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION} \
+          --platform=gke \
+          --namespace=default \
+          --revision-suffix=${_VERSION};
+        gcloud run services update-traffic \
+          --to-revisions run-${_VERSION} 100
     waitFor: ["docker-push"]
 
   # ========================================================================== #
