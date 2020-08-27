@@ -135,7 +135,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse("static/favicon.ico")
+    icon_path = str(settings.static_dir.joinpath("favicon.ico"))
+    return FileResponse(icon_path)
 
 
 if __name__ == "__main__":
