@@ -5,7 +5,7 @@ resource "google_app_engine_flexible_app_version" "app" {
   project        = var.project_id
   service        = var.service
   runtime        = "custom"
-  version_id     = "initial"
+  version_id     = "demo"
   serving_status = "SERVING"
 
   manual_scaling {
@@ -21,6 +21,12 @@ resource "google_app_engine_flexible_app_version" "app" {
   network {
     name       = var.network_name
     subnetwork = var.subnet_name
+  }
+
+  resources {
+    cpu       = 1
+    memory_gb = 0.9
+    disk_gb   = 10
   }
 
   handlers {
@@ -48,7 +54,7 @@ resource "google_app_engine_flexible_app_version" "app" {
 
   # Ignore subsequent deployments after Terraform apply
   lifecycle {
-    ignore_changes = [version_id, serving_status, deployment]
+    ignore_changes = [version_id, serving_status, deployment, resources]
   }
 }
 

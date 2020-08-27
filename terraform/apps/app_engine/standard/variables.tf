@@ -12,3 +12,5 @@ variable "google_cname" {
   type    = string
   default = "ghs.googlehosted.com."
 }
+
+variable "app_dir" { type = string }

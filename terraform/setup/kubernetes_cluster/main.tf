@@ -65,7 +65,7 @@ resource "google_container_node_pool" "preemptible_nodes" {
 
   node_config {
     preemptible  = true
-    machine_type = "n1-standard-2"
+    machine_type = "n1-standard-4"
 
     tags = ["ssh", "https-server", "http-server"]
 

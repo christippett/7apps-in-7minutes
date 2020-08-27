@@ -38,13 +38,13 @@ data "google_compute_default_service_account" "default" {
 }
 
 resource "google_secret_manager_secret" "cloud_build_trigger_id" {
-  project = var.project_id
+  project   = var.project_id
   secret_id = "CLOUD_BUILD_TRIGGER_ID"
   replication { automatic = true }
 }
 
 resource "google_secret_manager_secret_version" "cloud_build_trigger_id" {
-  secret = google_secret_manager_secret.cloud_build_trigger_id.id
+  secret      = google_secret_manager_secret.cloud_build_trigger_id.id
   secret_data = google_cloudbuild_trigger.deploy.id
 }
 
@@ -56,11 +56,11 @@ locals {
 }
 
 resource "google_secret_manager_secret_iam_member" "secret_access" {
-  count = length(local.secrets)
-  project = var.project_id
+  count     = length(local.secrets)
+  project   = var.project_id
   secret_id = local.secrets[count.index]
-  role = "roles/secretmanager.secretAccessor"
-  member = "serviceAccount:${data.google_compute_default_service_account.default.email}"
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_compute_default_service_account.default.email}"
 }
 
 /* Cloud Scheduler ---------------------------------------------------------- */
@@ -104,7 +104,7 @@ resource "google_cloud_scheduler_job" "reset" {
 resource "google_service_account" "scheduler" {
   account_id   = "cloud-scheduler"
   display_name = "🤖 Cloud Scheduler service account"
-  description  = "🕹️️️ Account for scheduling Cloud Build jobs"
+  description  = "🕹️️️ Application job scheduler"
   project      = var.project_id
 }
 

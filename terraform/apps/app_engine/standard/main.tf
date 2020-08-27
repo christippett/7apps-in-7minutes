@@ -8,7 +8,7 @@ resource "google_app_engine_standard_app_version" "app" {
   project    = var.project_id
   service    = var.service
   runtime    = "python38"
-  version_id = "initial"
+  version_id = "demo"
 
   manual_scaling {
     instances = 1
