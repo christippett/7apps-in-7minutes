@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-
+import WebFont from 'webfontloader'
 import { ApplicationService } from './services/app.js'
 import { CommentService } from './services/comment.js'
 import { LogService } from './services/log.js'
@@ -26,6 +26,11 @@ const app = new ApplicationService({
   notificationService
 })
 
+WebFont.load({
+  google: { families: props.themes.map(t => t.font) },
+  classes: false
+})
+
 // Debug WebSocket
 window.ns = notificationService
 notificationService.subscribe('echo', message =>
@@ -33,12 +38,18 @@ notificationService.subscribe('echo', message =>
 )
 
 notificationService.subscribe('app-updated', message => {
-  const { app, duration } = message.data
-  const { minute, second } = utils.timePart(duration * 1000)
+  const { app, started, finished, duration } = message.data
+  const { minute, second } = utils.timePart(duration)
   const time = [
-    minute ? `${minute} minutes` : '',
-    second ? `${second} seconds` : ''
-  ]
+    minute ? `${minute} minute${minute === 1 ? '' : 's'}` : null,
+    second ? `${second} second${second === 1 ? '' : 's'}` : null
+  ].filter(t => t)
+  console.log(
+    `started:${started}`,
+    `finished:${finished}`,
+    `duration:${duration}`,
+    `${new Date(finished) - new Date(started)}`
+  )
   comment.add({
     text: `<p><span class='is-fancy'>${
       app.title
@@ -53,31 +64,28 @@ notificationService.subscribe('app-updated', message => {
       isFullscreen: false,
       isLoading: false,
       isDeploying: false,
-      theme: 0
+      theme: props.themes[utils.randomNumber(props.themes.length - 1)]
     }
 
     const methods = {
       toggleFullscreen () {
         this.isFullscreen = !this.isFullscreen
       },
-      selectTheme (index) {
-        const [min, max] = [0, this.themes.length - 1]
-        this.theme = index < min ? max : index > max ? min : index
+      selectTheme (i) {
+        const index = this.themes.indexOf(this.theme) + i
+        this.theme = utils.loopIndex(index, this.themes)
         this.updateThemeStyle()
       },
-      selectedTheme () {
-        return this.themes[this.theme]
-      },
       updateThemeStyle () {
-        const theme = this.selectedTheme()
-        const colors = theme.colors.join(',')
-        document.getElementById('theme').innerHTML = `
+        const colors = this.theme.colors.join(',')
+        const style = document.getElementById('theme')
+        style.innerHTML = `
           .theme {
-            background: ${colors[0]};
+            background: ${this.theme.colors[0]};
             background: linear-gradient(45deg,${colors}) 0% 0% / 400% 400%;
           }
-          .theme.title {
-            font-family: '${theme.font}';
+          .theme .title {
+            font-family: '${this.theme.font}';
           }
         `
       },
@@ -88,7 +96,7 @@ notificationService.subscribe('app-updated', message => {
         this.isLoading = true
         try {
           var { build, status } = await app.deploy({
-            data: this.selectedTheme()
+            data: this.theme
           })
         } catch (e) {
           comment.add({ text: e, style: 'danger' })
@@ -96,6 +104,7 @@ notificationService.subscribe('app-updated', message => {
           return false
         }
 
+        console.log(`build.createTime: ${build.createTime}`)
         logger.getLogs(build.id)
         timeline.startCountdown(build.createTime)
         this.build = build

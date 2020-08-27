@@ -43,8 +43,8 @@ class Settings(BaseSettings):
     google_project = project
     google_credentials = credentials
     google_fonts_api_key: str = Field(default=get_secret_value("GOOGLE_FONTS_API_KEY"))
-    github_repo: str
-    github_branch: str
+    github_repo: str = "7apps-google-cloud"
+    github_branch: str = "demo"
     cloud_build_api_url: HttpUrl = Field(default="https://cloudbuild.googleapis.com/v1")
     cloud_build_trigger_id: str = Field(
         default=get_secret_value("CLOUD_BUILD_TRIGGER_ID")

@@ -1,16 +1,20 @@
 {
-  "name": "7apps-in-7minutes",
+  "name": "7apps-google-cloud",
   "version": "0.0.1",
   "description": "7-Apps in 7-Minutes",
-  "main": "static/index.js",
+  "main": "static/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bundle": "rollup -c",
+    "watch": "rollup -c -w -m inline",
+    "python": "(cd src && poetry run python main.py)",
+    "start": "concurrently \"npm run watch\" \"npm run python\""
   },
   "author": "Chris Tippett <chris.tippett@servian.com>",
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^15.0.0",
-    "@rollup/plugin-node-resolve": "^9.0.0"
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "concurrently": "^5.3.0"
   },
   "dependencies": {
     "d3": "^5.16.0",
@@ -19,6 +23,7 @@
     "d3-selection": "^2.0.0",
     "d3-shape": "^2.0.0",
     "d3-timer": "^2.0.0",
-    "d3-transition": "^2.0.0"
+    "d3-transition": "^2.0.0",
+    "webfontloader": "^1.6.28"
   }
 }
