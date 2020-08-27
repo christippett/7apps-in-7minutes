@@ -124,7 +124,7 @@ steps:
           --image=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_VERSION} \
           --platform=managed \
           --revision-suffix=${_VERSION} && \
-        gcloud run services update-traffic \
+        gcloud run services update-traffic run \
           --platform=managed \
           --to-revisions=run-${_VERSION}=100
     waitFor: ["docker-push"]
@@ -144,7 +144,7 @@ steps:
           --platform=gke \
           --namespace=default \
           --revision-suffix=${_VERSION} &&\
-        gcloud run services update-traffic \
+        gcloud run services update-traffic run-anthos \
           --platform=gke \
           --namespace=default \
           --to-revisions=run-${_VERSION}=100
