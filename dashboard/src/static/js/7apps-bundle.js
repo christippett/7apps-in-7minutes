@@ -3951,7 +3951,9 @@
 
 	const d3 = {
 	  scaleLinear: linear$1,
+	  now,
 	  timeout: timeout$1,
+	  timer,
 	  interval: interval$1,
 	  linkHorizontal,
 	  select,
@@ -4030,15 +4032,12 @@
 	  create () {
 	    // Create SVG element and attach to DOM, replacing any existing SVG
 	    // elements if necessary
+	    this.parentNode.innerHTML = '';
 	    const svg = d3
-	      .select('#timeline')
-	      .selectAll('svg')
-	      .data([1])
-	      .enter()
+	      .select(this.parentNode)
 	      .append('svg:svg')
-	      .attr('width', '100%')
 	      .attr('height', '100%')
-	      .attr('preserveAspectRatio', 'xMinYMin meet')
+	      .attr('width', '100%')
 	      .attr('viewBox', `0 0 ${this.width} ${this.height}`);
 	    svg.append(() => this.drawFilters().node());
 	    svg.append(() => this.drawTimeline().node());
@@ -4046,11 +4045,6 @@
 	  }
 
 	  add ({ app, timer }) {
-	    const value = Math.floor(this.timelineScale(timer.duration));
-	    const now = new Date();
-	    console.log(app.id, now);
-	    console.log(app.id, 'duration:', timer.duration, 'value:', value);
-	    console.log(app.id, 'countdown:', this.countdownTick);
 	    const item = {
 	      id: app.id,
 	      app,
@@ -4082,11 +4076,11 @@
 	    d3.select('.countdown .axis line').attr('y2', 0);
 	    d3.select('.countdown .axis circle').attr('cy', 0);
 	    d3.select('#timeline').classed('show-countdown', true);
-	    const now = new Date();
-	    const offset = now - startTime;
-	    this.countdownTimer = d3.interval(ms => {
-	      this.countdownHandler({ ms, offset });
-	    }, 100);
+	    const offset = new Date() - startTime;
+	    const countdownStart = d3.now();
+	    this.countdownTimer = d3.timer(ms => {
+	      this.countdownHandler({ ms, offset, startTime, countdownStart });
+	    });
 	  }
 
 	  stopCountdown () {
@@ -4108,24 +4102,28 @@
 	    this.create();
 	  }
 
-	  countdownHandler ({ ms, offset }) {
-	    ms = Math.floor(ms + offset);
-	    const value = Math.floor(this.timelineScale(ms / 1000));
+	  countdownHandler ({ ms, offset, startTime, countdownStart }) {
+	    const elapsed = ms + offset;
+	    const value = this.timelineScale(elapsed / 1000);
 
 	    // Update clock
-	    this.setClock(ms);
+	    this.setClock(elapsed);
 
 	    // Increment axis progress tracker
+	    const t = d3
+	      .transition('axis')
+	      .delay(0)
+	      .duration(0);
 	    d3.select('.countdown line.leader')
-	      .transition()
+	      .transition(t)
 	      .attr('y2', value);
 	    d3.select('.countdown circle.leader')
-	      .transition()
+	      .transition(t)
 	      .attr('cy', value);
 
 	    const scale = this.timelineScale;
 	    d3.selectAll('.tick').classed('active', function () {
-	      const tick = scale(this.dataset.value - 0.25);
+	      const tick = scale(this.dataset.value);
 	      return tick <= value
 	    });
 	  }
@@ -4173,23 +4171,57 @@
 	      .append('svg:g')
 	      .classed('item', true)
 	      .attr('data-app', d => d.id)
-	      .attr('data-duration', d => d.duration);
+	      .attr('data-duration', d => d.duration)
+	      .datum(d => {
+	        const link = d.linkGenerator(d);
+	        const path = d3
+	          .create('svg:path')
+	          .attr('d', link)
+	          .node();
+	        return {
+	          ...d,
+	          link,
+	          length: path.getTotalLength()
+	        }
+	      });
 	    parent.exit().remove();
+
+	    // Transitions
+	    const sourceTransition = d3
+	      .transition('source')
+	      .delay(0)
+	      .duration(500);
+	    const targetTransition = d3
+	      .transition('target')
+	      .delay(2500)
+	      .duration(500);
+	    const linkTransition = d3
+	      .transition('item-path')
+	      .delay(250)
+	      .duration(2500);
 
 	    // Background elements
 	    const bg = items.append('svg:g').classed('bg', true);
 	    bg.append('svg:path')
 	      .classed('link', true)
-	      .attr('d', d => d.linkGenerator(d));
+	      .attr('d', d => d.link)
+	      .attr('stroke-dasharray', d => `${d.length} ${d.length}`)
+	      .attr('stroke-dashoffset', d => d.length)
+	      .transition(linkTransition)
+	      .attr('stroke-dashoffset', 0);
 	    bg.append('svg:circle')
 	      .classed('target', true)
 	      .attr('cx', d => d.position().target[0])
 	      .attr('cy', d => d.position().target[1])
+	      .attr('r', 0)
+	      .transition(targetTransition)
 	      .attr('r', 5);
 	    bg.append('svg:circle')
 	      .classed('source', true)
 	      .attr('cy', d => d.position().source[1])
 	      .attr('cx', this.margin.left)
+	      .attr('r', 0)
+	      .transition(sourceTransition)
 	      .attr('r', 4);
 
 	    // Foreground elements
@@ -4203,6 +4235,8 @@
 	      .attr('fill', d => getColour(d.id))
 	      .attr('cx', d => d.position().target[0])
 	      .attr('cy', d => d.position().target[1])
+	      .attr('r', 0)
+	      .transition(targetTransition)
 	      .attr('r', 5);
 	    items
 	      .append('svg:circle')
@@ -4210,12 +4244,18 @@
 	      .attr('fill', d => getColour(d.id))
 	      .attr('cx', this.margin.left)
 	      .attr('cy', d => d.position().source[1])
+	      .attr('r', 0)
+	      .transition(sourceTransition)
 	      .attr('r', 4);
 	    items
 	      .append('svg:path')
 	      .classed('link', true)
 	      .attr('stroke', d => getColour(d.id))
-	      .attr('d', d => d.linkGenerator(d));
+	      .attr('d', d => d.link)
+	      .attr('stroke-dasharray', d => `${d.length} ${d.length}`)
+	      .attr('stroke-dashoffset', d => d.length)
+	      .transition(linkTransition)
+	      .attr('stroke-dashoffset', 0);
 
 	    items.merge(parent);
 	  }
@@ -4416,9 +4456,9 @@
 
 	// Debug WebSocket
 	window.ns = notificationService;
-	notificationService.subscribe('echo', message =>
-	  comment.add({ text: message.data.text, timeout: 5000 })
-	);
+	notificationService.subscribe('comment', message => {
+	  comment.add(message.data);
+	});
 
 	notificationService.subscribe('app-updated', message => {
 	  const { app, duration } = message.data;
