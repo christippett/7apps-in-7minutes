@@ -18,8 +18,7 @@
   <a href="https://github.com/servian/7apps-google-cloud/stargazers">
     <img src="https://img.shields.io/github/stars/servian/7apps-google-cloud?style=social" alt="GitHub">
   </a>
-</p>
-<p align="center">
+  <br />
   <a href="https://compute.7apps.cloud">
     <img src="https://img.shields.io/website?label=Compute%20Engine&url=https%3A%2F%2Fcompute.7apps.cloud%2F%3Fbadge" alt="Compute Engine">
   </a>
