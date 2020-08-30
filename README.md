@@ -1,6 +1,9 @@
 <p align="center">
   <img src="./docs/logo.png" alt="7-Apps in 7-Minutes" width="200"/>
+  <br />
+  <em>Deploying a Python Flask web app to seven different services on Google Cloud</em>
 </p>
+<br />
 <p align="center">
   <img src="https://img.shields.io/badge/Google%20Cloud-EA4335?logo=google-cloud&logoColor=white" alt="Google Cloud">
   <a href="./terraform">
