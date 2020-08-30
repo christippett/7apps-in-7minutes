@@ -18,25 +18,25 @@
 </p>
 <p align="center">
   <a href="https://compute.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=Compute%20Engine&url=https%3A%2F%2Fcompute.7apps.cloud%2F%3Fbadge" alt="Compute Engine">
+    <img src="https://img.shields.io/website?label=Compute%20Engine&url=https%3A%2F%2Fcompute.7apps.cloud%2F%3Fbadge" alt="Compute Engine">
   </a>
   <a href="https://gke.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=Kubernetes&url=https%3A%2F%2Fgke.7apps.cloud%2F%3Fbadge" alt="Kubernetes">
+    <img src="https://img.shields.io/website?label=Kubernetes&url=https%3A%2F%2Fgke.7apps.cloud%2F%3Fbadge" alt="Kubernetes">
   </a>
   <a href="https://run.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=Cloud%20Run&url=https%3A%2F%2Frun.7apps.cloud%2F%3Fbadge" alt="Cloud Run">
+    <img src="https://img.shields.io/website?label=Cloud%20Run&url=https%3A%2F%2Frun.7apps.cloud%2F%3Fbadge" alt="Cloud Run">
   </a>
   <a href="https://run-anthos.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=Cloud%20Run%3A%20Anthos&url=https%3A%2F%2Frun-anthos.7apps.cloud%2F%3Fbadge" alt="Cloud Run: Anthos">
+    <img src="https://img.shields.io/website?label=Cloud%20Run%3A%20Anthos&url=https%3A%2F%2Frun-anthos.7apps.cloud%2F%3Fbadge" alt="Cloud Run: Anthos">
   </a>
   <a href="https://standard.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=App%20Engine%3A%20Standard&url=https%3A%2F%2Fstandard.7apps.cloud%2F%3Fbadge" alt="App Engine: Standard">
+    <img src="https://img.shields.io/website?label=App%20Engine%3A%20Standard&url=https%3A%2F%2Fstandard.7apps.cloud%2F%3Fbadge" alt="App Engine: Standard">
   </a>
   <a href="https://flexible.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=App%20Engine%3A%20Flexible&url=https%3A%2F%2Fflex.7apps.cloud%2F%3Fbadge" alt="App Engine: Flexible">
+    <img src="https://img.shields.io/website?label=App%20Engine%3A%20Flexible&url=https%3A%2F%2Fflex.7apps.cloud%2F%3Fbadge" alt="App Engine: Flexible">
   </a>
   <a href="https://function.7apps.cloud">
-    <img src="https://img.shields.io/endpoint?label=Cloud%20Function&url=https%3A%2F%2Ffunction.7apps.cloud%2F%3Fbadge" alt="Cloud Function">
+    <img src="https://img.shields.io/website?label=Cloud%20Function&url=https%3A%2F%2Ffunction.7apps.cloud%2F%3Fbadge" alt="Cloud Function">
   </a>
 </p>
 <br />

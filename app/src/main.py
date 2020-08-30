@@ -95,17 +95,7 @@ theme = Theme()
 def main(*args, **kwargs):
     app_info = App.from_env(theme=theme)
 
-    if "badge" in request.args:
-        # Return JSON metadata to create shields.io GitHub badge
-        print(request.headers)
-        badge = {
-            "schemaVersion": 1,
-            "label": app_info.title,
-            "message": app_info.version,
-            "color": app_info.theme.colors[0].replace("#", ""),
-        }
-        return jsonify(badge)
-    elif request.headers.get("Accept") == "application/json":
+    if request.headers.get("Accept") == "application/json":
         # Return machine-readable app info (used by dashboard)
         return jsonify(dataclasses.asdict(app_info))
 
