@@ -314,6 +314,21 @@ google-resumable-media = ">=1.0.0,<2.0dev"
 
 [[package]]
 category = "main"
+description = "Cloud Tasks API API client library"
+name = "google-cloud-tasks"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+version = "1.5.0"
+
+[package.dependencies]
+grpc-google-iam-v1 = ">=0.12.3,<0.13dev"
+
+[package.dependencies.google-api-core]
+extras = ["grpc"]
+version = ">=1.14.0,<2.0.0dev"
+
+[[package]]
+category = "main"
 description = "A python wrapper of the C library 'Google CRC32C'"
 marker = "python_version >= \"3.5\""
 name = "google-crc32c"
@@ -774,7 +789,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "39c2c3201db868fa12cee4738b6ffbd637552831922cfb3386de0aa3784287ec"
+content-hash = "43891e3fab5744ec9696258ad670db7e1d50b0c104946f97095c9fef38f0735a"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -914,6 +929,10 @@ google-cloud-secret-manager = [
 google-cloud-storage = [
     {file = "google-cloud-storage-1.31.0.tar.gz", hash = "sha256:4f51c7700242a9d54c07117f25fec5d110ab85435b3ce60ac28cc553f8ea938b"},
     {file = "google_cloud_storage-1.31.0-py2.py3-none-any.whl", hash = "sha256:34fb8f7e8a2a633cbfb09d8dec38b3450c4029af1a328a67bca64f6226a1f4a5"},
+]
+google-cloud-tasks = [
+    {file = "google-cloud-tasks-1.5.0.tar.gz", hash = "sha256:d751b97c1e84980a1646702d3fc1b45bab3284bc3388181f1dc9ba3d204b5a39"},
+    {file = "google_cloud_tasks-1.5.0-py2.py3-none-any.whl", hash = "sha256:36aa16f0c52aa9a292b1f919d2582725731e9760393c9ca98ce599c68cbf9996"},
 ]
 google-crc32c = [
     {file = "google-crc32c-1.0.0.tar.gz", hash = "sha256:9439b960b6ecd847557675d130fc3626d762bf535da595c20a6949a705fb3eae"},
