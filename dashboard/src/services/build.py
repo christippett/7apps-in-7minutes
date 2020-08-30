@@ -5,16 +5,12 @@ from collections import defaultdict, deque
 from enum import Enum
 from typing import Deque, Dict, List, Optional, Tuple
 
-from fastapi import HTTPException
-
-import google_auth_httplib2
 from google.api_core.exceptions import ClientError
-from google.auth.transport.requests import AuthorizedSession
-from googleapiclient import discovery, errors
-from googleapiclient.http import build_http
+from googleapiclient import discovery
 from pyfiglet import figlet_format
 
 from common.config import settings
+from common.utils import execute_api_request
 from models.build import BuildRef, LogRecord, LogSection, LogType
 from services.notifier import Notifier
 
@@ -84,22 +80,9 @@ class CloudBuildLogger:
 class CloudBuildService:
     def __init__(self, notifier: Notifier):
         self.notifier = notifier
-        self.session = AuthorizedSession(settings.gcp.credentials)
         self.client = discovery.build("cloudbuild", "v1")
         self.logs_history = defaultdict(list)
         self._active_builds: Deque[Tuple[BuildRef, Future]] = deque(maxlen=10)
-
-    def _execute_request(self, request):
-        http = google_auth_httplib2.AuthorizedHttp(
-            settings.gcp.credentials, http=build_http()
-        )
-        try:
-            return request.execute(http=http)
-        except errors.HttpError as exc:
-            logger.error(exc)
-            reason = exc._get_reason()
-            detail = f"Cloud Build API returned error response: {reason}"
-            raise HTTPException(status_code=exc.resp.status, detail=detail)
 
     def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
         body = {
@@ -116,12 +99,12 @@ class CloudBuildService:
                 body=body,
             )
         )
-        data = self._execute_request(req)
+        data = execute_api_request(req)
         return BuildRef.parse_obj(data["metadata"]["build"])
 
     def get_build(self, id: str) -> BuildRef:
         req = self.client.projects().builds().get(projectId=settings.gcp.project, id=id)
-        data = self._execute_request(req)
+        data = execute_api_request(req)
         return BuildRef.parse_obj(data)
 
     def get_active_builds(self) -> List[BuildRef]:
@@ -134,7 +117,7 @@ class CloudBuildService:
                 pageSize=3,
             )
         )
-        data = self._execute_request(req)
+        data = execute_api_request(req)
         return list(map(BuildRef.parse_obj, data.get("builds", [])))
 
     async def stream_logs(self, build: BuildRef):
