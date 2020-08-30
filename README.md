@@ -9,13 +9,10 @@
     <img src="https://img.shields.io/badge/Terraform-623CE4?logo=terraform" alt="Terraform">
   </a>
   <a href="./app/src">
-    <img src="https://img.shields.io/badge/Python-4285F4?logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white" alt="Python">
   </a>
   <a href="https://github.com/servian/7apps-google-cloud/wiki">
-    <img src="https://img.shields.io/badge/Documentation-8CA1AF?logo=read-the-docs&logoColor=white" alt="Python">
-  </a>
-  <a href="https://github.com/servian/7apps-google-cloud/stargazers">
-    <img src="https://img.shields.io/github/stars/servian/7apps-google-cloud?style=social" alt="GitHub">
+    <img src="https://img.shields.io/badge/Documentation-181717?logo=github&logoColor=white" alt="Python">
   </a>
 </p>
 <p align="center">
