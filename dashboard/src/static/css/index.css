@@ -614,7 +614,7 @@ iframe.app-frame {
   white-space: pre;
   line-height: 1.2;
   letter-spacing: -0.01rem;
-  padding-right: 1ch;
+  margin-right: 1ch;
 }
 
 .logs p > .lg-text {
@@ -623,20 +623,22 @@ iframe.app-frame {
 
 .logs > p .lg-step {
   width: 8ch;
+  display: inline-block;
 }
 .logs > p .lg-id {
   display: none;
   align-items: center;
-  width: 16ch;
+  width: 15ch;
 }
 
 .logs > p .lg-id:after {
   content: "";
-  opacity: 0.9;
   flex: 1;
+  align-self: center;
   height: 1px;
-  margin: 2px 4px 0 4px;
+  margin: 2px 5px 0 5px;
   border-bottom: 4px dotted currentColor;
+  opacity: 0.75;
 }
 
 /* .logs > p[data-type="ascii"] .lg-text {
