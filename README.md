@@ -3,7 +3,6 @@
   <br />
   <em>Deploying a Python Flask web app to seven different services on Google Cloud</em>
 </p>
-<br />
 <p align="center">
   <img src="https://img.shields.io/badge/Google%20Cloud-EA4335?logo=google-cloud&logoColor=white" alt="Google Cloud">
   <a href="./terraform">
@@ -18,7 +17,8 @@
   <a href="https://github.com/servian/7apps-google-cloud/stargazers">
     <img src="https://img.shields.io/github/stars/servian/7apps-google-cloud?style=social" alt="GitHub">
   </a>
-  <br />
+</p>
+<p align="center">
   <a href="https://compute.7apps.cloud">
     <img src="https://img.shields.io/website?label=Compute%20Engine&url=https%3A%2F%2Fcompute.7apps.cloud%2F%3Fbadge" alt="Compute Engine">
   </a>
@@ -41,7 +41,6 @@
     <img src="https://img.shields.io/website?label=Cloud%20Function&url=https%3A%2F%2Ffunction.7apps.cloud%2F%3Fbadge" alt="Cloud Function">
   </a>
 </p>
-<br />
 
 # 7-Apps in 7-Minutes
 
