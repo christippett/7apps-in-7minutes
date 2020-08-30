@@ -771,7 +771,7 @@ iframe.app-frame {
     margin-top: 3.5rem;
   }
   .timeline {
-    width: 6.5rem;
+    width: 6.6rem;
     display: flex;
   }
   .logs {
@@ -780,15 +780,15 @@ iframe.app-frame {
 }
 @media (min-width: 1024px) {
   .container {
-    padding-left: 5%;
-    padding-right: 5%;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .column,
   .columns {
     --columnGap: 3rem !important;
   }
   .timeline {
-    width: 6.5rem;
+    width: 6.6rem;
     font-size: 0.9rem;
   }
   .is-fullscreen {
