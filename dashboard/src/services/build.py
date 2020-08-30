@@ -2,7 +2,6 @@ import asyncio
 import logging
 from asyncio.futures import Future
 from collections import defaultdict, deque
-from enum import Enum
 from typing import Deque, Dict, List, Optional, Tuple
 
 from google.api_core.exceptions import ClientError
@@ -15,8 +14,6 @@ from models.build import BuildRef, LogRecord, LogSection, LogType
 from services.notifier import Notifier
 
 logger = logging.getLogger("dashboard." + __name__)
-
-Status = Enum("Status", "ACTIVE INACTIVE UNKNOWN")
 
 
 class CloudBuildLogger:
