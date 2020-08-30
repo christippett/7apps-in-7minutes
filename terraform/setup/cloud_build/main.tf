@@ -45,7 +45,7 @@ resource "google_secret_manager_secret" "cloud_build_trigger_id" {
 
 resource "google_secret_manager_secret_version" "cloud_build_trigger_id" {
   secret      = google_secret_manager_secret.cloud_build_trigger_id.id
-  secret_data = google_cloudbuild_trigger.deploy.id
+  secret_data = google_cloudbuild_trigger.deploy.trigger_id
 }
 
 locals {
