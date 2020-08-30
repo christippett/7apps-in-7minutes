@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import google.auth
-from google.cloud import error_reporting, secretmanager, storage
+from google.cloud import error_reporting, secretmanager, storage, tasks_v2
 from pydantic import BaseSettings, Field, HttpUrl, validator
 
 ROOT_DIR = root_dir = Path(__file__).parent.parent
@@ -61,6 +61,12 @@ class GoogleClientManager:
             self._storage = storage.Client()
         return self._storage
 
+    @property
+    def tasks(self):
+        if not hasattr(self, "_tasks"):
+            self._tasks = tasks_v2.CloudTasksClient()
+        return self._tasks
+
     def get_secret(self, secret, version="latest"):
         path = self.secrets.secret_path(self.project, secret)
         secret_name = f"{path}/versions/{version}"
@@ -78,6 +84,7 @@ class Settings(BaseSettings):
     gcp: GoogleClientManager = Field(default_factory=GoogleClientManager)
     google_fonts_api_key: Optional[str]
     cloud_build_trigger_id: Optional[str]
+    cloud_tasks_queue_name: Optional[str]
     enable_stackdriver_logging: bool = False
 
     class Config:
@@ -92,6 +99,11 @@ class Settings(BaseSettings):
     def default_cloud_build_trigger_id(cls, v, values):
         gcp = values.get("gcp")
         return v or gcp.get_secret("CLOUD_BUILD_TRIGGER_ID")
+
+    @validator("cloud_tasks_queue_name", pre=True, always=True)
+    def default_cloud_tasks_queue_name(cls, v, values):
+        gcp = values.get("gcp")
+        return v or gcp.get_secret("CLOUD_TASKS_QUEUE_NAME")
 
 
 settings = Settings()
