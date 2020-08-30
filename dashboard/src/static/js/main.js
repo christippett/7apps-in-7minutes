@@ -33,9 +33,9 @@ WebFont.load({
 
 // Debug WebSocket
 window.ns = notificationService
-notificationService.subscribe('echo', message =>
-  comment.add({ text: message.data.text, timeout: 5000 })
-)
+notificationService.subscribe('comment', message => {
+  comment.add(message.data)
+})
 
 notificationService.subscribe('app-updated', message => {
   const { app, duration } = message.data
