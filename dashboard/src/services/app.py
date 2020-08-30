@@ -58,7 +58,7 @@ class AppService:
                 "_ASCII_FONT": theme.ascii_font or "",
                 "_VERSION": version,
             }
-            build = await self.build.trigger_build(substitutions)
+            build = self.build.trigger_build(substitutions)
             logger.info("Deployment started for version %s", version)
         return version, build
 

@@ -77,7 +77,6 @@ class Settings(BaseSettings):
     github_branch: str = "demo"
     gcp: GoogleClientManager = Field(default_factory=GoogleClientManager)
     google_fonts_api_key: Optional[str]
-    cloud_build_api_url: HttpUrl = Field(default="https://cloudbuild.googleapis.com/v1")
     cloud_build_trigger_id: Optional[str]
     enable_stackdriver_logging: bool = False
 

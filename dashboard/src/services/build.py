@@ -5,10 +5,14 @@ from collections import defaultdict, deque
 from enum import Enum
 from typing import Deque, Dict, List, Optional, Tuple
 
+from fastapi import HTTPException
+
+import google_auth_httplib2
 from google.api_core.exceptions import ClientError
 from google.auth.transport.requests import AuthorizedSession
+from googleapiclient import discovery, errors
+from googleapiclient.http import build_http
 from pyfiglet import figlet_format
-from requests.exceptions import HTTPError
 
 from common.config import settings
 from models.build import BuildRef, LogRecord, LogSection, LogType
@@ -81,36 +85,56 @@ class CloudBuildService:
     def __init__(self, notifier: Notifier):
         self.notifier = notifier
         self.session = AuthorizedSession(settings.gcp.credentials)
+        self.client = discovery.build("cloudbuild", "v1")
         self.logs_history = defaultdict(list)
         self._active_builds: Deque[Tuple[BuildRef, Future]] = deque(maxlen=10)
 
-    def make_request(self, url, method="GET", **kwargs):
-        resp = self.session.request(method, url, **kwargs)
-        data = resp.json()
-        if not resp.ok and "error" in data:
-            raise HTTPError(data["error"]["message"], response=resp)
-        resp.raise_for_status()
-        return data
+    def _execute_request(self, request):
+        http = google_auth_httplib2.AuthorizedHttp(
+            settings.gcp.credentials, http=build_http()
+        )
+        try:
+            return request.execute(http=http)
+        except errors.HttpError as exc:
+            logger.error(exc)
+            reason = exc._get_reason()
+            detail = f"Cloud Build API returned error response: {reason}"
+            raise HTTPException(status_code=exc.resp.status, detail=detail)
 
-    async def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
-        url = f"{settings.cloud_build_api_url}/{settings.cloud_build_trigger_id}:run"
-        payload = {
+    def trigger_build(self, substitutions: Dict[str, str]) -> BuildRef:
+        body = {
             "repoName": settings.github_repo,
             "branchName": settings.github_branch,
             "substitutions": substitutions,
         }
-        data = self.make_request(url, method="POST", json=payload)
+        req = (
+            self.client.projects()
+            .triggers()
+            .run(
+                projectId=settings.gcp.project,
+                triggerId=settings.cloud_build_trigger_id,
+                body=body,
+            )
+        )
+        data = self._execute_request(req)
         return BuildRef.parse_obj(data["metadata"]["build"])
 
     def get_build(self, id: str) -> BuildRef:
-        url = f"{settings.cloud_build_api_url}/projects/{settings.gcp.project}/builds/{id}"
-        data = self.make_request(url)
+        req = self.client.projects().builds().get(projectId=settings.gcp.project, id=id)
+        data = self._execute_request(req)
         return BuildRef.parse_obj(data)
 
     def get_active_builds(self) -> List[BuildRef]:
-        url = f"{settings.cloud_build_api_url}/projects/{settings.gcp.project}/builds"
-        params = {"filter": '(status="QUEUED" OR status="WORKING") AND tags="app"'}
-        data = self.make_request(url, params=params)
+        req = (
+            self.client.projects()
+            .builds()
+            .list(
+                projectId=settings.gcp.project,
+                filter='(status="QUEUED" OR status="WORKING") AND tags="app"',
+                pageSize=3,
+            )
+        )
+        data = self._execute_request(req)
         return list(map(BuildRef.parse_obj, data.get("builds", [])))
 
     async def stream_logs(self, build: BuildRef):

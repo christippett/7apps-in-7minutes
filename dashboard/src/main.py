@@ -99,15 +99,10 @@ async def deploy(theme: Theme, background_tasks: BackgroundTasks, response: Resp
     """
     Create new Deployment Job
     """
-    try:
-        response.status_code = 409 if app_service.build.get_active_builds() else 200
-        version, build = await app_service.deploy(theme)
-        background_tasks.add_task(app_service.start_polling_for_version, version, build)
-        background_tasks.add_task(app_service.build.stream_logs, build)
-    except RequestsHTTPError as e:
-        logger.exception(e)
-        code = e.response.status_code
-        raise HTTPException(code, detail="Unable to trigger Cloud Build deployment")
+    response.status_code = 409 if app_service.build.get_active_builds() else 200
+    version, build = await app_service.deploy(theme)
+    background_tasks.add_task(app_service.start_polling_for_version, version, build)
+    background_tasks.add_task(app_service.build.stream_logs, build)
     return DeploymentJob.construct(
         id=build.id, version=version, create_time=build.createTime
     )
