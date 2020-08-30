@@ -30,6 +30,7 @@
     <img src="https://img.shields.io/endpoint?label=Cloud%20Function&url=https%3A%2F%2Ffunction.7apps.cloud%2F%3Fbadge" alt="Cloud Function">
   </a>
 </p>
+<br />
 
 # 7-Apps in 7-Minutes
 
