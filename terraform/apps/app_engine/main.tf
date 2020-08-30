@@ -54,19 +54,12 @@ resource "google_app_engine_application_url_dispatch_rules" "app" {
 
 # Stop/start App Engine Flexible on a schedule
 
-resource "google_cloud_scheduler_job" "toggle_serving_status" {
-  for_each = {
-    stop  = { status = "STOPPED", schedule = "30 3 * * *" },
-    start = { status = "SERVING", schedule = "0 12 * * *" }
-  }
-
-
-
+resource "google_cloud_scheduler_job" "stop_appengine_flex" {
   project     = var.project_id
   region      = var.region
-  name        = "${each.key}-appengine"
-  description = "🕹️ ${title(each.key)} App Engine: Flexible service"
-  schedule    = each.value.schedule
+  name        = "stop-appengine-flexible"
+  description = "🕹️ Stop App Engine: Flexible service"
+  schedule    = "45 */1 * * *" # attempt to stop App Engine service every hour to save on cost
 
   time_zone        = "Australia/Melbourne"
   attempt_deadline = "660s"
@@ -76,7 +69,7 @@ resource "google_cloud_scheduler_job" "toggle_serving_status" {
 
     uri = "https://appengine.googleapis.com/v1/${module.app_engine_flexible.version.id}?updateMask=servingStatus"
     body = base64encode(jsonencode({
-      servingStatus = each.value.status
+      servingStatus = "STOPPED"
     }))
 
     headers = {
