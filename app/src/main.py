@@ -95,7 +95,7 @@ theme = Theme()
 def main(*args, **kwargs):
     app_info = App.from_env(theme=theme)
 
-    if "Shields.io" in request.headers.get("User-Agent", ""):
+    if "badge" in request.args:
         # Return JSON metadata to create shields.io GitHub badge
         print(request.headers)
         badge = {
