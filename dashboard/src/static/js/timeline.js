@@ -88,14 +88,12 @@ export class Timeline {
   create () {
     // Create SVG element and attach to DOM, replacing any existing SVG
     // elements if necessary
+    this.parentNode.innerHTML = ''
     const svg = d3
-      .select('#timeline')
-      .selectAll('svg')
-      .data([1])
-      .enter()
+      .select(this.parentNode)
       .append('svg:svg')
       .attr('height', '100%')
-      .attr('preserveAspectRatio', 'xMinYMin meet')
+      .attr('width', '100%')
       .attr('viewBox', `0 0 ${this.width} ${this.height}`)
     svg.append(() => this.drawFilters().node())
     svg.append(() => this.drawTimeline().node())
