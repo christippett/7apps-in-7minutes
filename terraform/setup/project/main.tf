@@ -17,6 +17,7 @@ module "project_services" {
     "webfonts.googleapis.com",
     "secretmanager.googleapis.com",
     "clouderrorreporting.googleapis.com",
+    "cloudtasks.googleapis.com",
 
     # These services are required by Cloud Run (Anthos)
     "cloudresourcemanager.googleapis.com",

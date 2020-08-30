@@ -25,15 +25,10 @@ dependency "dns" {
   config_path = "${local.root_dir}/setup/dns"
 }
 
-dependency "cloud_build" {
-  config_path = "${local.root_dir}/setup/cloud_build"
-}
-
 /* Inputs ------------------------------------------------------------------- */
 
 inputs = {
   cloud_dns_zone                  = dependency.dns.outputs.cloud_dns_zone
   network_name                    = dependency.network.outputs.network_name
   subnet_name                     = dependency.network.outputs.subnet_name
-  cloud_scheduler_service_account = dependency.cloud_build.outputs.cloud_scheduler_service_account.email
 }
