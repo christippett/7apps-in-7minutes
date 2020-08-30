@@ -1,10 +1,8 @@
-import json
 import logging
 from typing import Any, Dict, List
 
 from fastapi import WebSocket
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
 
 from models import Message
 
