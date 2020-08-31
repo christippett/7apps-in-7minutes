@@ -36,6 +36,9 @@ black = "^19.10b0"
 pygments = "^2.6.1"
 devtools = "^0.6"
 
+[tool.black]
+line-length = 100
+
 [tool.isort]
 profile = "black"
 src_paths = ["src"]

@@ -55,9 +55,9 @@ class Theme:
 @dataclass
 class App:
     id: str
+    title: str
     theme: Theme
-    title: Optional[str] = "7-Apps in 7-Minutes"
-    version: Optional[str] = os.getenv("VERSION", "unknown")
+    version: str = os.getenv("VERSION", "unknown")
     updated: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
     @property
@@ -77,7 +77,7 @@ class App:
         elif "K_SERVICE" in os.environ:
             id, title = "run", "Cloud Run"
         elif any(v.startswith("GKE_APP") for v in os.environ):
-            id, title = "kubernetes", "Kubernetes"
+            id, title = "gke", "Kubernetes"
         elif "GCE_APP" in os.environ:
             id, title = "compute-engine", "Compute Engine"
         else:
@@ -96,7 +96,6 @@ def main(*args, **kwargs):
     app_info = App.from_env(theme=theme)
 
     if request.headers.get("Accept") == "application/json":
-        # Return machine-readable app info (used by dashboard)
         return jsonify(dataclasses.asdict(app_info))
 
     return render_template("index.html", app=app_info)

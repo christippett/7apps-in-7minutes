@@ -75,9 +75,7 @@ class Theme(BaseModel):
     def get_gradients(cls) -> List[Dict[str, Any]]:
         if hasattr(cls, "_gradients"):
             return cls._gradients
-        url = (
-            "https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json"
-        )
+        url = "https://raw.githubusercontent.com/ghosh/uiGradients/master/gradients.json"
         resp = requests.get(url)
         data = resp.json()
         for gradient in data:

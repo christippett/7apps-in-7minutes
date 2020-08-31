@@ -16,15 +16,15 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from google.cloud.error_reporting import HTTPContext
 
-from common import utils
-from common.config import LOGGING_CONFIG, settings
+from common import config, utils
+from common.config import settings
 from common.logging import setup_stackdriver_logging
 from models import DeploymentJob
-from models.app import Theme
+from models.app import App, Theme
 from services import AppService, Notifier
 
 # Logging
-logging.config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(config.LOGGING_CONFIG)
 logger = logging.getLogger("dashboard.main")
 if settings.enable_stackdriver_logging:
     logger.debug("Enabling Stackdriver logging")
@@ -43,7 +43,7 @@ templates = Jinja2Templates(directory=str(settings.templates_dir))
 # Application
 notifier = Notifier()
 app_config = settings.root_dir.joinpath("7apps.yaml")
-app_service = AppService.load_from_config(str(app_config), notifier=notifier)
+app_service = AppService(apps=list(map(App.parse_obj, config.APPS)), notifier=notifier)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -71,10 +71,10 @@ async def startup():
 async def index(request: Request):
     display_order = [
         "compute-engine",
-        "kubernetes",
+        "gke",
+        "run-anthos",
         "run",
         "standard",
-        "run-anthos",
         "flex",
         "function",
     ]
@@ -97,10 +97,7 @@ async def index(request: Request):
     response_model=DeploymentJob,
     responses={
         200: {"description": "Deployment Job successfully created"},
-        409: {
-            "model": DeploymentJob,
-            "description": "Deployment Job already in-progress",
-        },
+        409: {"model": DeploymentJob, "description": "Deployment Job already in-progress",},
     },
 )
 async def deploy(theme: Theme, background_tasks: BackgroundTasks, response: Response):
@@ -111,9 +108,7 @@ async def deploy(theme: Theme, background_tasks: BackgroundTasks, response: Resp
     version, build = await app_service.deploy(theme)
     background_tasks.add_task(app_service.start_polling_for_version, version, build)
     background_tasks.add_task(app_service.build.stream_logs, build)
-    return DeploymentJob.construct(
-        id=build.id, version=version, create_time=build.createTime
-    )
+    return DeploymentJob.construct(id=build.id, version=version, create_time=build.createTime)
 
 
 @app.post("/task", include_in_schema=False)

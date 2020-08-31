@@ -3,7 +3,7 @@ from typing import Optional
 
 import google.auth
 from google.cloud import error_reporting, secretmanager, storage, tasks_v2
-from pydantic import BaseSettings, Field, HttpUrl, validator
+from pydantic import BaseSettings, Field, validator
 
 ROOT_DIR = root_dir = Path(__file__).parent.parent
 
@@ -11,10 +11,7 @@ LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "icon": {
-            "class": "common.logging.ColourFormatter",
-            "format": "%(icon)-2s %(message)s",
-        },
+        "icon": {"class": "common.logging.ColourFormatter", "format": "%(icon)-2s %(message)s"},
         "icon-verbose": {
             "class": "common.logging.ColourFormatter",
             "format": "%(asctime)-10s%(icon)-2s %(message)s [%(name)s]",
@@ -31,10 +28,18 @@ LOGGING_CONFIG = {
             "stream": "ext://sys.stdout",
         }
     },
-    "loggers": {
-        "dashboard": {"handlers": ["default"], "level": "DEBUG", "propagate": False}
-    },
+    "loggers": {"dashboard": {"handlers": ["default"], "level": "DEBUG", "propagate": False}},
 }
+
+APPS = [
+    {"id": "compute-engine", "title": "Compute Engine", "url": "https://compute.7apps.cloud"},
+    {"id": "gke", "title": "Kubernetes", "url": "https://gke.7apps.cloud"},
+    {"id": "function", "title": "Cloud Function", "url": "https://function.7apps.cloud"},
+    {"id": "run", "title": "Cloud Run", "url": "https://run.7apps.cloud"},
+    {"id": "run-anthos", "title": "Cloud Run:Anthos", "url": "https://run-anthos.7apps.cloud"},
+    {"id": "standard", "title": "App Engine: Standard", "url": "https://standard.7apps.cloud"},
+    {"id": "flex", "title": "App Engine: Flexible", "url": "https://flex.7apps.cloud"},
+]
 
 
 class GoogleClientManager:
