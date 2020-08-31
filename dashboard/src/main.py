@@ -1,9 +1,10 @@
 import logging
 import logging.config
 import time
+from typing import Dict
 
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.gzip import GZipMiddleware
@@ -14,8 +15,8 @@ from fastapi.websockets import WebSocket, WebSocketDisconnect
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from google.cloud.error_reporting import HTTPContext
-from requests.exceptions import HTTPError as RequestsHTTPError
 
+from common import utils
 from common.config import LOGGING_CONFIG, settings
 from common.logging import setup_stackdriver_logging
 from models import DeploymentJob
@@ -57,6 +58,13 @@ async def unicorn_exception_handler(request: Request, exc: StarletteHTTPExceptio
     )
     settings.gcp.error.report_exception(http_context=context)
     return await http_exception_handler(request, exc)
+
+
+@app.on_event("startup")
+async def startup():
+    # prime generator: https://stackoverflow.com/a/19892334
+    await notifier.notification_generator.asend(None)
+    await app_service.refresh_app_data()
 
 
 @app.get("/")
@@ -108,11 +116,9 @@ async def deploy(theme: Theme, background_tasks: BackgroundTasks, response: Resp
     )
 
 
-@app.on_event("startup")
-async def startup():
-    # prime generator: https://stackoverflow.com/a/19892334
-    await notifier.notification_generator.asend(None)
-    await app_service.refresh_app_data()
+@app.post("/task", include_in_schema=False)
+def tasks(id_info: Dict[str, str] = Depends(utils.validate_google_identity)):
+    return {"message": "authorized"}
 
 
 @app.websocket("/ws")
