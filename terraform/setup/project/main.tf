@@ -3,7 +3,8 @@
 
 module "project_services" {
   source  = "terraform-google-modules/project-factory/google//modules/project_services"
-  version = "4.0.0"
+  version = ">= 11.0.0"
+
 
   project_id = var.project_id
 
@@ -39,4 +40,6 @@ module "project_services" {
 resource "google_app_engine_application" "app" {
   project     = var.project_id
   location_id = var.region
+
+  # depends_on = [module.project_services]
 }

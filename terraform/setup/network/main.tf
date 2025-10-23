@@ -21,25 +21,16 @@ resource "google_compute_subnetwork" "default" {
 # Setup default firewall rules for HTTP, HTTPS and SSH
 
 module "firewall" {
-  source = "terraform-google-modules/network/google//modules/fabric-net-firewall"
+  source  = "terraform-google-modules/network/google//modules/fabric-net-firewall"
+  version = "~> 3.3"
 
-  project_id = var.project_id
-  network    = google_compute_network.default.name
-
-  http_source_ranges  = ["0.0.0.0/0"]
-  https_source_ranges = ["0.0.0.0/0"]
-  ssh_source_ranges   = ["0.0.0.0/0"]
-
+  project_id              = var.project_id
+  network                 = google_compute_network.default.name
   internal_ranges_enabled = true
-  internal_ranges = [
-    google_compute_subnetwork.default.ip_cidr_range,
-    "35.235.240.0/20" # IAP source IP range
-  ]
-  internal_allow = [
-    { "protocol" : "icmp" },
-    { "protocol" : "tcp" }
-  ]
-
-  custom_rules = {}
+  internal_ranges         = [google_compute_subnetwork.default.ip_cidr_range]
+  internal_allow          = [{ protocol = "tcp" }, { protocol = "icmp" }]
+  custom_rules = {
+    for k, v in var.firewall_rules : "${module.vpc.network_name}-${k}" => v
+  }
 }
 

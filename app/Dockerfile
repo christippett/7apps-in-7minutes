@@ -1,13 +1,18 @@
-FROM python:3.8-slim-buster
+FROM python:3.8-slim
 
-WORKDIR /app
+ENV APP_HOME /app
+ENV PYTHONUNBUFFERED TRUE
+
+WORKDIR $APP_HOME
+
+RUN pip install functions-framework
 
 # Install dependencies
-ADD src/requirements.txt .
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Copy source code
-ADD src /app/
+COPY src .
 
 # App configuration
 ARG VERSION
@@ -20,6 +25,4 @@ ENV GRADIENT="$GRADIENT"
 ENV FONT="$FONT"
 ENV ASCII_FONT="$ASCII_FONT"
 
-EXPOSE 8080
-
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
+CMD exec functions-framework --target=main

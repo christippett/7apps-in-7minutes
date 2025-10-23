@@ -92,7 +92,7 @@ resource "google_secret_manager_secret_iam_member" "secret_access" {
   member    = "serviceAccount:${data.google_compute_default_service_account.default.email}"
 }
 
-# Create a service account for Cloud Scheduler
+# Custom service account for Cloud Scheduler
 
 resource "google_service_account" "scheduler" {
   account_id   = "cloud-scheduler"
@@ -102,7 +102,11 @@ resource "google_service_account" "scheduler" {
 }
 
 resource "google_project_iam_member" "scheduler" {
-  for_each = toset(["roles/cloudbuild.builds.editor", "roles/appengine.serviceAdmin"])
+  for_each = toset([
+    "roles/cloudbuild.builds.editor",
+    "roles/appengine.serviceAdmin"
+  ])
+
   project = var.project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.scheduler.email}"

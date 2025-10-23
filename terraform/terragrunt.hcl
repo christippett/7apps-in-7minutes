@@ -35,6 +35,38 @@ generate "provider" {
               | |   | |
               |_|   |_| ©2020 Servian */
 
+
+/* Providers ---------------------------------------------------------------- */
+
+terraform {
+  required_version = ">= 0.13"
+
+  required_providers {
+    google = {
+      source = "hashicorp/google"
+			version = "~> 3.43"
+    }
+    google-beta = {
+      source = "hashicorp/google-beta"
+			version = "~> 3.43"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = "2.3.2"
+    }
+    helm = {
+      source = "hashicorp/helm"
+      version = "~> 2.2"
+    }
+    null = {
+      source = "hashicorp/null"
+    }
+    external = {
+      source = "hashicorp/external"
+    }
+  }
+}
+
 /* Global variables --------------------------------------------------------- */
 
 variable "project_id" { type = string }

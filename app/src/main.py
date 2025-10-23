@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
 
-from flask import Flask, jsonify, render_template, request
+from flask import jsonify, render_template, request
 from flask_cors import cross_origin
 from pyfiglet import FigletFont
 from pyfiglet import figlet_format as fmt
@@ -86,11 +86,9 @@ class App:
         return cls(id=id, title=title.title(), **kwargs)
 
 
-app = Flask("7apps")
 theme = Theme()
 
 
-@app.route("/")
 @cross_origin(send_wildcard=True)
 def main(*args, **kwargs):
     app_info = App.from_env(theme=theme)
@@ -99,7 +97,3 @@ def main(*args, **kwargs):
         return jsonify(dataclasses.asdict(app_info))
 
     return render_template("index.html", app=app_info)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
